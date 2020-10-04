@@ -1,0 +1,19 @@
+[package]
+name = "europa"
+version = "0.1.0"
+authors = ["patract labs <https://github.com/patractlabs>"]
+edition = "2018"
+description = "A sandbox of Substrate runtime execution environment."
+
+[workspace]
+members = [
+    "cli",
+    "runtime",
+]
+
+[profile.release]
+panic = "unwind"
+
+[patch.crates-io]
+# patch for substrate crate
+sp-api-proc-macro = { path = "./substrate/primitives/api/proc-macro" }
