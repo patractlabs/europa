@@ -618,6 +618,14 @@ version = "2.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "executor"
+version = "0.1.0"
+dependencies = [
+ "europa-runtime 0.1.0",
+ "sc-executor 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "failure"
 version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2241,6 +2249,65 @@ dependencies = [
 ]
 
 [[package]]
+name = "sc-executor"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "derive_more 0.99.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libsecp256k1 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "parity-scale-codec 1.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "parity-wasm 0.41.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "parking_lot 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sc-executor-common 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sc-executor-wasmi 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-api 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-externalities 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-io 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-panic-handler 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-runtime-interface 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-serializer 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-trie 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-version 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-wasm-interface 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wasmi 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sc-executor-common"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "derive_more 0.99.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "parity-scale-codec 1.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "parity-wasm 0.41.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-allocator 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-runtime-interface 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-serializer 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-wasm-interface 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wasmi 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sc-executor-wasmi"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "parity-scale-codec 1.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sc-executor-common 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-allocator 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-runtime-interface 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-wasm-interface 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wasmi 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "schnorrkel"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2381,13 +2448,25 @@ version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "sp-allocator"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "derive_more 0.99.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-std 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-wasm-interface 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "sp-api"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "hash-db 0.15.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "parity-scale-codec 1.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-api-proc-macro 2.0.0",
+ "sp-api-proc-macro 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-core 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-runtime 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-state-machine 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2398,6 +2477,7 @@ dependencies = [
 [[package]]
 name = "sp-api-proc-macro"
 version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "blake2-rfc 0.2.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro-crate 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2652,6 +2732,15 @@ dependencies = [
  "proc-macro2 1.0.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 1.0.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 1.0.42 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "sp-serializer"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "serde 1.0.116 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.58 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -3575,6 +3664,9 @@ dependencies = [
 "checksum rw-stream-sink 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "4da5fcb054c46f5a5dff833b129285a93d3f0179531735e6c866e8cc307d2020"
 "checksum ryu 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)" = "71d301d4193d031abdd79ff7e3dd721168a9572ef3fe51a1517aba235bd8f86e"
 "checksum safe-mix 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "6d3d055a2582e6b00ed7a31c1524040aa391092bf636328350813f3a0605215c"
+"checksum sc-executor 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "af77c7fda9659559e257fe330af26e7c2e8f61583c2a5c45f4c9db73d58a902b"
+"checksum sc-executor-common 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6663e4d1d2f8255e6c1994ce548365a7631a82f7ab231d0b8a122cc2a0011949"
+"checksum sc-executor-wasmi 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "78aeea37a28b83af11fe621ee047758e125341db96efaf7f553a4180fe48d6b8"
 "checksum schnorrkel 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)" = "021b403afe70d81eea68f6ea12f6b3c9588e5d536a94c3bf80f15e7faa267862"
 "checksum scopeguard 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 "checksum secrecy 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9182278ed645df3477a9c27bfee0621c621aa16f6972635f7f795dae3d81070f"
@@ -3591,7 +3683,9 @@ dependencies = [
 "checksum signature 1.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "29f060a7d147e33490ec10da418795238fd7545bba241504d6b31a409f2e6210"
 "checksum slab 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 "checksum smallvec 1.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "fbee7696b84bbf3d89a1c2eccff0850e3047ed46bfcd2e92c29a2d074d57e252"
+"checksum sp-allocator 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9e79a1db780708b6b71e9914e2b1d11b3e61c9bfb492c88b1024115e1a6661da"
 "checksum sp-api 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "953a3296335d9761311763dbe6855109ea4bea915e27cf5633d8b01057898302"
+"checksum sp-api-proc-macro 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8247ca24a2a881af2ac675c8ec33584944965d6d45645bbec16fe327ce42dce6"
 "checksum sp-application-crypto 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "885eca124aa6ce0bba57c08bc48c4357096996d630a77f572580ef8e2e4df034"
 "checksum sp-arithmetic 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "667775bc50eb214225df18c92e4ec57acc7e2dc78d7d210eb4dd930db1a73995"
 "checksum sp-block-builder 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "07d7fca8aa126a9d295843d592f44b48d8cf93880862baeff2968164598ab26c"
@@ -3607,6 +3701,7 @@ dependencies = [
 "checksum sp-runtime 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "62542f8ce9d5fcb43a4dd3c3a53326d33aacf9b0bc9d353d6fe9fd5ff3031747"
 "checksum sp-runtime-interface 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8b7e363c480cc8c9019b84f85d10c0b56a184079d5d840d2d1d55087ad835dc6"
 "checksum sp-runtime-interface-proc-macro 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "85cf56a38544293e54dbe0aa7b6aed1e046bfc704b6fc3de7255897dca98ccb1"
+"checksum sp-serializer 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "643933e971979094c9d4b27b015c7250985a262e405bb9ad090336d8ceb5b2b9"
 "checksum sp-state-machine 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "5f58335de98bca196683a8ef22195a8a43b457b8bc705dba3124138ffc2ee720"
 "checksum sp-std 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fa2d6e166cead2d3b1d3d8fe0e787d076b7d0296b1760a0d7d340846d0ba42c5"
 "checksum sp-storage 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "0f4625e6f8f40995939560f48f89028f658b7929657c68d01c571c81ab5619ff"
