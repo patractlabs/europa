@@ -4,4 +4,4 @@ The sandbox will remove p2p and consensus functions, just remaining the executio
 
 In the first phase, Europa would just integrate the pallet-contracts module. In the second phase, we would refactor the sandbox to be more general that could let developers to add their runtime module and test.
 
-Riot Group for disscusion: https://app.element.io/#/room/!RZjiuwwssNFJZxaTjg:matrix.org
+Riot Group for disscusion: https://app.element.io/#/room/!RZjiuwwssNFJZxaTjg:matrix.org 
