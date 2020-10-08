@@ -551,6 +551,14 @@ version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "ec-cli"
+version = "0.1.0"
+
+[[package]]
+name = "ec-service"
+version = "0.1.0"
+
+[[package]]
 name = "ed25519"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
