@@ -1,3 +1,9 @@
+[profile.release]
+panic = "unwind"
+
+[patch.crates-io]
+# patch for substrate crate
+
 [workspace]
 members = [
     "bin/europa/",
