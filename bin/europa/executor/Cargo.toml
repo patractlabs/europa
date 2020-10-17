@@ -5,5 +5,5 @@ authors = ["patract labs <https://github.com/patractlabs>"]
 edition = "2018"
 
 [dependencies]
-sc-executor = { version = "0.8.0" }
+ec-executor = { path = "../../../client/executor" }
 europa-runtime = { path = "../runtime" }

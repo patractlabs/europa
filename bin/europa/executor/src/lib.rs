@@ -1,5 +1,5 @@
-use sc_executor::native_executor_instance;
-pub use sc_executor::NativeExecutor;
+use ec_executor::native_executor_instance;
+pub use ec_executor::NativeExecutor;
 
 // Declare an instance of the native executor named `Executor`. Not not has wasm part.
 native_executor_instance!(
