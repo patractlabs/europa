@@ -1,6 +1,8 @@
 #[macro_use]
 mod native_executor;
 
-pub use native_executor::{with_externalities_safe, NativeExecutor, NativeVersion};
-pub use sc_executor::NativeExecutionDispatch;
-pub use sp_core::Externalities;
+pub use native_executor::NativeExecutor;
+pub use sc_executor::{with_externalities_safe, NativeExecutionDispatch};
+pub use sc_executor_common::error;
+pub use sp_core::traits::Externalities;
+pub use sp_version::NativeVersion;

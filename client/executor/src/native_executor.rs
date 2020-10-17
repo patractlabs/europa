@@ -24,17 +24,15 @@ use std::{
 };
 
 use codec::{Decode, Encode};
-pub use sc_executor::with_externalities_safe;
 use sc_executor::{
 	error::{Error, Result},
-	NativeExecutionDispatch, RuntimeInfo,
+	with_externalities_safe, NativeExecutionDispatch, RuntimeInfo,
 };
 use sp_core::{
 	traits::{CodeExecutor, Externalities, MissingHostFunctions, RuntimeCode},
 	NativeOrEncoded,
 };
-pub use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
+use sp_version::{NativeVersion, RuntimeVersion};
 
 /// A generic `CodeExecutor` implementation that uses a delegate to determine wasm code equivalence
 /// and dispatch to native code when possible, falling back on `WasmExecutor` when not.
@@ -84,7 +82,7 @@ impl<D: NativeExecutionDispatch + 'static> CodeExecutor for NativeExecutor<D> {
 		_use_native: bool,
 		native_call: Option<NC>,
 	) -> (Result<NativeOrEncoded<R>>, bool) {
-		// only contains native executor
+		let mut ext = AssertUnwindSafe(ext);
 		let result = if let Some(call) = native_call {
 			with_externalities_safe(&mut **ext, move || (call)()).and_then(|r| {
 				r.map(NativeOrEncoded::Native)
