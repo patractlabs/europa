@@ -12,5 +12,6 @@ members = [
     "bin/europa/runtime",
 
     "client/cli",
+    "client/executor",
     "client/service",
 ]
