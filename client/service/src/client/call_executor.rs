@@ -19,8 +19,10 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode};
+use std::{cell::RefCell, panic::UnwindSafe, result, sync::Arc};
+
 use sc_client_api::{backend, call_executor::CallExecutor};
-use sc_executor::{NativeVersion, RuntimeInfo, RuntimeVersion};
+
 use sp_api::{InitializeBlock, ProofRecorder, StorageTransactionCache};
 use sp_core::{
 	offchain::storage::OffchainOverlayedChanges,
@@ -36,7 +38,8 @@ use sp_state_machine::{
 	self, backend::Backend as _, ExecutionManager, ExecutionStrategy, Ext, OverlayedChanges,
 	StateMachine, StorageProof,
 };
-use std::{cell::RefCell, panic::UnwindSafe, result, sync::Arc};
+
+use ec_executor::{NativeVersion, RuntimeInfo, RuntimeVersion};
 
 /// Call executor that executes methods locally, querying all required
 /// data from local backend.
