@@ -70,6 +70,8 @@ use sc_client_api::{
 	StorageNotifications, StorageProvider, UsageProvider,
 };
 
+pub use call_executor::LocalCallExecutor;
+
 type NotificationSinks<T> = Mutex<Vec<TracingUnboundedSender<T>>>;
 
 // used in importing a block, where additional changes are made after the runtime
