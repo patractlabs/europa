@@ -58,16 +58,18 @@ use sp_state_machine::{
 	ChangesTrieConfigurationRange,
 };
 use sp_tracing::{info, trace, warn};
+use sp_trie::StorageProof;
 use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedSender};
 
 use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider};
 use sc_client_api::{
 	apply_aux, backend, changes_tries_state_at_block, execution_extensions::ExecutionExtensions,
 	BlockBackend, BlockImportNotification, BlockImportOperation, BlockOf, BlockchainEvents,
-	CallExecutor, ClientImportOperation, ClientInfo, ExecutorProvider, FinalityNotification,
-	FinalityNotifications, ImportNotifications, ImportSummary, KeyIterator, LockImportRun,
-	NewBlockState, ProvideUncles, PrunableStateChangesTrieStorage, StorageEventStream,
-	StorageNotifications, StorageProvider, UsageProvider,
+	CallExecutor, ChangesProof, ClientImportOperation, ClientInfo, ExecutorProvider,
+	FinalityNotification, FinalityNotifications, Finalizer, ImportNotifications, ImportSummary,
+	KeyIterator, LockImportRun, NewBlockState, ProofProvider, ProvideUncles,
+	PrunableStateChangesTrieStorage, StorageEventStream, StorageNotifications, StorageProvider,
+	UsageProvider,
 };
 
 pub use call_executor::LocalCallExecutor;
@@ -938,6 +940,58 @@ where
 	}
 }
 
+impl<B, E, Block, RA> ProofProvider<Block> for Client<B, E, Block, RA>
+where
+	B: backend::Backend<Block>,
+	E: CallExecutor<Block>,
+	Block: BlockT,
+{
+	fn read_proof(
+		&self,
+		_id: &BlockId<Block>,
+		_keys: &mut dyn Iterator<Item = &[u8]>,
+	) -> sp_blockchain::Result<StorageProof> {
+		Err(sp_blockchain::Error::NotAvailableOnLightClient)
+	}
+
+	fn read_child_proof(
+		&self,
+		_id: &BlockId<Block>,
+		_child_info: &ChildInfo,
+		_keys: &mut dyn Iterator<Item = &[u8]>,
+	) -> sp_blockchain::Result<StorageProof> {
+		Err(sp_blockchain::Error::NotAvailableOnLightClient)
+	}
+
+	fn execution_proof(
+		&self,
+		_id: &BlockId<Block>,
+		_method: &str,
+		_call_data: &[u8],
+	) -> sp_blockchain::Result<(Vec<u8>, StorageProof)> {
+		Err(sp_blockchain::Error::NotAvailableOnLightClient)
+	}
+
+	fn header_proof(
+		&self,
+		_id: &BlockId<Block>,
+	) -> sp_blockchain::Result<(Block::Header, StorageProof)> {
+		Err(sp_blockchain::Error::NotAvailableOnLightClient)
+	}
+
+	fn key_changes_proof(
+		&self,
+		_first: Block::Hash,
+		_last: Block::Hash,
+		_min: Block::Hash,
+		_max: Block::Hash,
+		_storage_key: Option<&PrefixedStorageKey>,
+		_key: &StorageKey,
+	) -> sp_blockchain::Result<ChangesProof<Block::Header>> {
+		Err(sp_blockchain::Error::NotAvailableOnLightClient)
+	}
+}
+
 impl<B, E, Block, RA> BlockBuilderProvider<B, Block, Self> for Client<B, E, Block, RA>
 where
 	B: backend::Backend<Block> + Send + Sync + 'static,
@@ -1513,6 +1567,42 @@ where
 
 	fn check_block(&mut self, block: BlockCheckParams<Block>) -> Result<ImportResult, Self::Error> {
 		(&*self).check_block(block)
+	}
+}
+
+impl<B, E, Block, RA> Finalizer<Block, B> for Client<B, E, Block, RA>
+where
+	B: backend::Backend<Block>,
+	E: CallExecutor<Block>,
+	Block: BlockT,
+{
+	fn apply_finality(
+		&self,
+		operation: &mut ClientImportOperation<Block, B>,
+		id: BlockId<Block>,
+		justification: Option<Justification>,
+		notify: bool,
+	) -> sp_blockchain::Result<()> {
+		let last_best = self.backend.blockchain().info().best_hash;
+		let to_finalize_hash = self.backend.blockchain().expect_block_hash_from_id(&id)?;
+		self.apply_finality_with_block_hash(
+			operation,
+			to_finalize_hash,
+			justification,
+			last_best,
+			notify,
+		)
+	}
+
+	fn finalize_block(
+		&self,
+		id: BlockId<Block>,
+		justification: Option<Justification>,
+		notify: bool,
+	) -> sp_blockchain::Result<()> {
+		self.lock_import_and_run(|operation| {
+			self.apply_finality(operation, id, justification, notify)
+		})
 	}
 }
 

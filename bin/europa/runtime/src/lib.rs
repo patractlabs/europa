@@ -3,12 +3,12 @@
 #![recursion_limit = "256"]
 
 use sp_api::impl_runtime_apis;
-use sp_core::OpaqueMetadata;
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::traits::{
 	BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, Saturating, Verify,
 };
 use sp_runtime::{
-	create_runtime_str, generic,
+	create_runtime_str, generic, impl_opaque_keys,
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature,
 };
@@ -72,6 +72,11 @@ pub mod opaque {
 	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 	/// Opaque block identifier type.
 	pub type BlockId = generic::BlockId<Block>;
+
+	impl_opaque_keys! {
+		pub struct SessionKeys {
+		}
+	}
 }
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -314,6 +319,19 @@ impl_runtime_apis! {
 
 		fn random_seed() -> <Block as BlockT>::Hash {
 			RandomnessCollectiveFlip::random_seed()
+		}
+	}
+
+	// impl just for author rpc requirements
+	impl sp_session::SessionKeys<Block> for Runtime {
+		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
+			opaque::SessionKeys::generate(seed)
+		}
+
+		fn decode_session_keys(
+			encoded: Vec<u8>,
+		) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
+			opaque::SessionKeys::decode_into_raw_public_keys(&encoded)
 		}
 	}
 

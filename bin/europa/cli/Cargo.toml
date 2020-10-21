@@ -5,3 +5,16 @@ authors = ["patract labs <https://github.com/patractlabs>"]
 edition = "2018"
 
 [dependencies]
+sp-consensus = { version = "0.8.0" }
+sp-inherents = { version = "2.0.0" }
+sp-timestamp = { version = "2.0.0" }
+
+sc-transaction-pool = { version = "2.0.0" }
+sc-consensus = { version = "0.8.0" }
+sc-consensus-manual-seal = { version = "0.8.0" }
+sc-basic-authorship = { version = "0.8.0" }
+
+ec-service = { path = "../../../client/service" }
+
+europa-runtime = { path = "../runtime" }
+europa-executor = { path = "../executor" }
