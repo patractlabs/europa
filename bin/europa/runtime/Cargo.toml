@@ -21,6 +21,7 @@ sp-runtime = { version = "2.0.0" , default-features = false }
 sp-std = { version = "2.0.0" , default-features = false }
 sp-transaction-pool = { version = "2.0.0" , default-features = false }
 sp-version = { version = "2.0.0" , default-features = false }
+sp-session = { version = "2.0.0", default-features = false }
 
 # Substrate pallets
 frame-executive = { version = "2.0.0" , default-features = false }
@@ -49,6 +50,7 @@ std = [
     "sp-std/std",
     "sp-transaction-pool/std",
     "sp-version/std",
+    "sp-session/std",
 
     "frame-executive/std",
     "frame-support/std",

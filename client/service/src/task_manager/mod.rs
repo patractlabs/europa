@@ -38,7 +38,6 @@ pub(crate) type JoinFuture = Pin<Box<dyn Future<Output = ()> + Send>>;
 pub struct SpawnTaskHandle {
 	on_exit: exit_future::Exit,
 	executor: TaskExecutor,
-	// metrics: Option<Metrics>,
 	task_notifier: TracingUnboundedSender<JoinFuture>,
 }
 
