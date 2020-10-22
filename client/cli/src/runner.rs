@@ -29,7 +29,7 @@ use std::marker::PhantomData;
 
 use sc_cli::{CliConfiguration, Result, SubstrateCli};
 
-use ec_service::{Configuration, TaskType, TaskManager};
+use ec_service::{Configuration, TaskManager, TaskType};
 
 #[cfg(target_family = "unix")]
 async fn main<F, E>(func: F) -> std::result::Result<(), Box<dyn std::error::Error>>
@@ -124,13 +124,11 @@ impl<C: SubstrateCli> Runner<C> {
 		let tokio_runtime = build_runtime()?;
 		let runtime_handle = tokio_runtime.handle().clone();
 
-		let task_executor = move |fut, task_type| {
-			match task_type {
-				TaskType::Async => runtime_handle.spawn(fut).map(drop),
-				TaskType::Blocking =>
-					runtime_handle.spawn_blocking(move || futures::executor::block_on(fut))
-						.map(drop),
-			}
+		let task_executor = move |fut, task_type| match task_type {
+			TaskType::Async => runtime_handle.spawn(fut).map(drop),
+			TaskType::Blocking => runtime_handle
+				.spawn_blocking(move || futures::executor::block_on(fut))
+				.map(drop),
 		};
 
 		Ok(Runner {
@@ -166,11 +164,18 @@ impl<C: SubstrateCli> Runner<C> {
 		info!("📋 Chain specification: {}", self.config.chain_spec.name());
 		info!("🏷  Node name: {}", self.config.network.node_name);
 		info!("👤 Role: {}", self.config.display_role());
-		info!("💾 Database: {} at {}",
+		info!(
+			"💾 Database: {} at {}",
 			self.config.database,
-			self.config.database.path().map_or_else(|| "<unknown>".to_owned(), |p| p.display().to_string())
+			self.config
+				.database
+				.path()
+				.map_or_else(|| "<unknown>".to_owned(), |p| p.display().to_string())
 		);
-		info!("⛓  Native runtime: {}", C::native_runtime_version(&self.config.chain_spec));
+		info!(
+			"⛓  Native runtime: {}",
+			C::native_runtime_version(&self.config.chain_spec)
+		);
 	}
 
 	/// A helper function that runs a node with tokio and stops if the process receives the signal
@@ -181,7 +186,9 @@ impl<C: SubstrateCli> Runner<C> {
 	) -> Result<()> {
 		self.print_node_infos();
 		let mut task_manager = initialise(self.config)?;
-		let res = self.tokio_runtime.block_on(main(task_manager.future().fuse()));
+		let res = self
+			.tokio_runtime
+			.block_on(main(task_manager.future().fuse()));
 		self.tokio_runtime.block_on(task_manager.clean_shutdown());
 		res.map_err(|e| e.to_string().into())
 	}
@@ -194,7 +201,8 @@ impl<C: SubstrateCli> Runner<C> {
 	/// A helper function that runs a future with tokio and stops if the process receives
 	/// the signal SIGTERM or SIGINT
 	pub fn async_run<FUT>(
-		self, runner: impl FnOnce(Configuration) -> Result<(FUT, TaskManager)>,
+		self,
+		runner: impl FnOnce(Configuration) -> Result<(FUT, TaskManager)>,
 	) -> Result<()>
 	where
 		FUT: Future<Output = Result<()>>,
@@ -214,7 +222,10 @@ impl<C: SubstrateCli> Runner<C> {
 	}
 }
 
-pub fn build_runner<C: SubstrateCli, T: CliConfiguration>(cli: &C, command: &T) -> Result<Runner<C>> {
+pub fn build_runner<C: SubstrateCli, T: CliConfiguration>(
+	cli: &C,
+	command: &T,
+) -> Result<Runner<C>> {
 	command.init::<C>()?;
 	Runner::new(&cli, command)
 }

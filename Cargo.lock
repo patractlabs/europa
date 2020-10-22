@@ -1076,6 +1076,9 @@ dependencies = [
 [[package]]
 name = "europa"
 version = "0.1.0"
+dependencies = [
+ "europa-cli 0.1.0",
+]
 
 [[package]]
 name = "europa-cli"
