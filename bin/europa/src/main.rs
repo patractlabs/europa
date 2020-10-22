@@ -1,1 +1,3 @@
-fn main() {}
+fn main() -> cli::Result<()> {
+	cli::run()
+}

@@ -13,7 +13,8 @@ pub use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnb
 
 pub use sc_keystore::KeyStorePtr as KeyStore;
 pub use sc_service::{
-	build_network, config::Configuration, error, BuildNetworkParams, NoopRpcExtensionBuilder,
+	build_network, config::Configuration, error, BuildNetworkParams, ChainSpec, ChainType,
+	GenericChainSpec, NoopRpcExtensionBuilder, TaskType,
 };
 
 pub use crate::builder::{

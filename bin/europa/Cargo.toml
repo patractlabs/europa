@@ -5,4 +5,5 @@ authors = ["patract labs <https://github.com/patractlabs>"]
 edition = "2018"
 description = "A sandbox of Substrate runtime execution environment."
 
-
+[dependencies]
+cli = { package = "europa-cli", path = "cli" }
