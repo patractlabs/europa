@@ -63,7 +63,8 @@ impl<D: NativeExecutionDispatch> RuntimeInfo for NativeExecutor<D> {
 		_ext: &mut dyn Externalities,
 		_runtime_code: &RuntimeCode,
 	) -> Result<RuntimeVersion> {
-		unimplemented!("do not need this impl")
+		// do not use wasm runtime version, use native runtime version directly
+		Ok(self.native_version.runtime_version.clone())
 	}
 }
 
