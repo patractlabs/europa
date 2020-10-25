@@ -25,6 +25,7 @@ ec-cli = { path = "../../../client/cli" }
 
 europa-runtime = { path = "../runtime" }
 europa-executor = { path = "../executor" }
+europa-rpc = { path = "../rpc" }
 
 [build-dependencies]
 substrate-build-script-utils = { version = "2.0.0" }

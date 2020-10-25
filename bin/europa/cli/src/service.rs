@@ -1,6 +1,6 @@
 use sp_inherents::InherentDataProviders;
 
-use ec_service::{error::Error, Configuration, IoHandler, NoopRpcExtensionBuilder, TaskManager};
+use ec_service::{error::Error, Configuration, TaskManager};
 
 use europa_executor::Executor;
 use europa_runtime::{self, opaque::Block, RuntimeApi};
@@ -21,6 +21,19 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, Error> {
 	ec_service::builder_ext::new_node::<Block, RuntimeApi, Executor, _, _>(
 		config,
 		inherent_data_providers,
-		|_components| Box::new(NoopRpcExtensionBuilder(IoHandler::default())),
+		|components| {
+			let client = components.client.clone();
+			let pool = components.transaction_pool.clone();
+
+			Box::new(move |deny_unsafe, _| {
+				let deps = europa_rpc::FullDeps::<_, _> {
+					client: client.clone(),
+					pool: pool.clone(),
+					deny_unsafe,
+				};
+
+				europa_rpc::create_full(deps)
+			})
+		},
 	)
 }
