@@ -44,3 +44,4 @@ sc-consensus-manual-seal = { version = "0.8.0" }
 sc-basic-authorship = { version = "0.8.0" }
 
 ec-executor = { path = "../executor" }
+ec-rpc = { path = "../rpc" }

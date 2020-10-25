@@ -1,3 +1,4 @@
+use futures::prelude::*;
 use std::sync::Arc;
 
 use sp_api::{ApiExt, TransactionFor};
@@ -142,16 +143,31 @@ where
 	let proposer: ProposerFactory<_, TFullBackend<TBl>, _> =
 		sc_basic_authorship::ProposerFactory::new(client.clone(), transaction_pool.clone(), None);
 
-	let params = sc_consensus_manual_seal::InstantSealParams {
+	// todo add stream from rpc
+	// instant-seal creates blocks as soon as transactions are imported
+	// into the transaction pool.
+	let commands_stream = transaction_pool
+		.pool()
+		.validated_pool()
+		.import_notification_stream()
+		.map(|_| sc_consensus_manual_seal::EngineCommand::SealNewBlock {
+			create_empty: false,
+			finalize: false,
+			parent_hash: None,
+			sender: None,
+		});
+
+	let params = sc_consensus_manual_seal::ManualSealParams {
 		block_import: client.clone(),
 		env: proposer,
 		client: client.clone(),
 		pool: transaction_pool.pool().clone(),
+		commands_stream,
 		select_chain,
 		consensus_data_provider: None,
 		inherent_data_providers,
 	};
-	let authorship_future = sc_consensus_manual_seal::run_instant_seal(params);
+	let authorship_future = sc_consensus_manual_seal::run_manual_seal(params);
 
 	task_manager
 		.spawn_essential_handle()
