@@ -1,4 +1,5 @@
 mod builder;
+pub mod builder_ext;
 pub mod client;
 pub mod task_manager;
 

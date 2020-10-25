@@ -231,7 +231,7 @@ where
 			system_rpc_tx.clone(),
 		)
 	};
-	// let rpc_metrics = sc_rpc_server::RpcMetrics::new(config.prometheus_registry()).ok();
+	// TODO add custom rpc
 	let rpc = start_rpc_servers(&config, gen_handler, None)?;
 	// This is used internally, so don't restrict access to unsafe RPC
 	let rpc_handlers = RpcHandlers(Arc::new(
