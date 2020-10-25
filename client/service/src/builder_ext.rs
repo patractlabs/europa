@@ -14,7 +14,7 @@ use crate::{build_mock_network, error, spawn_tasks, SpawnTasksParams, TFullBacke
 use crate::{new_full_parts, TFullClient, TaskManager};
 use sc_transaction_pool::FullPool;
 
-/// An imcomplete set of chain components, but enough to run the chain ops subcommands.
+/// A node components, for rpc construction.
 pub struct NodeComponents<TBl: BlockT, TRtApi, TExecDisp: NativeExecutionDispatch + 'static>
 where
 	TRtApi: sp_api::ConstructRuntimeApi<TBl, TFullClient<TBl, TRtApi, TExecDisp>>
