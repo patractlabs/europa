@@ -12,3 +12,5 @@ jsonrpc-derive = "15.0.0"
 sp-utils = { version = "2.0.0" }
 sp-blockchain = { version = "2.0.0" }
 sp-runtime = { version = "2.0.0" }
+
+sc-client-api = { version = "2.0.0" }
