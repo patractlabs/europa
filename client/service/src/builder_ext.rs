@@ -1,3 +1,4 @@
+use futures::prelude::*;
 use std::sync::Arc;
 
 use sp_api::{ApiExt, TransactionFor};
@@ -7,12 +8,12 @@ use sp_runtime::traits::Block as BlockT;
 use sc_basic_authorship::ProposerFactory;
 pub use sc_keystore::KeyStorePtr as KeyStore;
 use sc_service::{Configuration, RpcExtensionBuilder};
+use sc_transaction_pool::FullPool;
 
 use ec_executor::NativeExecutionDispatch;
 
 use crate::{build_mock_network, error, spawn_tasks, SpawnTasksParams, TFullBackend};
 use crate::{new_full_parts, TFullClient, TaskManager};
-use sc_transaction_pool::FullPool;
 
 /// A node components, for rpc construction.
 pub struct NodeComponents<TBl: BlockT, TRtApi, TExecDisp: NativeExecutionDispatch + 'static>
@@ -128,6 +129,9 @@ where
 
 	let rpc_extensions_builder = rpc_builder(components);
 	let system_rpc_tx = build_mock_network::<TBl>(task_manager.spawn_handle())?;
+
+	let (europa_rpc, europa_rpc_tx) = ec_rpc::Europa::new(client.clone(), backend.clone());
+
 	spawn_tasks(SpawnTasksParams {
 		client: client.clone(),
 		keystore,
@@ -136,22 +140,56 @@ where
 		rpc_extensions_builder,
 		backend,
 		system_rpc_tx,
+		europa_rpc: Some(europa_rpc),
 		config,
 	})?;
 
 	let proposer: ProposerFactory<_, TFullBackend<TBl>, _> =
 		sc_basic_authorship::ProposerFactory::new(client.clone(), transaction_pool.clone(), None);
 
-	let params = sc_consensus_manual_seal::InstantSealParams {
+	// manual_seal stream
+	let pool_import_stream = transaction_pool
+		.clone()
+		.pool()
+		.validated_pool()
+		.import_notification_stream();
+	// todo change compress stream into one for receive a batch of transactions
+	let pool_stream =
+		pool_import_stream.map(|_| sc_consensus_manual_seal::EngineCommand::SealNewBlock {
+			create_empty: false,
+			finalize: false,
+			parent_hash: None,
+			sender: None,
+		});
+	let europa_rpc_stream = europa_rpc_tx
+		.map(|message| match message {
+			ec_rpc::Message::Forward(n) => {
+				use sp_runtime::SaturatedConversion;
+				let to_height = (0..n.saturated_into::<u64>()).into_iter().map(|_| {
+					sc_consensus_manual_seal::EngineCommand::SealNewBlock {
+						create_empty: true,
+						finalize: false,
+						parent_hash: None,
+						sender: None,
+					}
+				});
+				stream::iter(to_height)
+			}
+		})
+		.flatten();
+
+	let commands_stream = stream::select(pool_stream, europa_rpc_stream);
+	let params = sc_consensus_manual_seal::ManualSealParams {
 		block_import: client.clone(),
 		env: proposer,
 		client: client.clone(),
 		pool: transaction_pool.pool().clone(),
+		commands_stream,
 		select_chain,
 		consensus_data_provider: None,
 		inherent_data_providers,
 	};
-	let authorship_future = sc_consensus_manual_seal::run_instant_seal(params);
+	let authorship_future = sc_consensus_manual_seal::run_manual_seal(params);
 
 	task_manager
 		.spawn_essential_handle()

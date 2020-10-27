@@ -1,0 +1,16 @@
+[package]
+name = "ec-rpc"
+version = "0.1.0"
+authors = ["patract labs <https://github.com/patractlabs>"]
+edition = "2018"
+
+[dependencies]
+jsonrpc-core = { version = "15.0.0" }
+jsonrpc-core-client = { version = "15.0.0" }
+jsonrpc-derive = "15.0.0"
+
+sp-utils = { version = "2.0.0" }
+sp-blockchain = { version = "2.0.0" }
+sp-runtime = { version = "2.0.0" }
+
+sc-client-api = { version = "2.0.0" }

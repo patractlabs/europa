@@ -984,10 +984,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "ec-rpc"
+version = "0.1.0"
+dependencies = [
+ "jsonrpc-core 15.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-core-client 15.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jsonrpc-derive 15.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sc-client-api 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-blockchain 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-runtime 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-utils 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "ec-service"
 version = "0.1.0"
 dependencies = [
  "ec-executor 0.1.0",
+ "ec-rpc 0.1.0",
  "exit-future 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.30 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
