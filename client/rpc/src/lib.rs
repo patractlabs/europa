@@ -79,6 +79,12 @@ where
 	}
 
 	fn backward_to_height(&self, height: NumberOf<B>) -> Result<()> {
-		unimplemented!()
+		let best = self.client.info().best_number;
+		if height >= best {
+			return Err(EuropaRpcError::<B>::InvalidBackwardHeight(height, best).into());
+		}
+		let diff = best - height;
+		self.backend.revert(diff, true);
+		Ok(())
 	}
 }
