@@ -84,7 +84,9 @@ where
 			return Err(EuropaRpcError::<B>::InvalidBackwardHeight(height, best).into());
 		}
 		let diff = best - height;
-		self.backend.revert(diff, true);
+		self.backend
+			.revert(diff, true)
+			.map_err(error::client_err::<B>)?;
 		Ok(())
 	}
 }

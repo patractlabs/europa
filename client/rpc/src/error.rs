@@ -8,6 +8,7 @@ use crate::NumberOf;
 pub enum EuropaRpcError<B: BlockT> {
 	InvalidForwardHeight(NumberOf<B>, NumberOf<B>),
 	InvalidBackwardHeight(NumberOf<B>, NumberOf<B>),
+	Client(Box<dyn std::error::Error + Send>),
 }
 
 impl<B: BlockT> From<EuropaRpcError<B>> for rpc::Error {
@@ -31,6 +32,19 @@ impl<B: BlockT> From<EuropaRpcError<B>> for rpc::Error {
 				.into(),
 				data: None,
 			},
+			e => internal(e),
 		}
+	}
+}
+
+pub fn client_err<B: BlockT>(err: sp_blockchain::Error) -> EuropaRpcError<B> {
+	EuropaRpcError::Client(Box::new(err))
+}
+
+pub fn internal<E: ::std::fmt::Debug>(e: E) -> jsonrpc_core::Error {
+	jsonrpc_core::Error {
+		code: jsonrpc_core::ErrorCode::InternalError,
+		message: "Unknown error occurred".into(),
+		data: Some(format!("{:?}", e).into()),
 	}
 }
