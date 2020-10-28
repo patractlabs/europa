@@ -35,8 +35,8 @@ use sp_runtime::{
 	traits::{Block as BlockT, HashFor, NumberFor},
 };
 use sp_state_machine::{
-	self, backend::Backend as _, ExecutionManager, ExecutionStrategy, Ext, OverlayedChanges,
-	StateMachine, StorageProof,
+	self, backend::Backend as _, DefaultHandler, ExecutionManager, ExecutionStrategy, Ext,
+	OverlayedChanges, StateMachine, StorageProof,
 };
 
 use ec_executor::{NativeVersion, RuntimeInfo, RuntimeVersion};
@@ -88,7 +88,7 @@ where
 		id: &BlockId<Block>,
 		method: &str,
 		call_data: &[u8],
-		strategy: ExecutionStrategy,
+		_strategy: ExecutionStrategy,
 		extensions: Option<Extensions>,
 	) -> sp_blockchain::Result<Vec<u8>> {
 		let mut changes = OverlayedChanges::default();
@@ -108,8 +108,8 @@ where
 			&state_runtime_code.runtime_code()?,
 			self.spawn_handle.clone(),
 		)
-		.execute_using_consensus_failure_handler::<_, NeverNativeValue, fn() -> _>(
-			strategy.get_manager(),
+		.execute_using_consensus_failure_handler::<DefaultHandler<_, _>, NeverNativeValue, fn() -> _>(
+			ExecutionManager::NativeElseWasm,
 			None,
 		)?;
 
