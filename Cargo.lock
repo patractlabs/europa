@@ -972,6 +972,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "ec-client-api"
+version = "0.1.0"
+dependencies = [
+ "sp-database 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-runtime 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "ec-client-db"
+version = "0.1.0"
+dependencies = [
+ "ec-client-api 0.1.0",
+ "kvdb 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "kvdb-rocksdb 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sc-client-db 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-blockchain 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-database 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-runtime 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-std 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "ec-executor"
 version = "0.1.0"
 dependencies = [
@@ -1000,6 +1023,7 @@ dependencies = [
 name = "ec-service"
 version = "0.1.0"
 dependencies = [
+ "ec-client-db 0.1.0",
  "ec-executor 0.1.0",
  "ec-rpc 0.1.0",
  "exit-future 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",

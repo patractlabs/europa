@@ -121,11 +121,13 @@ where
 {
 	const CANONICALIZATION_DELAY: u64 = 4096;
 
+	let state_kv = ec_client_db::open_state_key_database(&settings)?;
 	let backend = Arc::new(Backend::new(settings, CANONICALIZATION_DELAY)?);
 	let executor = crate::client::LocalCallExecutor::new(backend.clone(), executor, spawn_handle);
 	Ok((
 		crate::client::Client::new(
 			backend.clone(),
+			state_kv,
 			executor,
 			genesis_storage,
 			execution_extensions,

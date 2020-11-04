@@ -1,0 +1,21 @@
+[package]
+name = "ec-client-db"
+version = "0.1.0"
+authors = ["patract labs <https://github.com/patractlabs>"]
+edition = "2018"
+
+[dependencies]
+kvdb = "0.7.0"
+kvdb-rocksdb = { version = "0.9.1" }
+log = "0.4"
+
+sp-std = { version = "2.0.0" }
+sp-runtime = { version = "2.0.0" }
+sp-database = { version = "2.0.0" }
+sp-blockchain = { version = "2.0.0" }
+
+
+sc-client-db = { version = "0.8.0", features = [ "with-kvdb-rocksdb", "with-parity-db" ] }
+
+ec-client-api = { path = "../api" }
+
