@@ -1,7 +1,7 @@
 use sp_database::error;
 use sp_runtime::traits::Block as BlockT;
 
-pub trait StateKv<Block: BlockT> {
+pub trait StateKv<Block: BlockT>: Send + Sync {
 	/// The transaction type used by the StateKv.
 	type Transaction: StateKvTransaction + Default + Send + 'static;
 

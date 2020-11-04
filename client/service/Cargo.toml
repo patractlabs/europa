@@ -45,4 +45,5 @@ sc-basic-authorship = { version = "0.8.0" }
 
 ec-executor = { path = "../executor" }
 ec-client-db = { path = "../db" }
+ec-client-api = { path = "../api" }
 ec-rpc = { path = "../rpc" }

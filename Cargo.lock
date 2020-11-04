@@ -1023,6 +1023,7 @@ dependencies = [
 name = "ec-service"
 version = "0.1.0"
 dependencies = [
+ "ec-client-api 0.1.0",
  "ec-client-db 0.1.0",
  "ec-executor 0.1.0",
  "ec-rpc 0.1.0",

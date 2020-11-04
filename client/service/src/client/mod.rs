@@ -72,6 +72,8 @@ use sc_client_api::{
 	UsageProvider,
 };
 
+use ec_client_api::statekv;
+
 pub use call_executor::LocalCallExecutor;
 
 type NotificationSinks<T> = Mutex<Vec<TracingUnboundedSender<T>>>;
@@ -104,11 +106,12 @@ impl<H> PrePostHeader<H> {
 }
 
 /// europa sandbox client
-pub struct Client<B, E, Block, RA>
+pub struct Client<B, S, E, Block, RA>
 where
 	Block: BlockT,
 {
 	backend: Arc<B>,
+	state_kv: Arc<S>,
 	executor: E,
 	storage_notifications: Mutex<StorageNotifications<Block>>,
 	import_notification_sinks: NotificationSinks<BlockImportNotification<Block>>,
@@ -119,7 +122,7 @@ where
 	_phantom: PhantomData<RA>,
 }
 
-impl<B, E, Block, RA> BlockOf for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> BlockOf for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
 	E: CallExecutor<Block>,
@@ -128,9 +131,10 @@ where
 	type Type = Block;
 }
 
-impl<B, E, Block, RA> LockImportRun<Block, B> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> LockImportRun<Block, B> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block>,
 	Block: BlockT,
 {
@@ -170,10 +174,11 @@ where
 	}
 }
 
-impl<B, E, Block, RA> LockImportRun<Block, B> for &Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> LockImportRun<Block, B> for &Client<B, S, E, Block, RA>
 where
 	Block: BlockT,
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block>,
 {
 	fn lock_import_and_run<R, Err, F>(&self, f: F) -> Result<R, Err>
@@ -185,9 +190,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block>,
 	Block: BlockT,
 	Block::Header: Clone,
@@ -195,7 +201,7 @@ where
 	/// Creates new Substrate Client with given blockchain and code executor.
 	pub fn new(
 		backend: Arc<B>,
-		state_kv: Arc<>,
+		state_kv: Arc<S>,
 		executor: E,
 		build_genesis_storage: &dyn BuildStorage,
 		execution_extensions: ExecutionExtensions<Block>,
@@ -226,6 +232,7 @@ where
 
 		Ok(Client {
 			backend,
+			state_kv,
 			executor,
 			storage_notifications: Mutex::new(StorageNotifications::new(None)),
 			import_notification_sinks: Default::default(),
@@ -926,9 +933,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> UsageProvider<Block> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> UsageProvider<Block> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block>,
 	Block: BlockT,
 {
@@ -941,9 +949,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> ProofProvider<Block> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> ProofProvider<Block> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block>,
 	Block: BlockT,
 {
@@ -993,9 +1002,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> BlockBuilderProvider<B, Block, Self> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> BlockBuilderProvider<B, Block, Self> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block> + Send + Sync + 'static,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block> + Send + Sync + 'static,
 	Block: BlockT,
 	Self: ChainHeaderBackend<Block> + ProvideRuntimeApi<Block>,
@@ -1034,9 +1044,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> ExecutorProvider<Block> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> ExecutorProvider<Block> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block>,
 	Block: BlockT,
 {
@@ -1051,9 +1062,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> StorageProvider<Block, B> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> StorageProvider<Block, B> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block>,
 	Block: BlockT,
 {
@@ -1261,9 +1273,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> HeaderMetadata<Block> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> HeaderMetadata<Block> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block>,
 	Block: BlockT,
 {
@@ -1287,9 +1300,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> ProvideUncles<Block> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> ProvideUncles<Block> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block>,
 	Block: BlockT,
 {
@@ -1305,9 +1319,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> ChainHeaderBackend<Block> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> ChainHeaderBackend<Block> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block> + Send + Sync,
 	Block: BlockT,
 	RA: Send + Sync,
@@ -1336,9 +1351,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> sp_runtime::traits::BlockIdTo<Block> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> sp_runtime::traits::BlockIdTo<Block> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block> + Send + Sync,
 	Block: BlockT,
 	RA: Send + Sync,
@@ -1357,9 +1373,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> ChainHeaderBackend<Block> for &Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> ChainHeaderBackend<Block> for &Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block> + Send + Sync,
 	Block: BlockT,
 	RA: Send + Sync,
@@ -1388,9 +1405,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> ProvideCache<Block> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> ProvideCache<Block> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	Block: BlockT,
 {
 	fn cache(&self) -> Option<Arc<dyn Cache<Block>>> {
@@ -1398,9 +1416,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> ProvideRuntimeApi<Block> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> ProvideRuntimeApi<Block> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block, Backend = B> + Send + Sync,
 	Block: BlockT,
 	RA: ConstructRuntimeApi<Block, Self>,
@@ -1412,9 +1431,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> CallApiAt<Block> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> CallApiAt<Block> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block, Backend = B> + Send + Sync,
 	Block: BlockT,
 {
@@ -1461,13 +1481,14 @@ where
 /// NOTE: only use this implementation when you are sure there are NO consensus-level BlockImport
 /// objects. Otherwise, importing blocks directly into the client would be bypassing
 /// important verification work.
-impl<B, E, Block, RA> sp_consensus::BlockImport<Block> for &Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> sp_consensus::BlockImport<Block> for &Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block> + Send + Sync,
 	Block: BlockT,
-	Client<B, E, Block, RA>: ProvideRuntimeApi<Block>,
-	<Client<B, E, Block, RA> as ProvideRuntimeApi<Block>>::Api:
+	Client<B, S, E, Block, RA>: ProvideRuntimeApi<Block>,
+	<Client<B, S, E, Block, RA> as ProvideRuntimeApi<Block>>::Api:
 		CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State>,
 {
 	type Error = ConsensusError;
@@ -1546,9 +1567,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> sp_consensus::BlockImport<Block> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> sp_consensus::BlockImport<Block> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block> + Send + Sync,
 	Block: BlockT,
 	Self: ProvideRuntimeApi<Block>,
@@ -1571,9 +1593,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> Finalizer<Block, B> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> Finalizer<Block, B> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block>,
 	Block: BlockT,
 {
@@ -1607,7 +1630,7 @@ where
 	}
 }
 
-impl<B, E, Block, RA> BlockchainEvents<Block> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> BlockchainEvents<Block> for Client<B, S, E, Block, RA>
 where
 	E: CallExecutor<Block>,
 	Block: BlockT,
@@ -1638,9 +1661,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> BlockBackend<Block> for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> BlockBackend<Block> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block>,
 	Block: BlockT,
 {
@@ -1700,9 +1724,10 @@ where
 	}
 }
 
-impl<B, E, Block, RA> backend::AuxStore for Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> backend::AuxStore for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block>,
 	Block: BlockT,
 	Self: ProvideRuntimeApi<Block>,
@@ -1732,13 +1757,14 @@ where
 	}
 }
 
-impl<B, E, Block, RA> backend::AuxStore for &Client<B, E, Block, RA>
+impl<B, S, E, Block, RA> backend::AuxStore for &Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
+	S: statekv::StateKv<Block>,
 	E: CallExecutor<Block>,
 	Block: BlockT,
-	Client<B, E, Block, RA>: ProvideRuntimeApi<Block>,
-	<Client<B, E, Block, RA> as ProvideRuntimeApi<Block>>::Api: CoreApi<Block, Error = Error>,
+	Client<B, S, E, Block, RA>: ProvideRuntimeApi<Block>,
+	<Client<B, S, E, Block, RA> as ProvideRuntimeApi<Block>>::Api: CoreApi<Block, Error = Error>,
 {
 	fn insert_aux<
 		'a,
@@ -1759,9 +1785,10 @@ where
 	}
 }
 
-impl<BE, E, B, RA> sp_consensus::block_validation::Chain<B> for Client<BE, E, B, RA>
+impl<BE, S, E, B, RA> sp_consensus::block_validation::Chain<B> for Client<BE, S, E, B, RA>
 where
 	BE: backend::Backend<B>,
+	S: statekv::StateKv<B>,
 	E: CallExecutor<B>,
 	B: BlockT,
 {

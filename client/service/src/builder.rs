@@ -33,13 +33,16 @@ use crate::client::Client;
 use crate::start_rpc_servers;
 use crate::task_manager::{SpawnTaskHandle, TaskManager};
 use crate::RpcHandlers;
+use ec_client_db::StateKv;
 
 /// Full client type.
 pub type TFullClient<TBl, TRtApi, TExecDisp> =
-	Client<TFullBackend<TBl>, TFullCallExecutor<TBl, TExecDisp>, TBl, TRtApi>;
+	Client<TFullBackend<TBl>, TFullStateKv, TFullCallExecutor<TBl, TExecDisp>, TBl, TRtApi>;
 
 /// Full client backend type.
 pub type TFullBackend<TBl> = sc_client_db::Backend<TBl>;
+
+pub type TFullStateKv = ec_client_db::StateKv;
 
 /// Full client call executor type.
 pub type TFullCallExecutor<TBl, TExecDisp> =
@@ -107,6 +110,7 @@ pub fn new_client<E, Block, RA>(
 	(
 		crate::client::Client<
 			Backend<Block>,
+			StateKv,
 			crate::client::LocalCallExecutor<Backend<Block>, E>,
 			Block,
 			RA,
@@ -121,7 +125,7 @@ where
 {
 	const CANONICALIZATION_DELAY: u64 = 4096;
 
-	let state_kv = ec_client_db::open_state_key_database(&settings)?;
+	let state_kv = Arc::new(ec_client_db::StateKv::new(&settings)?);
 	let backend = Arc::new(Backend::new(settings, CANONICALIZATION_DELAY)?);
 	let executor = crate::client::LocalCallExecutor::new(backend.clone(), executor, spawn_handle);
 	Ok((
