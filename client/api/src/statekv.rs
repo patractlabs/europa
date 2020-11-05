@@ -1,5 +1,5 @@
 use sp_database::error;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::traits::{Block as BlockT, NumberFor};
 
 pub trait StateKv<Block: BlockT>: Send + Sync {
 	/// The transaction type used by the StateKv.
@@ -16,6 +16,11 @@ pub trait StateKv<Block: BlockT>: Send + Sync {
 	fn get_child_kvs_by_hash(&self, hash: Block::Hash,child: &[u8], ) -> Option<Vec<(Vec<u8>, Vec<u8>)>>;
 	fn delete_kvs_by_hash(&self, hash: Block::Hash) -> error::Result<()>;
 	fn delete_child_kvs_by_hash(&self, hash: Block::Hash, child: &[u8]) -> error::Result<()>;
+
+	// hash&number
+	fn set_hash_and_number(&self, hash: Block::Hash, number: NumberFor<Block>)-> error::Result<()>;
+	fn get_number(&self, hash: Block::Hash) -> Option<NumberFor<Block>>;
+	fn get_hash(&self, number: NumberFor<Block>) -> Option<Block::Hash>;
 }
 
 pub trait StateKvTransaction {

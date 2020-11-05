@@ -3,13 +3,16 @@ use std::sync::Arc;
 use kvdb::{DBTransaction, KeyValueDB};
 
 use sp_database::error;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::{
+	traits::{Block as BlockT, NumberFor},
+	SaturatedConversion,
+};
 
 use sc_client_db::{DatabaseSettings, DatabaseSettingsSrc};
 
 const SEPARATOR: u8 = b'|';
 
-pub const NUM_COLUMNS: u32 = 5;
+pub const NUM_COLUMNS: u32 = 7;
 /// Meta column. The set of keys in the column is shared by full storages.
 pub const COLUMN_META: u32 = 0;
 
@@ -22,6 +25,8 @@ pub mod columns {
 	pub const STATE_CHILD_KV: u32 = 2;
 	pub const STATE_KV_INDEX: u32 = 3; // TODO use index to improve query or other things
 	pub const STATE_CHILD_KV_INDEX: u32 = 4;
+	pub const HASH_TO_NUMBER: u32 = 5;
+	pub const NUMBER_TO_HASH: u32 = 6;
 }
 
 const DB_PATH_NAME: &'static str = "state_kv";
@@ -158,12 +163,12 @@ fn handle_err<T>(result: std::io::Result<T>) -> T {
 }
 
 impl StateKv {
-	fn set_ky_impl(&self, col: u32, real_key: Vec<u8>, value: Option<&[u8]>) -> error::Result<()> {
+	fn set_kv_impl(&self, col: u32, real_key: &[u8], value: Option<&[u8]>) -> error::Result<()> {
 		let mut t = DBTransaction::with_capacity(1);
 		if let Some(value) = value {
-			t.put(col, &real_key, value);
+			t.put(col, real_key, value);
 		} else {
-			t.delete(col, &real_key);
+			t.delete(col, real_key);
 		}
 		self.state_kv_db
 			.write(t)
@@ -192,7 +197,7 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 	type Transaction = StateKvTransaction<B>;
 	fn set_kv(&self, hash: B::Hash, key: &[u8], value: Option<&[u8]>) -> error::Result<()> {
 		let real_key = real_key::<B>(hash, key);
-		self.set_ky_impl(columns::STATE_KV, real_key, value)
+		self.set_kv_impl(columns::STATE_KV, &real_key, value)
 	}
 
 	fn set_child_kv(
@@ -203,7 +208,7 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		value: Option<&[u8]>,
 	) -> error::Result<()> {
 		let real_key = real_child_key::<B>(hash, child, key);
-		self.set_ky_impl(columns::STATE_CHILD_KV, real_key, value)
+		self.set_kv_impl(columns::STATE_CHILD_KV, &real_key, value)
 	}
 
 	fn transaction(&self, hash: B::Hash) -> Self::Transaction {
@@ -278,5 +283,32 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		self.state_kv_db
 			.write(t)
 			.map_err(|e| error::DatabaseError(Box::new(e)))
+	}
+
+	// hash&number
+	fn set_hash_and_number(&self, hash: B::Hash, number: NumberFor<B>) -> error::Result<()> {
+		let number: u64 = number.saturated_into::<u64>();
+		let bytes = &number.to_le_bytes()[..];
+		self.set_kv_impl(columns::HASH_TO_NUMBER, hash.as_ref(), Some(bytes))?;
+		self.set_kv_impl(columns::NUMBER_TO_HASH, bytes, Some(hash.as_ref()))
+	}
+	fn get_number(&self, hash: B::Hash) -> Option<NumberFor<B>> {
+		let r = handle_err(self.state_kv_db.get(columns::HASH_TO_NUMBER, hash.as_ref()));
+		r.map(|v| {
+			let mut bytes = [0_u8; 8];
+			bytes.copy_from_slice(v.as_slice());
+			let number = u64::from_le_bytes(bytes);
+			NumberFor::<B>::saturated_from::<u64>(number)
+		})
+	}
+	fn get_hash(&self, number: NumberFor<B>) -> Option<B::Hash> {
+		let number: u64 = number.saturated_into::<u64>();
+		let bytes = &number.to_le_bytes()[..];
+		let r = handle_err(self.state_kv_db.get(columns::NUMBER_TO_HASH, bytes));
+		r.map(|v| {
+			let mut hash = B::Hash::default();
+			hash.as_mut().copy_from_slice(v.as_slice());
+			hash
+		})
 	}
 }
