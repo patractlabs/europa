@@ -7,9 +7,9 @@ use sp_runtime::traits::Block as BlockT;
 
 use sc_client_db::{DatabaseSettings, DatabaseSettingsSrc};
 
-const SEPARATOR: u8 = '|' as u8;
+const SEPARATOR: u8 = b'|';
 
-pub const NUM_COLUMNS: u32 = 3;
+pub const NUM_COLUMNS: u32 = 5;
 /// Meta column. The set of keys in the column is shared by full storages.
 pub const COLUMN_META: u32 = 0;
 
@@ -19,7 +19,9 @@ pub mod meta_keys {}
 pub mod columns {
 	pub const META: u32 = super::COLUMN_META;
 	pub const STATE_KV: u32 = 1;
-	// pub const STATE_META: u32 = 2;
+	pub const STATE_CHILD_KV: u32 = 2;
+	pub const STATE_KV_INDEX: u32 = 3; // TODO use index to improve query or other things
+	pub const STATE_CHILD_KV_INDEX: u32 = 4;
 }
 
 const DB_PATH_NAME: &'static str = "state_kv";
@@ -84,8 +86,18 @@ impl StateKv {
 }
 
 fn real_key<B: BlockT>(hash: B::Hash, key: &[u8]) -> Vec<u8> {
-	let mut k = Vec::with_capacity(hash.as_ref().len() + key.len() + 1);
+	let mut k = Vec::with_capacity(hash.as_ref().len() + 1 + key.len());
 	k.extend(hash.as_ref());
+	k.push(SEPARATOR);
+	k.extend(key);
+	k
+}
+
+fn real_child_key<B: BlockT>(hash: B::Hash, child: &[u8], key: &[u8]) -> Vec<u8> {
+	let mut k = Vec::with_capacity(hash.as_ref().len() + 1 + child.len() + 1 + key.len());
+	k.extend(hash.as_ref());
+	k.push(SEPARATOR);
+	k.extend(child);
 	k.push(SEPARATOR);
 	k.extend(key);
 	k
@@ -103,13 +115,32 @@ impl<B: BlockT> Default for StateKvTransaction<B> {
 		}
 	}
 }
-impl<B: BlockT> ec_client_api::statekv::StateKvTransaction for StateKvTransaction<B> {
-	fn set_kv(&mut self, key: &[u8], value: &[u8]) {
-		let real_key = real_key::<B>(self.hash, key);
-		self.inner.put(columns::STATE_KV, &real_key, value)
+impl<B: BlockT> StateKvTransaction<B> {
+	fn set_kv_impl(&mut self, col: u32, real_key: &[u8], value: Option<&[u8]>) {
+		if let Some(value) = value {
+			self.inner.put(col, real_key, value);
+		} else {
+			self.inner.delete(col, real_key);
+		}
 	}
+}
+impl<B: BlockT> ec_client_api::statekv::StateKvTransaction for StateKvTransaction<B> {
+	fn set_kv(&mut self, key: &[u8], value: Option<&[u8]>) {
+		let real_key = real_key::<B>(self.hash, key);
+		self.set_kv_impl(columns::STATE_KV, &real_key, value);
+	}
+
+	fn set_child_kv(&mut self, child: &[u8], key: &[u8], value: Option<&[u8]>) {
+		let real_key = real_child_key::<B>(self.hash, child, key);
+		self.set_kv_impl(columns::STATE_CHILD_KV, &real_key, value);
+	}
+
 	fn remove(&mut self, key: &[u8]) {
 		let real_key = real_key::<B>(self.hash, key);
+		self.inner.delete(columns::STATE_KV, &real_key);
+	}
+	fn remove_child(&mut self, key: &[u8], child: &[u8]) {
+		let real_key = real_child_key::<B>(self.hash, child, key);
 		self.inner.delete(columns::STATE_KV, &real_key);
 	}
 	fn clear(&mut self) {
@@ -125,16 +156,56 @@ fn handle_err<T>(result: std::io::Result<T>) -> T {
 		}
 	}
 }
-impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
-	type Transaction = StateKvTransaction<B>;
-	fn set_kv(&self, hash: B::Hash, key: &[u8], value: &[u8]) -> error::Result<()> {
+
+impl StateKv {
+	fn set_ky_impl(&self, col: u32, real_key: Vec<u8>, value: Option<&[u8]>) -> error::Result<()> {
 		let mut t = DBTransaction::with_capacity(1);
-		let real_key = real_key::<B>(hash, key);
-		t.put(columns::STATE_KV, &real_key, value);
+		if let Some(value) = value {
+			t.put(col, &real_key, value);
+		} else {
+			t.delete(col, &real_key);
+		}
 		self.state_kv_db
 			.write(t)
 			.map_err(|e| error::DatabaseError(Box::new(e)))
 	}
+
+	fn get_kys_impl(
+		&self,
+		col: u32,
+		prefix: &[u8],
+		f: impl FnMut((Box<[u8]>, Box<[u8]>)) -> (Vec<u8>, Vec<u8>),
+	) -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+		let r = self
+			.state_kv_db
+			.iter_with_prefix(col, prefix)
+			.map(f)
+			.collect::<Vec<(Vec<u8>, Vec<u8>)>>();
+		if r.len() == 0 {
+			None
+		} else {
+			Some(r)
+		}
+	}
+}
+impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
+	type Transaction = StateKvTransaction<B>;
+	fn set_kv(&self, hash: B::Hash, key: &[u8], value: Option<&[u8]>) -> error::Result<()> {
+		let real_key = real_key::<B>(hash, key);
+		self.set_ky_impl(columns::STATE_KV, real_key, value)
+	}
+
+	fn set_child_kv(
+		&self,
+		hash: B::Hash,
+		child: &[u8],
+		key: &[u8],
+		value: Option<&[u8]>,
+	) -> error::Result<()> {
+		let real_key = real_child_key::<B>(hash, child, key);
+		self.set_ky_impl(columns::STATE_CHILD_KV, real_key, value)
+	}
+
 	fn transaction(&self, hash: B::Hash) -> Self::Transaction {
 		StateKvTransaction {
 			hash,
@@ -151,27 +222,59 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		let real_key = real_key::<B>(hash, key);
 		handle_err(self.state_kv_db.get(columns::STATE_KV, &real_key))
 	}
+	fn get_child(&self, hash: B::Hash, child: &[u8], key: &[u8]) -> Option<Vec<u8>> {
+		let real_key = real_child_key::<B>(hash, child, key);
+		handle_err(self.state_kv_db.get(columns::STATE_CHILD_KV, &real_key))
+	}
 
 	fn get_kvs_by_hash(&self, hash: B::Hash) -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
-		let hash_len = hash.as_ref().len();
-		let r = self
-			.state_kv_db
-			.iter_with_prefix(columns::STATE_KV, hash.as_ref())
-			.map(|(k, v)| {
-				assert_eq!(&k[hash_len], &SEPARATOR);
-				((&k[hash_len + 1..]).to_vec(), (&v).to_vec())
-			})
-			.collect::<Vec<_>>();
-		if r.len() == 0 {
-			None
-		} else {
-			Some(r)
-		}
+		let prefix = hash.as_ref();
+		let hash_len = prefix.len();
+		self.get_kys_impl(columns::STATE_KV, prefix, |(k, v)| {
+			assert_eq!(&k[hash_len], &SEPARATOR);
+			((&k[hash_len + 1..]).to_vec(), (&v).to_vec())
+		})
+	}
+
+	fn get_child_kvs_by_hash(
+		&self,
+		hash: B::Hash,
+		child: &[u8],
+	) -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+		let prefix = hash.as_ref();
+		let hash_len = prefix.len();
+		let mut lookup_key = Vec::with_capacity(hash_len + 1 + child.len());
+		lookup_key.extend(prefix);
+		lookup_key.push(SEPARATOR);
+		lookup_key.extend(child);
+
+		let lookup_key_len = lookup_key.len();
+
+		self.get_kys_impl(columns::STATE_CHILD_KV, &lookup_key, |(k, v)| {
+			assert_eq!(&k[lookup_key_len], &SEPARATOR);
+			let sub = &k[lookup_key_len + 1..];
+			(sub.to_vec(), (&v).to_vec())
+		})
 	}
 
 	fn delete_kvs_by_hash(&self, hash: B::Hash) -> error::Result<()> {
 		let mut t = DBTransaction::with_capacity(1);
 		t.delete_prefix(columns::STATE_KV, hash.as_ref());
+		self.state_kv_db
+			.write(t)
+			.map_err(|e| error::DatabaseError(Box::new(e)))
+	}
+
+	fn delete_child_kvs_by_hash(&self, hash: B::Hash, child: &[u8]) -> error::Result<()> {
+		let prefix = hash.as_ref();
+		let hash_len = prefix.len();
+		let mut lookup_key = Vec::with_capacity(hash_len + 1 + child.len());
+		lookup_key.extend(prefix);
+		lookup_key.push(SEPARATOR);
+		lookup_key.extend(child);
+
+		let mut t = DBTransaction::with_capacity(1);
+		t.delete_prefix(columns::STATE_CHILD_KV, &lookup_key);
 		self.state_kv_db
 			.write(t)
 			.map_err(|e| error::DatabaseError(Box::new(e)))
