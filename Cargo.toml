@@ -12,7 +12,9 @@ members = [
     "bin/europa/executor",
     "bin/europa/runtime",
 
+    "client/api",
     "client/cli",
+    "client/db",
     "client/executor",
     "client/service",
     "client/rpc",

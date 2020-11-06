@@ -1,0 +1,9 @@
+[package]
+name = "ec-client-api"
+version = "0.1.0"
+authors = ["patract labs <https://github.com/patractlabs>"]
+edition = "2018"
+
+[dependencies]
+sp-runtime = { version = "2.0.0" }
+sp-database = { version = "2.0.0" }
