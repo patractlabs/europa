@@ -14,7 +14,7 @@ pub trait StateKv<Block: BlockT>: Send + Sync {
 		value: Option<&[u8]>,
 	) -> error::Result<()>;
 	fn transaction(&self, hash: Block::Hash) -> Self::Transaction;
-	fn commit(self, t: Self::Transaction) -> error::Result<()>;
+	fn commit(&self, t: Self::Transaction) -> error::Result<()>;
 
 	fn get(&self, hash: Block::Hash, key: &[u8]) -> Option<Vec<u8>>;
 	fn get_child(&self, hash: Block::Hash, child: &[u8], key: &[u8]) -> Option<Vec<u8>>;

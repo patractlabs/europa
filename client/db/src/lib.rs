@@ -217,7 +217,7 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 			inner: self.state_kv_db.transaction(),
 		}
 	}
-	fn commit(self, t: Self::Transaction) -> error::Result<()> {
+	fn commit(&self, t: Self::Transaction) -> error::Result<()> {
 		self.state_kv_db
 			.write(t.inner)
 			.map_err(|e| error::DatabaseError(Box::new(e)))

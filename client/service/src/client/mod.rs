@@ -57,7 +57,7 @@ use sp_state_machine::{
 	// prove_read, prove_child_read, ChangesTrieRootsStorage, ChangesTrieStorage,
 	ChangesTrieConfigurationRange,
 };
-use sp_tracing::{info, trace, warn};
+use sp_tracing::{debug, info, trace, warn};
 use sp_trie::StorageProof;
 use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedSender};
 
@@ -771,6 +771,7 @@ where
 			}
 		};
 		// TODO add bypass storage here
+		debug!(target: "state-kv", "store state|hash:{:?}", notify_import.hash);
 		if let Some(storage_changes) = notify_import.storage_changes {
 			let hash = notify_import.hash;
 			let number = *notify_import.header.number();
@@ -778,13 +779,17 @@ where
 			self.state_kv.set_hash_and_number(hash, number)?;
 			let mut t = self.state_kv.transaction(notify_import.hash);
 			for (k, v) in storage_changes.0.iter() {
+				trace!(target: "state-kv", "kv|{:}|{:}", hex::encode(&k) , v.as_ref().map(|b| hex::encode(b)).unwrap_or("[DELETE]".to_string()));
 				t.set_kv(k.as_ref(), v.as_ref().map(AsRef::as_ref));
 			}
 			for (child, item) in storage_changes.1.iter() {
+				trace!(target: "state-kv", "child-kv|child:[{:}]", hex::encode(child));
 				for (k, v) in item.iter() {
+					trace!(target: "state-kv", "child-kv|{:}|{:}", hex::encode(&k) , v.as_ref().map(|b| hex::encode(b)).unwrap_or("[DELETE]".to_string()));
 					t.set_child_kv(child.as_slice(), k.as_ref(), v.as_ref().map(AsRef::as_ref));
 				}
 			}
+			self.state_kv.commit(t)?;
 
 			// TODO [ToDr] How to handle re-orgs? Should we re-emit all storage changes?
 			self.storage_notifications.lock().trigger(
