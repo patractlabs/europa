@@ -770,7 +770,7 @@ where
 				return Ok(());
 			}
 		};
-		// TODO add bypass storage here
+		// TODO improve store contents e.g. hash index child-index
 		debug!(target: "state-kv", "store state|hash:{:?}", notify_import.hash);
 		if let Some(storage_changes) = notify_import.storage_changes {
 			let hash = notify_import.hash;

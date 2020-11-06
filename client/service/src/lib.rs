@@ -13,9 +13,10 @@ pub use jsonrpc_core::IoHandler;
 pub use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 
 pub use sc_keystore::KeyStorePtr as KeyStore;
+use sc_service::config::Configuration;
 pub use sc_service::{
-	build_network, config::Configuration, error, BuildNetworkParams, ChainSpec, ChainType,
-	GenericChainSpec, NoopRpcExtensionBuilder, TaskType,
+	build_network, config, error, BasePath, BuildNetworkParams, ChainSpec, ChainType,
+	GenericChainSpec, NoopRpcExtensionBuilder, RpcMethods, TaskType, TransactionPoolOptions,
 };
 
 pub use crate::builder::{
@@ -25,8 +26,6 @@ pub use crate::builder::{
 pub use crate::task_manager::{SpawnTaskHandle, TaskManager};
 
 use log::warn;
-
-use sc_service::RpcMethods;
 
 /// An imcomplete set of chain components, but enough to run the chain ops subcommands.
 pub struct PartialComponents<Client, Backend, SelectChain, ImportQueue, TransactionPool, Other> {
