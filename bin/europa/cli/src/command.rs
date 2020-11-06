@@ -32,8 +32,7 @@ impl SubstrateCli for Cli {
 		// todo chain_spec would receive some params to generate account or other thing dynamically,
 		// maybe use some global vars or something others.
 		Ok(match id {
-			"dev" => Box::new(chain_spec::development_config()?),
-			_ => return Err("Not support this chain-spec".to_string()),
+			"dev" | _ => Box::new(chain_spec::development_config()?),
 		})
 	}
 

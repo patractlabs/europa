@@ -121,38 +121,6 @@ pub struct RunCmd {
 	#[structopt(flatten)]
 	pub pool_config: TransactionPoolParams,
 
-	/// Shortcut for `--name Alice --validator` with session keys for `Alice` added to keystore.
-	#[structopt(long, conflicts_with_all = &["bob", "charlie", "dave", "eve", "ferdie", "one", "two"])]
-	pub alice: bool,
-
-	/// Shortcut for `--name Bob --validator` with session keys for `Bob` added to keystore.
-	#[structopt(long, conflicts_with_all = &["alice", "charlie", "dave", "eve", "ferdie", "one", "two"])]
-	pub bob: bool,
-
-	/// Shortcut for `--name Charlie --validator` with session keys for `Charlie` added to keystore.
-	#[structopt(long, conflicts_with_all = &["alice", "bob", "dave", "eve", "ferdie", "one", "two"])]
-	pub charlie: bool,
-
-	/// Shortcut for `--name Dave --validator` with session keys for `Dave` added to keystore.
-	#[structopt(long, conflicts_with_all = &["alice", "bob", "charlie", "eve", "ferdie", "one", "two"])]
-	pub dave: bool,
-
-	/// Shortcut for `--name Eve --validator` with session keys for `Eve` added to keystore.
-	#[structopt(long, conflicts_with_all = &["alice", "bob", "charlie", "dave", "ferdie", "one", "two"])]
-	pub eve: bool,
-
-	/// Shortcut for `--name Ferdie --validator` with session keys for `Ferdie` added to keystore.
-	#[structopt(long, conflicts_with_all = &["alice", "bob", "charlie", "dave", "eve", "one", "two"])]
-	pub ferdie: bool,
-
-	/// Shortcut for `--name One --validator` with session keys for `One` added to keystore.
-	#[structopt(long, conflicts_with_all = &["alice", "bob", "charlie", "dave", "eve", "ferdie", "two"])]
-	pub one: bool,
-
-	/// Shortcut for `--name Two --validator` with session keys for `Two` added to keystore.
-	#[structopt(long, conflicts_with_all = &["alice", "bob", "charlie", "dave", "eve", "ferdie", "one"])]
-	pub two: bool,
-
 	/// Enable authoring even when offline.
 	#[structopt(long = "force-authoring")]
 	pub force_authoring: bool,
@@ -177,34 +145,6 @@ pub struct RunCmd {
 	#[structopt(long, conflicts_with = "base-path")]
 	pub tmp: bool,
 }
-
-impl RunCmd {
-	/// Get the `Sr25519Keyring` matching one of the flag.
-	pub fn get_keyring(&self) -> Option<sp_keyring::Sr25519Keyring> {
-		use sp_keyring::Sr25519Keyring::*;
-
-		if self.alice {
-			Some(Alice)
-		} else if self.bob {
-			Some(Bob)
-		} else if self.charlie {
-			Some(Charlie)
-		} else if self.dave {
-			Some(Dave)
-		} else if self.eve {
-			Some(Eve)
-		} else if self.ferdie {
-			Some(Ferdie)
-		} else if self.one {
-			Some(One)
-		} else if self.two {
-			Some(Two)
-		} else {
-			None
-		}
-	}
-}
-
 impl CliConfiguration for RunCmd {
 	fn shared_params(&self) -> &SharedParams {
 		&self.shared_params
@@ -227,10 +167,9 @@ impl CliConfiguration for RunCmd {
 	}
 
 	fn node_name(&self) -> Result<String> {
-		let name: String = match (self.name.as_ref(), self.get_keyring()) {
-			(Some(name), _) => name.to_string(),
-			(_, Some(keyring)) => keyring.to_string(),
-			(None, None) => "europa-sandbox".to_string(),
+		let name: String = match self.name.as_ref() {
+			Some(name) => name.to_string(),
+			None => "europa-sandbox".to_string(),
 		};
 
 		is_node_name_valid(&name).map_err(|msg| {

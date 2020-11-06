@@ -1,5 +1,6 @@
-use sc_cli::RunCmd;
 use structopt::StructOpt;
+
+use ec_cli::RunCmd;
 
 #[derive(Debug, StructOpt)]
 pub struct Cli {
