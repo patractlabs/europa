@@ -1,6 +1,6 @@
 use sp_inherents::InherentDataProviders;
 
-use ec_service::{error::Error, Configuration, TaskManager};
+use ec_service::{config::Configuration, error::Error, TaskManager};
 
 use europa_executor::Executor;
 use europa_runtime::{self, opaque::Block, RuntimeApi};
