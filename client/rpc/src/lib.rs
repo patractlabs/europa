@@ -1,37 +1,44 @@
 mod error;
 
-use std::sync::Arc;
+use serde::{Deserialize, Serialize};
+use std::{collections::hash_map::HashMap, sync::Arc};
 
 use jsonrpc_core::Result;
 use jsonrpc_derive::rpc;
 
 use sp_blockchain::HeaderBackend;
-use sp_runtime::traits::{Block as BlockT, Header};
+use sp_core::Bytes;
+use sp_runtime::traits::{Block as BlockT, BlockIdTo, Header};
 use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 
+use ec_client_api::statekv;
+
 use error::EuropaRpcError;
+use sp_runtime::generic::BlockId;
 
 pub enum Message<B: BlockT> {
 	Forward(NumberOf<B>),
 }
 
-pub struct Europa<C, B: BlockT, Backend> {
+pub struct Europa<C, B: BlockT, Backend, S> {
 	client: Arc<C>,
 	backend: Arc<Backend>,
 	sender: TracingUnboundedSender<Message<B>>,
+	_marker: std::marker::PhantomData<S>,
 }
 
-impl<C, B: BlockT, Backend> Clone for Europa<C, B, Backend> {
+impl<C, B: BlockT, Backend, S> Clone for Europa<C, B, Backend, S> {
 	fn clone(&self) -> Self {
 		Europa {
 			client: self.client.clone(),
 			backend: self.backend.clone(),
 			sender: self.sender.clone(),
+			_marker: self._marker.clone(),
 		}
 	}
 }
 
-impl<C, B: BlockT, Backend> Europa<C, B, Backend> {
+impl<C, B: BlockT, Backend, S> Europa<C, B, Backend, S> {
 	/// Create new `Contracts` with the given reference to the client.
 	pub fn new(
 		client: Arc<C>,
@@ -43,6 +50,7 @@ impl<C, B: BlockT, Backend> Europa<C, B, Backend> {
 				client,
 				backend,
 				sender: tx,
+				_marker: Default::default(),
 			},
 			rx,
 		)
@@ -50,22 +58,40 @@ impl<C, B: BlockT, Backend> Europa<C, B, Backend> {
 }
 
 #[rpc]
-pub trait EuropaApi<BlockNumber> {
+pub trait EuropaApi<B>
+where
+	B: BlockT,
+{
 	#[rpc(name = "europa_forwardToHeight")]
-	fn forward_to_height(&self, height: BlockNumber) -> Result<()>;
+	fn forward_to_height(&self, height: NumberOf<B>) -> Result<()>;
 
 	#[rpc(name = "europa_backwardToHeight")]
-	fn backward_to_height(&self, height: BlockNumber) -> Result<()>;
+	fn backward_to_height(&self, height: NumberOf<B>) -> Result<()>;
+
+	#[rpc(name = "europa_modifiedStateKvs")]
+	fn state_kvs(
+		&self,
+		number_or_hash: NumberOrHash<B>,
+		child: Option<Bytes>,
+	) -> Result<HashMap<Bytes, Option<Bytes>>>;
 }
 
 type NumberOf<B> = <<B as BlockT>::Header as Header>::Number;
 
-impl<C, B, Backend> EuropaApi<NumberOf<B>> for Europa<C, B, Backend>
+#[derive(Copy, Clone, Serialize, Deserialize, Debug, PartialEq)]
+#[serde(untagged)]
+pub enum NumberOrHash<B: BlockT> {
+	Number(NumberOf<B>),
+	Hash(B::Hash),
+}
+
+impl<C, B, Backend, S> EuropaApi<B> for Europa<C, B, Backend, S>
 where
-	C: HeaderBackend<B>,
+	C: HeaderBackend<B> + BlockIdTo<B, Error = sp_blockchain::Error> + statekv::ClientStateKv<B, S>,
 	C: Send + Sync + 'static,
 	B: BlockT,
 	Backend: sc_client_api::backend::Backend<B> + Send + Sync + 'static,
+	S: statekv::StateKv<B> + 'static,
 {
 	fn forward_to_height(&self, height: NumberOf<B>) -> Result<()> {
 		let best = self.client.info().best_number;
@@ -88,5 +114,37 @@ where
 			.revert(diff, true)
 			.map_err(error::client_err::<B>)?;
 		Ok(())
+	}
+	fn state_kvs(
+		&self,
+		number_or_hash: NumberOrHash<B>,
+		child: Option<Bytes>,
+	) -> Result<HashMap<Bytes, Option<Bytes>>> {
+		let hash = match number_or_hash {
+			NumberOrHash::Hash(hash) => hash,
+			NumberOrHash::Number(num) => self
+				.client
+				.to_hash(&BlockId::Number(num))
+				.map_err(error::client_err::<B>)?
+				.ok_or(EuropaRpcError::<B>::InvalidBlockNumber(num))?,
+		};
+
+		let state_kv = self.client.state_kv();
+		let kvs = if let Some(child) = child {
+			// todo treat child as a prefix in future or split this rpc to two interface
+			state_kv
+				.get_child_kvs_by_hash(hash, &child)
+				.ok_or(EuropaRpcError::<B>::NoChildStateKvs(number_or_hash, child))?
+		} else {
+			state_kv
+				.get_kvs_by_hash(hash)
+				.ok_or(EuropaRpcError::<B>::NoStateKvs(number_or_hash))?
+		};
+		let kvs = kvs
+			.into_iter()
+			.map(|(k, v)| (Bytes(k), v.map(Bytes)))
+			.collect();
+
+		Ok(kvs)
 	}
 }

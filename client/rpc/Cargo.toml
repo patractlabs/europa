@@ -8,9 +8,14 @@ edition = "2018"
 jsonrpc-core = { version = "15.0.0" }
 jsonrpc-core-client = { version = "15.0.0" }
 jsonrpc-derive = "15.0.0"
+serde = { version = "1.0.101", features = ["derive"] }
+hex = "0.4"
 
 sp-utils = { version = "2.0.0" }
 sp-blockchain = { version = "2.0.0" }
 sp-runtime = { version = "2.0.0" }
+sp-core = { version = "2.0.0" }
 
 sc-client-api = { version = "2.0.0" }
+
+ec-client-api = { path = "../api" }

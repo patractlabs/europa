@@ -55,7 +55,7 @@ where
 		NodeComponents<TBl, TRtApi, TExecDisp>,
 	) -> Box<dyn RpcExtensionBuilder<Output = TRpc> + Send>,
 	TRpc: sc_rpc::RpcExtension<sc_rpc::Metadata>,
-	TBl: BlockT,
+	TBl: BlockT + for<'de> sp_runtime::Deserialize<'de>,
 	TRtApi: sp_api::ConstructRuntimeApi<TBl, TFullClient<TBl, TRtApi, TExecDisp>>
 		+ Send
 		+ Sync

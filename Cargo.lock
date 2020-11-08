@@ -1017,11 +1017,15 @@ dependencies = [
 name = "ec-rpc"
 version = "0.1.0"
 dependencies = [
+ "ec-client-api 0.1.0",
+ "hex 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core 15.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core-client 15.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-derive 15.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sc-client-api 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.116 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-blockchain 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-runtime 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-utils 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

@@ -155,7 +155,7 @@ where
 }
 
 /// Parameters to pass into `build`.
-pub struct SpawnTasksParams<'a, TBl: BlockT, TCl, TExPool, TRpc, Backend> {
+pub struct SpawnTasksParams<'a, TBl: BlockT, TCl, TExPool, TRpc, Backend, S> {
 	/// The service configuration.
 	pub config: Configuration,
 	/// A shared client returned by `new_full_parts`/`new_light_parts`.
@@ -174,12 +174,12 @@ pub struct SpawnTasksParams<'a, TBl: BlockT, TCl, TExPool, TRpc, Backend> {
 	/// A Sender for RPC requests.
 	pub system_rpc_tx: TracingUnboundedSender<sc_rpc::system::Request<TBl>>,
 	/// rpc instance for europa inner rpc
-	pub europa_rpc: Option<ec_rpc::Europa<TCl, TBl, Backend>>,
+	pub europa_rpc: Option<ec_rpc::Europa<TCl, TBl, Backend, S>>,
 }
 
 /// Spawn the tasks that are required to run a node.
-pub fn spawn_tasks<TBl, TBackend, TExPool, TRpc, TCl>(
-	params: SpawnTasksParams<TBl, TCl, TExPool, TRpc, TBackend>,
+pub fn spawn_tasks<TBl, TBackend, TStateKv, TExPool, TRpc, TCl>(
+	params: SpawnTasksParams<TBl, TCl, TExPool, TRpc, TBackend, TStateKv>,
 ) -> Result<RpcHandlers, Error>
 where
 	TCl: ProvideRuntimeApi<TBl>
@@ -187,6 +187,7 @@ where
 		+ Chain<TBl>
 		+ BlockBackend<TBl>
 		+ BlockIdTo<TBl, Error = sp_blockchain::Error>
+		+ ec_client_api::statekv::ClientStateKv<TBl, TStateKv>
 		+ ProofProvider<TBl>
 		+ HeaderBackend<TBl>
 		+ BlockchainEvents<TBl>
@@ -201,8 +202,9 @@ where
 		+ sp_session::SessionKeys<TBl>
 		+ sp_api::ApiErrorExt<Error = sp_blockchain::Error>
 		+ sp_api::ApiExt<TBl, StateBackend = TBackend::State>,
-	TBl: BlockT,
+	TBl: BlockT + for<'de> sp_runtime::Deserialize<'de>,
 	TBackend: 'static + sc_client_api::backend::Backend<TBl> + Send,
+	TStateKv: 'static + ec_client_api::statekv::StateKv<TBl>,
 	TExPool: MaintainedTransactionPool<Block = TBl, Hash = <TBl as BlockT>::Hash>
 		+ MallocSizeOfWasm
 		+ 'static,
@@ -280,7 +282,7 @@ where
 	Ok(rpc_handlers)
 }
 
-fn gen_handler<TBl, TBackend, TExPool, TRpc, TCl>(
+fn gen_handler<TBl, TBackend, TStateKv, TExPool, TRpc, TCl>(
 	deny_unsafe: sc_rpc::DenyUnsafe,
 	rpc_middleware: sc_rpc_server::RpcMiddleware,
 	config: &Configuration,
@@ -290,10 +292,10 @@ fn gen_handler<TBl, TBackend, TExPool, TRpc, TCl>(
 	keystore: Arc<RwLock<Keystore>>,
 	rpc_extensions_builder: &(dyn RpcExtensionBuilder<Output = TRpc> + Send),
 	system_rpc_tx: TracingUnboundedSender<sc_rpc::system::Request<TBl>>,
-	europa_rpc: Option<ec_rpc::Europa<TCl, TBl, TBackend>>,
+	europa_rpc: Option<ec_rpc::Europa<TCl, TBl, TBackend, TStateKv>>,
 ) -> sc_rpc_server::RpcHandler<sc_rpc::Metadata>
 where
-	TBl: BlockT,
+	TBl: BlockT + for<'de> sp_runtime::Deserialize<'de>,
 	TCl: ProvideRuntimeApi<TBl>
 		+ BlockchainEvents<TBl>
 		+ HeaderBackend<TBl>
@@ -303,11 +305,14 @@ where
 		+ ProofProvider<TBl>
 		+ StorageProvider<TBl, TBackend>
 		+ BlockBackend<TBl>
+		+ BlockIdTo<TBl, Error = sp_blockchain::Error>
+		+ ec_client_api::statekv::ClientStateKv<TBl, TStateKv>
 		+ Send
 		+ Sync
 		+ 'static,
 	TExPool: MaintainedTransactionPool<Block = TBl, Hash = <TBl as BlockT>::Hash> + 'static,
 	TBackend: sc_client_api::backend::Backend<TBl> + 'static,
+	TStateKv: ec_client_api::statekv::StateKv<TBl> + 'static,
 	TRpc: sc_rpc::RpcExtension<sc_rpc::Metadata>,
 	<TCl as ProvideRuntimeApi<TBl>>::Api:
 		sp_session::SessionKeys<TBl> + sp_api::Metadata<TBl, Error = sp_blockchain::Error>,
