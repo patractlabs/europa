@@ -19,12 +19,12 @@ pub trait StateKv<Block: BlockT>: Send + Sync {
 
 	fn get(&self, hash: Block::Hash, key: &[u8]) -> Option<Vec<u8>>;
 	fn get_child(&self, hash: Block::Hash, child: &[u8], key: &[u8]) -> Option<Vec<u8>>;
-	fn get_kvs_by_hash(&self, hash: Block::Hash) -> Option<Vec<(Vec<u8>, Vec<u8>)>>;
+	fn get_kvs_by_hash(&self, hash: Block::Hash) -> Option<Vec<(Vec<u8>, Option<Vec<u8>>)>>;
 	fn get_child_kvs_by_hash(
 		&self,
 		hash: Block::Hash,
 		child: &[u8],
-	) -> Option<Vec<(Vec<u8>, Vec<u8>)>>;
+	) -> Option<Vec<(Vec<u8>, Option<Vec<u8>>)>>;
 	fn delete_kvs_by_hash(&self, hash: Block::Hash) -> error::Result<()>;
 	fn delete_child_kvs_by_hash(&self, hash: Block::Hash, child: &[u8]) -> error::Result<()>;
 

@@ -39,7 +39,7 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, Error> {
 }
 
 pub fn new_full_parts(
-	config: Configuration,
+	config: &Configuration,
 ) -> Result<TFullParts<Block, RuntimeApi, Executor>, Error> {
-	ec_service::new_full_parts::<Block, RuntimeApi, Executor>(&config)
+	ec_service::new_full_parts::<Block, RuntimeApi, Executor>(config)
 }

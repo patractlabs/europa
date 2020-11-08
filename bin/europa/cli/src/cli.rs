@@ -13,6 +13,6 @@ pub struct Cli {
 
 #[derive(Debug, StructOpt)]
 pub enum Subcommand {
-	/// print stored state kvs.
+	/// print modified stored state kvs for a block.
 	StateKv(StateKvCmd),
 }

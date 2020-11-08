@@ -195,12 +195,19 @@ impl StateKv {
 		col: u32,
 		prefix: &[u8],
 		f: impl FnMut((Box<[u8]>, Box<[u8]>)) -> (Vec<u8>, Vec<u8>),
-	) -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+	) -> Option<Vec<(Vec<u8>, Option<Vec<u8>>)>> {
 		let r = self
 			.state_kv_db
 			.iter_with_prefix(col, prefix)
 			.map(f)
-			.collect::<Vec<(Vec<u8>, Vec<u8>)>>();
+			.map(|(k, v)| {
+				if &v == &DELETE_HOLDER {
+					(k, None)
+				} else {
+					(k, Some(v))
+				}
+			})
+			.collect::<Vec<(Vec<u8>, Option<Vec<u8>>)>>();
 		if r.len() == 0 {
 			None
 		} else {
@@ -247,7 +254,7 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		handle_err(self.state_kv_db.get(columns::STATE_CHILD_KV, &real_key))
 	}
 
-	fn get_kvs_by_hash(&self, hash: B::Hash) -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+	fn get_kvs_by_hash(&self, hash: B::Hash) -> Option<Vec<(Vec<u8>, Option<Vec<u8>>)>> {
 		let prefix = hash.as_ref();
 		let hash_len = prefix.len();
 		self.get_kys_impl(columns::STATE_KV, prefix, |(k, v)| {
@@ -260,7 +267,7 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		&self,
 		hash: B::Hash,
 		child: &[u8],
-	) -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+	) -> Option<Vec<(Vec<u8>, Option<Vec<u8>>)>> {
 		let prefix = hash.as_ref();
 		let hash_len = prefix.len();
 		let mut lookup_key = Vec::with_capacity(hash_len + 1 + child.len());
