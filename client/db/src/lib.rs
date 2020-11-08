@@ -11,6 +11,7 @@ use sp_runtime::{
 use sc_client_db::{DatabaseSettings, DatabaseSettingsSrc};
 
 const SEPARATOR: u8 = b'|';
+const DELETE_HOLDER: &'static [u8] = b":DELETE:";
 
 pub const NUM_COLUMNS: u32 = 7;
 /// Meta column. The set of keys in the column is shared by full storages.
@@ -125,7 +126,18 @@ impl<B: BlockT> StateKvTransaction<B> {
 		if let Some(value) = value {
 			self.inner.put(col, real_key, value);
 		} else {
-			self.inner.delete(col, real_key);
+			// can't put "" directly, for `Foo: Option<()>` which defined in runtime would be "" in value
+			self.inner.put(col, real_key, DELETE_HOLDER);
+		}
+	}
+	fn remove_impl(&mut self, col: u32, real_key: &[u8]) {
+		let find = self
+			.inner
+			.ops
+			.iter()
+			.position(|op| op.col() == col && op.key() == real_key);
+		if let Some(pos) = find {
+			self.inner.ops.remove(pos);
 		}
 	}
 }
@@ -140,13 +152,15 @@ impl<B: BlockT> ec_client_api::statekv::StateKvTransaction for StateKvTransactio
 		self.set_kv_impl(columns::STATE_CHILD_KV, &real_key, value);
 	}
 
+	/// remove old record from this Transaction
 	fn remove(&mut self, key: &[u8]) {
 		let real_key = real_key::<B>(self.hash, key);
-		self.inner.delete(columns::STATE_KV, &real_key);
+		self.remove_impl(columns::STATE_KV, &real_key);
 	}
+	/// remove old child record from this Transaction
 	fn remove_child(&mut self, key: &[u8], child: &[u8]) {
 		let real_key = real_child_key::<B>(self.hash, child, key);
-		self.inner.delete(columns::STATE_KV, &real_key);
+		self.remove_impl(columns::STATE_CHILD_KV, &real_key);
 	}
 	fn clear(&mut self) {
 		self.inner.ops.clear();
@@ -168,7 +182,8 @@ impl StateKv {
 		if let Some(value) = value {
 			t.put(col, real_key, value);
 		} else {
-			t.delete(col, real_key);
+			// can't put "" directly, for `Foo: Option<()>` which defined in runtime would be "" in value
+			t.put(col, real_key, DELETE_HOLDER);
 		}
 		self.state_kv_db
 			.write(t)
