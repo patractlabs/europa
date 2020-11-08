@@ -1,14 +1,17 @@
 use jsonrpc_core as rpc;
 
+use sp_core::Bytes;
 use sp_runtime::traits::Block as BlockT;
 
-use crate::NumberOf;
+use crate::{NumberOf, NumberOrHash};
 
 #[derive(Debug)]
 pub enum EuropaRpcError<B: BlockT> {
 	InvalidForwardHeight(NumberOf<B>, NumberOf<B>),
 	InvalidBackwardHeight(NumberOf<B>, NumberOf<B>),
 	InvalidBlockNumber(NumberOf<B>),
+	NoStateKvs(NumberOrHash<B>),
+	NoChildStateKvs(NumberOrHash<B>, Bytes),
 	Client(Box<dyn std::error::Error + Send>),
 }
 
@@ -36,6 +39,21 @@ impl<B: BlockT> From<EuropaRpcError<B>> for rpc::Error {
 			EuropaRpcError::InvalidBlockNumber(num) => rpc::Error {
 				code: rpc::ErrorCode::InvalidParams,
 				message: format!("invalid or not existed block number: {}", num).into(),
+				data: None,
+			},
+			EuropaRpcError::NoStateKvs(num_or_hash) => rpc::Error {
+				code: rpc::ErrorCode::InvalidParams,
+				message: format!("No state kvs for this block: {:?}", num_or_hash).into(),
+				data: None,
+			},
+			EuropaRpcError::NoChildStateKvs(num_or_hash, bytes) => rpc::Error {
+				code: rpc::ErrorCode::InvalidParams,
+				message: format!(
+					"No child state kvs for this block: {:?}|child:0x{:}",
+					num_or_hash,
+					hex::encode(&*bytes)
+				)
+				.into(),
 				data: None,
 			},
 			e => internal(e),

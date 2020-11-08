@@ -1,7 +1,7 @@
 mod error;
 
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::{collections::hash_map::HashMap, sync::Arc};
 
 use jsonrpc_core::Result;
 use jsonrpc_derive::rpc;
@@ -73,7 +73,7 @@ where
 		&self,
 		number_or_hash: NumberOrHash<B>,
 		child: Option<Bytes>,
-	) -> Result<Vec<(Bytes, Option<Bytes>)>>;
+	) -> Result<HashMap<Bytes, Option<Bytes>>>;
 }
 
 type NumberOf<B> = <<B as BlockT>::Header as Header>::Number;
@@ -119,7 +119,7 @@ where
 		&self,
 		number_or_hash: NumberOrHash<B>,
 		child: Option<Bytes>,
-	) -> Result<Vec<(Bytes, Option<Bytes>)>> {
+	) -> Result<HashMap<Bytes, Option<Bytes>>> {
 		let hash = match number_or_hash {
 			NumberOrHash::Hash(hash) => hash,
 			NumberOrHash::Number(num) => self
@@ -130,6 +130,21 @@ where
 		};
 
 		let state_kv = self.client.state_kv();
-		Ok(vec![])
+		let kvs = if let Some(child) = child {
+			// todo treat child as a prefix in future or split this rpc to two interface
+			state_kv
+				.get_child_kvs_by_hash(hash, &child)
+				.ok_or(EuropaRpcError::<B>::NoChildStateKvs(number_or_hash, child))?
+		} else {
+			state_kv
+				.get_kvs_by_hash(hash)
+				.ok_or(EuropaRpcError::<B>::NoStateKvs(number_or_hash))?
+		};
+		let kvs = kvs
+			.into_iter()
+			.map(|(k, v)| (Bytes(k), v.map(Bytes)))
+			.collect();
+
+		Ok(kvs)
 	}
 }
