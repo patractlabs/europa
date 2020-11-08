@@ -1,7 +1,9 @@
-// This file is part of Substrate.
+// This file is part of europa which is forked form Substrate.
 
 // Copyright (C) 2019-2020 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
+
+// Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +21,7 @@
 //!
 //! Since `substrate` core functionality makes no assumptions
 //! about the modules used inside the runtime, so do
-//! RPC methods defined in `sc-rpc` crate.
+//! RPC methods defined in `ec-rpc` crate.
 //! It means that `client/rpc` can't have any methods that
 //! need some strong assumptions about the particular runtime.
 //!

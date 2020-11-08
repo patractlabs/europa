@@ -8,6 +8,7 @@ use crate::NumberOf;
 pub enum EuropaRpcError<B: BlockT> {
 	InvalidForwardHeight(NumberOf<B>, NumberOf<B>),
 	InvalidBackwardHeight(NumberOf<B>, NumberOf<B>),
+	InvalidBlockNumber(NumberOf<B>),
 	Client(Box<dyn std::error::Error + Send>),
 }
 
@@ -30,6 +31,11 @@ impl<B: BlockT> From<EuropaRpcError<B>> for rpc::Error {
 					backward, best
 				)
 				.into(),
+				data: None,
+			},
+			EuropaRpcError::InvalidBlockNumber(num) => rpc::Error {
+				code: rpc::ErrorCode::InvalidParams,
+				message: format!("invalid or not existed block number: {}", num).into(),
 				data: None,
 			},
 			e => internal(e),
