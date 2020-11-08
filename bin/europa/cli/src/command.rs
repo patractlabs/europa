@@ -50,8 +50,8 @@ pub fn run() -> sc_cli::Result<()> {
 			Subcommand::StateKv(cmd) => {
 				let runner = ec_cli::build_runner(&cli, cmd)?;
 				runner.sync_run(|config| {
-					let (client, _, _, _) = service::new_full_parts(&config)?;
-					cmd.run(client)
+					let state_kv = service::new_state_kv(&config, true)?;
+					cmd.run::<europa_runtime::opaque::Block, _>(state_kv)
 				})
 			}
 		},

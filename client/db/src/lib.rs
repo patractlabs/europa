@@ -34,6 +34,7 @@ const DB_PATH_NAME: &'static str = "state_kv";
 
 pub fn open_state_key_database(
 	config: &DatabaseSettings,
+	read_only: bool,
 ) -> sp_blockchain::Result<Arc<dyn KeyValueDB>> {
 	#[allow(unused)]
 	fn db_open_error(feat: &'static str) -> sp_blockchain::Error {
@@ -70,6 +71,10 @@ pub fn open_state_key_database(
 			let memory_budget = std::collections::HashMap::new();
 			db_config.memory_budget = memory_budget;
 
+			if read_only {
+				db_config.secondary = Some(path.to_string());
+			}
+
 			let db = kvdb_rocksdb::Database::open(&db_config, &path)
 				.map_err(|err| sp_blockchain::Error::Backend(format!("{}", err)))?;
 			Arc::new(db)
@@ -85,8 +90,8 @@ pub struct StateKv {
 }
 
 impl StateKv {
-	pub fn new(config: &DatabaseSettings) -> sp_blockchain::Result<Self> {
-		let db = open_state_key_database(config)?;
+	pub fn new(config: &DatabaseSettings, read_only: bool) -> sp_blockchain::Result<Self> {
+		let db = open_state_key_database(config, read_only)?;
 		Ok(StateKv { state_kv_db: db })
 	}
 }

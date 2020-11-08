@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use bytes::Bytes;
 use structopt::StructOpt;
@@ -9,7 +10,9 @@ use sp_runtime::{
 	traits::{Block as BlockT, Header as HeaderT},
 };
 
-use sc_cli::{BlockNumberOrHash, CliConfiguration, Error as CliError, ImportParams, SharedParams, Role};
+use sc_cli::{
+	BlockNumberOrHash, CliConfiguration, Error as CliError, ImportParams, Role, SharedParams,
+};
 
 use ec_client_api::statekv;
 
@@ -35,16 +38,14 @@ pub struct StateKvCmd {
 
 impl StateKvCmd {
 	/// Run the check-block command
-	pub fn run<B, C, S>(&self, client: C) -> sc_cli::Result<()>
+	pub fn run<B, S>(&self, state_kv: Arc<S>) -> sc_cli::Result<()>
 	where
 		B: BlockT,
 		B::Hash: FromStr,
 		<B::Hash as FromStr>::Err: Debug,
 		<<B::Header as HeaderT>::Number as FromStr>::Err: Debug,
 		S: statekv::StateKv<B>,
-		C: statekv::ClientStateKv<B, S>,
 	{
-		let state_kv = client.state_kv();
 		let id = self.input.parse::<B>().map_err(CliError::Input)?;
 		let hash = match id {
 			BlockId::Hash(hash) => hash,
@@ -103,7 +104,9 @@ impl CliConfiguration for StateKvCmd {
 	}
 
 	fn role(&self, _is_dev: bool) -> sc_cli::Result<Role> {
-		Ok(Role::Authority { sentry_nodes: vec![] })
+		Ok(Role::Authority {
+			sentry_nodes: vec![],
+		})
 	}
 }
 

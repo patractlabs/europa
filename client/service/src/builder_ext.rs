@@ -99,7 +99,7 @@ where
 		sc_block_builder::BlockBuilderApi<TBl, Error = sp_blockchain::Error>,
 {
 	let (client, backend, keystore, mut task_manager) =
-		new_full_parts::<TBl, TRtApi, TExecDisp>(&config)?;
+		new_full_parts::<TBl, TRtApi, TExecDisp>(&config, false)?;
 	let client = Arc::new(client);
 
 	let transaction_pool = sc_transaction_pool::BasicPool::new_full(

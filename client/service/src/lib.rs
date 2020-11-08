@@ -20,8 +20,8 @@ pub use sc_service::{
 };
 
 pub use crate::builder::{
-	build_mock_network, new_client, new_full_parts, spawn_tasks, SpawnTasksParams, TFullBackend,
-	TFullCallExecutor, TFullClient, TFullParts,
+	build_mock_network, database_settings, new_client, new_full_parts, new_state_kv, spawn_tasks,
+	SpawnTasksParams, TFullBackend, TFullCallExecutor, TFullClient, TFullParts, TFullStateKv,
 };
 pub use crate::task_manager::{SpawnTaskHandle, TaskManager};
 
