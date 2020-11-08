@@ -1,5 +1,6 @@
 use sp_database::error;
 use sp_runtime::traits::{Block as BlockT, NumberFor};
+use std::sync::Arc;
 
 pub trait StateKv<Block: BlockT>: Send + Sync {
 	/// The transaction type used by the StateKv.
@@ -18,12 +19,12 @@ pub trait StateKv<Block: BlockT>: Send + Sync {
 
 	fn get(&self, hash: Block::Hash, key: &[u8]) -> Option<Vec<u8>>;
 	fn get_child(&self, hash: Block::Hash, child: &[u8], key: &[u8]) -> Option<Vec<u8>>;
-	fn get_kvs_by_hash(&self, hash: Block::Hash) -> Option<Vec<(Vec<u8>, Vec<u8>)>>;
+	fn get_kvs_by_hash(&self, hash: Block::Hash) -> Option<Vec<(Vec<u8>, Option<Vec<u8>>)>>;
 	fn get_child_kvs_by_hash(
 		&self,
 		hash: Block::Hash,
 		child: &[u8],
-	) -> Option<Vec<(Vec<u8>, Vec<u8>)>>;
+	) -> Option<Vec<(Vec<u8>, Option<Vec<u8>>)>>;
 	fn delete_kvs_by_hash(&self, hash: Block::Hash) -> error::Result<()>;
 	fn delete_child_kvs_by_hash(&self, hash: Block::Hash, child: &[u8]) -> error::Result<()>;
 
@@ -40,4 +41,8 @@ pub trait StateKvTransaction {
 	fn remove(&mut self, key: &[u8]);
 	fn remove_child(&mut self, key: &[u8], child: &[u8]);
 	fn clear(&mut self);
+}
+
+pub trait ClientStateKv<B: BlockT, S: StateKv<B>> {
+	fn state_kv(&self) -> Arc<S>;
 }

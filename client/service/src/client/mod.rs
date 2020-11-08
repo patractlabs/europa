@@ -122,6 +122,16 @@ where
 	_phantom: PhantomData<RA>,
 }
 
+impl<B, S, E, Block, RA> statekv::ClientStateKv<Block, S> for Client<B, S, E, Block, RA>
+where
+	S: statekv::StateKv<Block>,
+	Block: BlockT,
+{
+	fn state_kv(&self) -> Arc<S> {
+		self.state_kv.clone()
+	}
+}
+
 impl<B, S, E, Block, RA> BlockOf for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
@@ -770,7 +780,7 @@ where
 				return Ok(());
 			}
 		};
-		// TODO add bypass storage here
+		// TODO improve store contents e.g. hash index child-index
 		debug!(target: "state-kv", "store state|hash:{:?}", notify_import.hash);
 		if let Some(storage_changes) = notify_import.storage_changes {
 			let hash = notify_import.hash;

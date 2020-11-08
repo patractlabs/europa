@@ -11,6 +11,7 @@ use sp_runtime::{
 use sc_client_db::{DatabaseSettings, DatabaseSettingsSrc};
 
 const SEPARATOR: u8 = b'|';
+const DELETE_HOLDER: &'static [u8] = b":DELETE:";
 
 pub const NUM_COLUMNS: u32 = 7;
 /// Meta column. The set of keys in the column is shared by full storages.
@@ -33,6 +34,7 @@ const DB_PATH_NAME: &'static str = "state_kv";
 
 pub fn open_state_key_database(
 	config: &DatabaseSettings,
+	read_only: bool,
 ) -> sp_blockchain::Result<Arc<dyn KeyValueDB>> {
 	#[allow(unused)]
 	fn db_open_error(feat: &'static str) -> sp_blockchain::Error {
@@ -69,6 +71,10 @@ pub fn open_state_key_database(
 			let memory_budget = std::collections::HashMap::new();
 			db_config.memory_budget = memory_budget;
 
+			if read_only {
+				db_config.secondary = Some(path.to_string());
+			}
+
 			let db = kvdb_rocksdb::Database::open(&db_config, &path)
 				.map_err(|err| sp_blockchain::Error::Backend(format!("{}", err)))?;
 			Arc::new(db)
@@ -84,8 +90,8 @@ pub struct StateKv {
 }
 
 impl StateKv {
-	pub fn new(config: &DatabaseSettings) -> sp_blockchain::Result<Self> {
-		let db = open_state_key_database(config)?;
+	pub fn new(config: &DatabaseSettings, read_only: bool) -> sp_blockchain::Result<Self> {
+		let db = open_state_key_database(config, read_only)?;
 		Ok(StateKv { state_kv_db: db })
 	}
 }
@@ -125,7 +131,18 @@ impl<B: BlockT> StateKvTransaction<B> {
 		if let Some(value) = value {
 			self.inner.put(col, real_key, value);
 		} else {
-			self.inner.delete(col, real_key);
+			// can't put "" directly, for `Foo: Option<()>` which defined in runtime would be "" in value
+			self.inner.put(col, real_key, DELETE_HOLDER);
+		}
+	}
+	fn remove_impl(&mut self, col: u32, real_key: &[u8]) {
+		let find = self
+			.inner
+			.ops
+			.iter()
+			.position(|op| op.col() == col && op.key() == real_key);
+		if let Some(pos) = find {
+			self.inner.ops.remove(pos);
 		}
 	}
 }
@@ -140,13 +157,15 @@ impl<B: BlockT> ec_client_api::statekv::StateKvTransaction for StateKvTransactio
 		self.set_kv_impl(columns::STATE_CHILD_KV, &real_key, value);
 	}
 
+	/// remove old record from this Transaction
 	fn remove(&mut self, key: &[u8]) {
 		let real_key = real_key::<B>(self.hash, key);
-		self.inner.delete(columns::STATE_KV, &real_key);
+		self.remove_impl(columns::STATE_KV, &real_key);
 	}
+	/// remove old child record from this Transaction
 	fn remove_child(&mut self, key: &[u8], child: &[u8]) {
 		let real_key = real_child_key::<B>(self.hash, child, key);
-		self.inner.delete(columns::STATE_KV, &real_key);
+		self.remove_impl(columns::STATE_CHILD_KV, &real_key);
 	}
 	fn clear(&mut self) {
 		self.inner.ops.clear();
@@ -168,7 +187,8 @@ impl StateKv {
 		if let Some(value) = value {
 			t.put(col, real_key, value);
 		} else {
-			t.delete(col, real_key);
+			// can't put "" directly, for `Foo: Option<()>` which defined in runtime would be "" in value
+			t.put(col, real_key, DELETE_HOLDER);
 		}
 		self.state_kv_db
 			.write(t)
@@ -180,12 +200,19 @@ impl StateKv {
 		col: u32,
 		prefix: &[u8],
 		f: impl FnMut((Box<[u8]>, Box<[u8]>)) -> (Vec<u8>, Vec<u8>),
-	) -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+	) -> Option<Vec<(Vec<u8>, Option<Vec<u8>>)>> {
 		let r = self
 			.state_kv_db
 			.iter_with_prefix(col, prefix)
 			.map(f)
-			.collect::<Vec<(Vec<u8>, Vec<u8>)>>();
+			.map(|(k, v)| {
+				if &v == &DELETE_HOLDER {
+					(k, None)
+				} else {
+					(k, Some(v))
+				}
+			})
+			.collect::<Vec<(Vec<u8>, Option<Vec<u8>>)>>();
 		if r.len() == 0 {
 			None
 		} else {
@@ -232,7 +259,7 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		handle_err(self.state_kv_db.get(columns::STATE_CHILD_KV, &real_key))
 	}
 
-	fn get_kvs_by_hash(&self, hash: B::Hash) -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+	fn get_kvs_by_hash(&self, hash: B::Hash) -> Option<Vec<(Vec<u8>, Option<Vec<u8>>)>> {
 		let prefix = hash.as_ref();
 		let hash_len = prefix.len();
 		self.get_kys_impl(columns::STATE_KV, prefix, |(k, v)| {
@@ -245,7 +272,7 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		&self,
 		hash: B::Hash,
 		child: &[u8],
-	) -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+	) -> Option<Vec<(Vec<u8>, Option<Vec<u8>>)>> {
 		let prefix = hash.as_ref();
 		let hash_len = prefix.len();
 		let mut lookup_key = Vec::with_capacity(hash_len + 1 + child.len());

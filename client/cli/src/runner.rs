@@ -29,7 +29,7 @@ use std::marker::PhantomData;
 
 use sc_cli::{CliConfiguration, Result, SubstrateCli};
 
-use ec_service::{Configuration, TaskManager, TaskType};
+use ec_service::{config::Configuration, TaskManager, TaskType};
 
 #[cfg(target_family = "unix")]
 async fn main<F, E>(func: F) -> std::result::Result<(), Box<dyn std::error::Error>>

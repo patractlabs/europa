@@ -48,7 +48,7 @@ pub type TFullStateKv = ec_client_db::StateKv;
 pub type TFullCallExecutor<TBl, TExecDisp> =
 	crate::client::LocalCallExecutor<sc_client_db::Backend<TBl>, NativeExecutor<TExecDisp>>;
 
-type TFullParts<TBl, TRtApi, TExecDisp> = (
+pub type TFullParts<TBl, TRtApi, TExecDisp> = (
 	TFullClient<TBl, TRtApi, TExecDisp>,
 	Arc<TFullBackend<TBl>>,
 	Arc<RwLock<sc_keystore::Store>>,
@@ -58,6 +58,7 @@ type TFullParts<TBl, TRtApi, TExecDisp> = (
 /// Create the initial parts of a full node.
 pub fn new_full_parts<TBl, TRtApi, TExecDisp>(
 	config: &Configuration,
+	read_only: bool,
 ) -> Result<TFullParts<TBl, TRtApi, TExecDisp>, Error>
 where
 	TBl: BlockT,
@@ -75,12 +76,7 @@ where
 	let chain_spec = &config.chain_spec;
 
 	let (client, backend) = {
-		let db_config = sc_client_db::DatabaseSettings {
-			state_cache_size: config.state_cache_size,
-			state_cache_child_ratio: config.state_cache_child_ratio.map(|v| (v, 100)),
-			pruning: config.pruning.clone(),
-			source: config.database.clone(),
-		};
+		let db_config = database_settings(&config);
 
 		let extensions = sc_client_api::execution_extensions::ExecutionExtensions::new(
 			config.execution_strategies.clone(),
@@ -89,6 +85,7 @@ where
 
 		new_client(
 			db_config,
+			read_only,
 			executor,
 			chain_spec.as_storage_builder(),
 			extensions,
@@ -98,10 +95,27 @@ where
 
 	Ok((client, backend, keystore, task_manager))
 }
+pub fn database_settings(config: &Configuration) -> sc_client_db::DatabaseSettings {
+	sc_client_db::DatabaseSettings {
+		state_cache_size: config.state_cache_size,
+		state_cache_child_ratio: config.state_cache_child_ratio.map(|v| (v, 100)),
+		pruning: config.pruning.clone(), // PruningMode::ArchiveAll,
+		source: config.database.clone(),
+	}
+}
+
+pub fn new_state_kv(
+	settings: &sc_client_db::DatabaseSettings,
+	read_only: bool,
+) -> Result<Arc<StateKv>, sp_blockchain::Error> {
+	let state_kv = Arc::new(ec_client_db::StateKv::new(settings, read_only)?);
+	Ok(state_kv)
+}
 
 /// Create an instance of db-backed client.
 pub fn new_client<E, Block, RA>(
 	settings: DatabaseSettings,
+	read_only: bool,
 	executor: E,
 	genesis_storage: &dyn BuildStorage,
 	execution_extensions: ExecutionExtensions<Block>,
@@ -125,7 +139,7 @@ where
 {
 	const CANONICALIZATION_DELAY: u64 = 4096;
 
-	let state_kv = Arc::new(ec_client_db::StateKv::new(&settings)?);
+	let state_kv = new_state_kv(&settings, read_only)?;
 	let backend = Arc::new(Backend::new(settings, CANONICALIZATION_DELAY)?);
 	let executor = crate::client::LocalCallExecutor::new(backend.clone(), executor, spawn_handle);
 	Ok((

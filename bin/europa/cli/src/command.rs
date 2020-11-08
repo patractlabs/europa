@@ -1,6 +1,6 @@
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 
-use crate::cli::Cli;
+use crate::cli::{Cli, Subcommand};
 use crate::{chain_spec, service};
 
 impl SubstrateCli for Cli {
@@ -32,8 +32,7 @@ impl SubstrateCli for Cli {
 		// todo chain_spec would receive some params to generate account or other thing dynamically,
 		// maybe use some global vars or something others.
 		Ok(match id {
-			"dev" => Box::new(chain_spec::development_config()?),
-			_ => return Err("Not support this chain-spec".to_string()),
+			"dev" | _ => Box::new(chain_spec::development_config()?),
 		})
 	}
 
@@ -45,7 +44,21 @@ impl SubstrateCli for Cli {
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
-	let command = &cli.run;
-	let runner = ec_cli::build_runner(&cli, command)?;
-	runner.run_node_until_exit(|config| service::new_full(config))
+
+	match &cli.subcommand {
+		Some(sub) => match sub {
+			Subcommand::StateKv(cmd) => {
+				let runner = ec_cli::build_runner(&cli, cmd)?;
+				runner.sync_run(|config| {
+					let state_kv = service::new_state_kv(&config, true)?;
+					cmd.run::<europa_runtime::opaque::Block, _>(state_kv)
+				})
+			}
+		},
+		None => {
+			let command = &cli.run;
+			let runner = ec_cli::build_runner(&cli, command)?;
+			runner.run_node_until_exit(|config| service::new_full(config))
+		}
+	}
 }
