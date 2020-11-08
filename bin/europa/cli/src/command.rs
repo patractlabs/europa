@@ -1,6 +1,6 @@
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 
-use crate::cli::Cli;
+use crate::cli::{Cli, Subcommand};
 use crate::{chain_spec, service};
 
 impl SubstrateCli for Cli {
@@ -44,7 +44,21 @@ impl SubstrateCli for Cli {
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
-	let command = &cli.run;
-	let runner = ec_cli::build_runner(&cli, command)?;
-	runner.run_node_until_exit(|config| service::new_full(config))
+
+	match &cli.subcommand {
+		Some(sub) => match sub {
+			Subcommand::StateKv(cmd) => {
+				let runner = ec_cli::build_runner(&cli, cmd)?;
+				runner.sync_run(|config| {
+					let (client, _, _, _) = service::new_full_parts(config)?;
+					cmd.run(client)
+				})
+			}
+		},
+		None => {
+			let command = &cli.run;
+			let runner = ec_cli::build_runner(&cli, command)?;
+			runner.run_node_until_exit(|config| service::new_full(config))
+		}
+	}
 }

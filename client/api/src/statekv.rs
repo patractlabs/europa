@@ -1,5 +1,6 @@
 use sp_database::error;
 use sp_runtime::traits::{Block as BlockT, NumberFor};
+use std::sync::Arc;
 
 pub trait StateKv<Block: BlockT>: Send + Sync {
 	/// The transaction type used by the StateKv.
@@ -40,4 +41,8 @@ pub trait StateKvTransaction {
 	fn remove(&mut self, key: &[u8]);
 	fn remove_child(&mut self, key: &[u8], child: &[u8]);
 	fn clear(&mut self);
+}
+
+pub trait ClientStateKv<B: BlockT, S: StateKv<B>> {
+	fn state_kv(&self) -> Arc<S>;
 }

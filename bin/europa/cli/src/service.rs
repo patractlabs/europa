@@ -1,6 +1,6 @@
 use sp_inherents::InherentDataProviders;
 
-use ec_service::{config::Configuration, error::Error, TaskManager};
+use ec_service::{config::Configuration, error::Error, TFullParts, TaskManager};
 
 use europa_executor::Executor;
 use europa_runtime::{self, opaque::Block, RuntimeApi};
@@ -36,4 +36,10 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, Error> {
 			})
 		},
 	)
+}
+
+pub fn new_full_parts(
+	config: Configuration,
+) -> Result<TFullParts<Block, RuntimeApi, Executor>, Error> {
+	ec_service::new_full_parts::<Block, RuntimeApi, Executor>(&config)
 }

@@ -48,7 +48,7 @@ pub type TFullStateKv = ec_client_db::StateKv;
 pub type TFullCallExecutor<TBl, TExecDisp> =
 	crate::client::LocalCallExecutor<sc_client_db::Backend<TBl>, NativeExecutor<TExecDisp>>;
 
-type TFullParts<TBl, TRtApi, TExecDisp> = (
+pub type TFullParts<TBl, TRtApi, TExecDisp> = (
 	TFullClient<TBl, TRtApi, TExecDisp>,
 	Arc<TFullBackend<TBl>>,
 	Arc<RwLock<sc_keystore::Store>>,
@@ -78,7 +78,7 @@ where
 		let db_config = sc_client_db::DatabaseSettings {
 			state_cache_size: config.state_cache_size,
 			state_cache_child_ratio: config.state_cache_child_ratio.map(|v| (v, 100)),
-			pruning: config.pruning.clone(),
+			pruning: config.pruning.clone(), // PruningMode::ArchiveAll,
 			source: config.database.clone(),
 		};
 
