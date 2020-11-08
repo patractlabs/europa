@@ -19,21 +19,18 @@ use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnbound
 use sc_client_api::execution_extensions::ExecutionExtensions;
 use sc_client_db::{Backend, DatabaseSettings};
 use sc_keystore::Store as Keystore;
-use sc_service::{
-	config::{Configuration, KeystoreConfig},
-	error::Error,
-	MallocSizeOfWasm, RpcExtensionBuilder,
-};
+use sc_service::{error::Error, MallocSizeOfWasm, RpcExtensionBuilder};
 
+use ec_client_db::StateKv;
 use ec_executor::{NativeExecutionDispatch, NativeExecutor, RuntimeInfo};
 
 use log::info;
 
 use crate::client::Client;
+use crate::config::{Configuration, KeystoreConfig};
 use crate::start_rpc_servers;
 use crate::task_manager::{SpawnTaskHandle, TaskManager};
 use crate::RpcHandlers;
-use ec_client_db::StateKv;
 
 /// Full client type.
 pub type TFullClient<TBl, TRtApi, TExecDisp> =

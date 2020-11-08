@@ -1,6 +1,7 @@
 mod builder;
 pub mod builder_ext;
 pub mod client;
+pub mod config;
 pub mod task_manager;
 
 use std::net::SocketAddr;
@@ -13,16 +14,16 @@ pub use jsonrpc_core::IoHandler;
 pub use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 
 pub use sc_keystore::KeyStorePtr as KeyStore;
-use sc_service::config::Configuration;
 pub use sc_service::{
-	build_network, config, error, BasePath, BuildNetworkParams, ChainSpec, ChainType,
-	GenericChainSpec, NoopRpcExtensionBuilder, RpcMethods, TaskType, TransactionPoolOptions,
+	build_network, error, BasePath, BuildNetworkParams, ChainSpec, ChainType, GenericChainSpec,
+	NoopRpcExtensionBuilder, RpcExtensionBuilder, RpcMethods, TaskType, TransactionPoolOptions,
 };
 
 pub use crate::builder::{
 	build_mock_network, database_settings, new_client, new_full_parts, new_state_kv, spawn_tasks,
 	SpawnTasksParams, TFullBackend, TFullCallExecutor, TFullClient, TFullParts, TFullStateKv,
 };
+pub use crate::config::Configuration;
 pub use crate::task_manager::{SpawnTaskHandle, TaskManager};
 
 use log::warn;

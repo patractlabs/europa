@@ -7,13 +7,14 @@ use sp_runtime::traits::Block as BlockT;
 
 use sc_basic_authorship::ProposerFactory;
 pub use sc_keystore::KeyStorePtr as KeyStore;
-use sc_service::{Configuration, RpcExtensionBuilder};
 use sc_transaction_pool::FullPool;
 
 use ec_executor::NativeExecutionDispatch;
 
-use crate::{build_mock_network, error, spawn_tasks, SpawnTasksParams, TFullBackend};
-use crate::{new_full_parts, TFullClient, TaskManager};
+use crate::{
+	build_mock_network, error, new_full_parts, spawn_tasks, Configuration, RpcExtensionBuilder,
+	SpawnTasksParams, TFullBackend, TFullClient, TaskManager,
+};
 
 /// A node components, for rpc construction.
 pub struct NodeComponents<TBl: BlockT, TRtApi, TExecDisp: NativeExecutionDispatch + 'static>
@@ -104,7 +105,7 @@ where
 
 	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
 		config.transaction_pool.clone(),
-		config.prometheus_registry(),
+		None,
 		task_manager.spawn_handle(),
 		client.clone(),
 	);
