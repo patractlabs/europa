@@ -18,6 +18,7 @@ pub use sc_service::{
 	build_network, error, BasePath, BuildNetworkParams, ChainSpec, ChainType, GenericChainSpec,
 	NoopRpcExtensionBuilder, RpcExtensionBuilder, RpcMethods, TaskType, TransactionPoolOptions,
 };
+pub use sc_tracing::TracingReceiver;
 
 pub use crate::builder::{
 	build_mock_network, database_settings, new_client, new_full_parts, new_state_kv, spawn_tasks,

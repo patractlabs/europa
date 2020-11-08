@@ -16,7 +16,10 @@ use sp_runtime::{traits::Block as BlockT, BuildStorage};
 use sp_transaction_pool::MaintainedTransactionPool;
 use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 
-use sc_client_api::execution_extensions::ExecutionExtensions;
+use sc_client_api::{
+	execution_extensions::{ExecutionExtensions, ExecutionStrategies},
+	ExecutionStrategy,
+};
 use sc_client_db::{Backend, DatabaseSettings};
 use sc_keystore::Store as Keystore;
 use sc_service::{error::Error, MallocSizeOfWasm, RpcExtensionBuilder};
@@ -76,7 +79,13 @@ where
 		let db_config = database_settings(&config);
 
 		let extensions = sc_client_api::execution_extensions::ExecutionExtensions::new(
-			config.execution_strategies.clone(),
+			ExecutionStrategies {
+				syncing: ExecutionStrategy::NativeElseWasm,
+				importing: ExecutionStrategy::NativeElseWasm,
+				block_construction: ExecutionStrategy::NativeElseWasm,
+				offchain_worker: ExecutionStrategy::NativeElseWasm,
+				other: ExecutionStrategy::NativeElseWasm,
+			},
 			Some(keystore.clone()),
 		);
 

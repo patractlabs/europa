@@ -12,12 +12,15 @@ structopt = "0.3.8"
 bytes = "0.5.0"
 hex = "0.4.0"
 log = "0.4"
+fdlimit = "0.2.0"
 tokio = { version = "0.2.21", features = [ "signal", "rt-core", "rt-threaded", "blocking" ] }
 
-sc-cli = { version = "0.8.0" }
 sp-utils = { version = "2.0.0" }
 sp-keyring = { version = "2.0.0" }
 sp-runtime = { version = "2.0.0" }
+sp-panic-handler = { version = "2.0.0" }
+
+sc-cli = { version = "0.8.0" }
 
 ec-service = { path = "../service" }
 ec-client-api = { path = "../api" }

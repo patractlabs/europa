@@ -10,11 +10,14 @@ use sp_runtime::{
 	traits::{Block as BlockT, Header as HeaderT},
 };
 
-use sc_cli::{
-	BlockNumberOrHash, CliConfiguration, Error as CliError, ImportParams, Role, SharedParams,
-};
+use sc_cli::BlockNumberOrHash;
 
 use ec_client_api::statekv;
+
+use crate::{
+	config::{ImportParams, SharedParams},
+	CliConfiguration, Error as CliError,
+};
 
 use log::info;
 
@@ -101,12 +104,6 @@ impl CliConfiguration for StateKvCmd {
 
 	fn import_params(&self) -> Option<&ImportParams> {
 		Some(&self.import_params)
-	}
-
-	fn role(&self, _is_dev: bool) -> sc_cli::Result<Role> {
-		Ok(Role::Authority {
-			sentry_nodes: vec![],
-		})
 	}
 }
 

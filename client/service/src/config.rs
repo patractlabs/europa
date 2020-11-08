@@ -22,7 +22,6 @@
 
 use std::net::SocketAddr;
 
-use sc_client_api::execution_extensions::ExecutionStrategies;
 pub use sc_client_db::{Database, DatabaseSettingsSrc as DatabaseConfig, PruningMode};
 
 use sc_chain_spec::ChainSpec;
@@ -53,8 +52,6 @@ pub struct Configuration {
 	pub pruning: PruningMode,
 	/// Chain configuration.
 	pub chain_spec: Box<dyn ChainSpec>,
-	/// Execution strategies.
-	pub execution_strategies: ExecutionStrategies,
 	/// RPC over HTTP binding address. `None` if disabled.
 	pub rpc_http: Option<SocketAddr>,
 	/// RPC over Websockets binding address. `None` if disabled.
