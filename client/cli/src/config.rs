@@ -28,7 +28,7 @@ use sc_cli::{
 	arg_enums::Database, generate_node_name, init_logger, DefaultConfigurationValues, Result,
 };
 // TODO may use local
-pub use sc_cli::{DatabaseParams, KeystoreParams, SharedParams, SubstrateCli};
+pub use sc_cli::{DatabaseParams, KeystoreParams, SubstrateCli};
 
 use ec_service::{
 	config::{
@@ -38,7 +38,7 @@ use ec_service::{
 	TracingReceiver,
 };
 
-use crate::params::{ImportParams, PruningParams};
+use crate::params::{ImportParams, PruningParams, SharedParams};
 
 /// The recommended open file descriptor limit to be configured for the process.
 const RECOMMENDED_OPEN_FILE_DESCRIPTOR_LIMIT: u64 = 10_000;
@@ -158,8 +158,8 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 	/// Get the chain ID (string).
 	///
 	/// By default this is retrieved from `SharedParams`.
-	fn chain_id(&self, is_dev: bool) -> Result<String> {
-		Ok(self.shared_params().chain_id(is_dev))
+	fn chain_id(&self) -> Result<String> {
+		Ok(self.shared_params().chain_id())
 	}
 
 	/// Get the name of the node.
@@ -254,8 +254,7 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 		cli: &C,
 		task_executor: TaskExecutor,
 	) -> Result<Configuration> {
-		// TODO may remove is_dev
-		let chain_id = self.chain_id(true)?;
+		let chain_id = self.chain_id()?;
 		let chain_spec = cli.load_spec(chain_id.as_str())?;
 		let base_path = self
 			.base_path()?

@@ -27,8 +27,8 @@ use sc_cli::{arg_enums::RpcMethods, TransactionPoolParams};
 
 use ec_service::{BasePath, TransactionPoolOptions};
 
-use crate::config::{CliConfiguration, KeystoreParams, SharedParams};
-use crate::params::ImportParams;
+use crate::config::{CliConfiguration, KeystoreParams};
+use crate::params::{ImportParams, SharedParams};
 use crate::{Error, Result};
 
 /// The `run` command used to run a node.
