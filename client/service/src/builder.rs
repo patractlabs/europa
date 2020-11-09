@@ -16,24 +16,24 @@ use sp_runtime::{traits::Block as BlockT, BuildStorage};
 use sp_transaction_pool::MaintainedTransactionPool;
 use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 
-use sc_client_api::execution_extensions::ExecutionExtensions;
+use sc_client_api::{
+	execution_extensions::{ExecutionExtensions, ExecutionStrategies},
+	ExecutionStrategy,
+};
 use sc_client_db::{Backend, DatabaseSettings};
 use sc_keystore::Store as Keystore;
-use sc_service::{
-	config::{Configuration, KeystoreConfig},
-	error::Error,
-	MallocSizeOfWasm, RpcExtensionBuilder,
-};
+use sc_service::{error::Error, MallocSizeOfWasm, RpcExtensionBuilder};
 
+use ec_client_db::StateKv;
 use ec_executor::{NativeExecutionDispatch, NativeExecutor, RuntimeInfo};
 
 use log::info;
 
 use crate::client::Client;
+use crate::config::{Configuration, KeystoreConfig};
 use crate::start_rpc_servers;
 use crate::task_manager::{SpawnTaskHandle, TaskManager};
 use crate::RpcHandlers;
-use ec_client_db::StateKv;
 
 /// Full client type.
 pub type TFullClient<TBl, TRtApi, TExecDisp> =
@@ -79,7 +79,13 @@ where
 		let db_config = database_settings(&config);
 
 		let extensions = sc_client_api::execution_extensions::ExecutionExtensions::new(
-			config.execution_strategies.clone(),
+			ExecutionStrategies {
+				syncing: ExecutionStrategy::NativeElseWasm,
+				importing: ExecutionStrategy::NativeElseWasm,
+				block_construction: ExecutionStrategy::NativeElseWasm,
+				offchain_worker: ExecutionStrategy::NativeElseWasm,
+				other: ExecutionStrategy::NativeElseWasm,
+			},
 			Some(keystore.clone()),
 		);
 

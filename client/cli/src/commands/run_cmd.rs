@@ -23,13 +23,13 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use regex::Regex;
 use structopt::StructOpt;
 
-use sc_cli::{
-	arg_enums::RpcMethods, CliConfiguration, Error, ImportParams, KeystoreParams, NetworkParams,
-	OffchainWorkerParams, Result, Role, SharedParams, TransactionPoolParams,
-};
+use sc_cli::{arg_enums::RpcMethods, TransactionPoolParams};
 
-use ec_service::config::TelemetryEndpoints;
-use ec_service::{config::PrometheusConfig, BasePath, ChainSpec, TransactionPoolOptions};
+use ec_service::{BasePath, TransactionPoolOptions};
+
+use crate::config::{CliConfiguration, KeystoreParams, SharedParams};
+use crate::params::ImportParams;
+use crate::{Error, Result};
 
 /// The `run` command used to run a node.
 #[derive(Debug, StructOpt)]
@@ -154,16 +154,8 @@ impl CliConfiguration for RunCmd {
 		Some(&self.import_params)
 	}
 
-	fn network_params(&self) -> Option<&NetworkParams> {
-		None
-	}
-
 	fn keystore_params(&self) -> Option<&KeystoreParams> {
 		Some(&self.keystore_params)
-	}
-
-	fn offchain_worker_params(&self) -> Option<&OffchainWorkerParams> {
-		None
 	}
 
 	fn node_name(&self) -> Result<String> {
@@ -184,29 +176,6 @@ impl CliConfiguration for RunCmd {
 
 	fn dev_key_seed(&self, _is_dev: bool) -> Result<Option<String>> {
 		Ok(Some("//Alice".into()))
-	}
-
-	fn telemetry_endpoints(&self, _: &Box<dyn ChainSpec>) -> Result<Option<TelemetryEndpoints>> {
-		Ok(None)
-	}
-
-	fn role(&self, _: bool) -> Result<Role> {
-		Ok(Role::Authority {
-			sentry_nodes: vec![],
-		})
-	}
-
-	fn force_authoring(&self) -> Result<bool> {
-		// Imply forced authoring on --dev
-		Ok(self.shared_params.dev || self.force_authoring)
-	}
-
-	fn prometheus_config(&self, _: u16) -> Result<Option<PrometheusConfig>> {
-		Ok(None)
-	}
-
-	fn disable_grandpa(&self) -> Result<bool> {
-		Ok(true)
 	}
 
 	fn rpc_ws_max_connections(&self) -> Result<Option<usize>> {
@@ -272,10 +241,6 @@ impl CliConfiguration for RunCmd {
 
 	fn transaction_pool(&self) -> Result<TransactionPoolOptions> {
 		Ok(self.pool_config.transaction_pool())
-	}
-
-	fn max_runtime_instances(&self) -> Result<Option<usize>> {
-		Ok(self.max_runtime_instances.map(|x| x.min(256)))
 	}
 
 	fn base_path(&self) -> Result<Option<BasePath>> {

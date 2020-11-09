@@ -27,8 +27,9 @@ use log::info;
 use sp_utils::metrics::{TOKIO_THREADS_ALIVE, TOKIO_THREADS_TOTAL};
 use std::marker::PhantomData;
 
-use sc_cli::{CliConfiguration, Result, SubstrateCli};
+// use sc_cli::{Result, SubstrateCli};
 
+use crate::{CliConfiguration, Result, SubstrateCli};
 use ec_service::{config::Configuration, TaskManager, TaskType};
 
 #[cfg(target_family = "unix")]
@@ -162,8 +163,6 @@ impl<C: SubstrateCli> Runner<C> {
 			Local::today().year(),
 		);
 		info!("📋 Chain specification: {}", self.config.chain_spec.name());
-		info!("🏷  Node name: {}", self.config.network.node_name);
-		info!("👤 Role: {}", self.config.display_role());
 		info!(
 			"💾 Database: {} at {}",
 			self.config.database,

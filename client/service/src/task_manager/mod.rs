@@ -1,5 +1,7 @@
-// Copyright 2020 Parity Technologies (UK) Ltd.
 // This file is part of europa which is forked form Substrate.
+
+// Copyright 2020 Parity Technologies (UK) Ltd.
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
 
@@ -30,7 +32,6 @@ use sc_service::{
 };
 use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 
-// pub(crate) type SomeFuture = Pin<Box<dyn Future<Output = ()> + Send>>;
 pub(crate) type JoinFuture = Pin<Box<dyn Future<Output = ()> + Send>>;
 
 /// An handle for spawning tasks in the service.
