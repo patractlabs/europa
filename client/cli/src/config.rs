@@ -28,7 +28,7 @@ use sc_cli::{
 	arg_enums::Database, generate_node_name, init_logger, DefaultConfigurationValues, Result,
 };
 // TODO may use local
-pub use sc_cli::{DatabaseParams, ImportParams, KeystoreParams, SharedParams, SubstrateCli};
+pub use sc_cli::{DatabaseParams, KeystoreParams, SharedParams, SubstrateCli};
 
 use ec_service::{
 	config::{
@@ -38,7 +38,7 @@ use ec_service::{
 	TracingReceiver,
 };
 
-use crate::params::pruning_params::PruningParams;
+use crate::params::{ImportParams, PruningParams};
 
 /// The recommended open file descriptor limit to be configured for the process.
 const RECOMMENDED_OPEN_FILE_DESCRIPTOR_LIMIT: u64 = 10_000;
@@ -55,9 +55,7 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 
 	/// Get the PruningParams for this object
 	fn pruning_params(&self) -> Option<&PruningParams> {
-		// TODO may use local import params
-		None
-		// self.import_params().map(|x| (x.pruning_params).into())
+		self.import_params().map(|x| &x.pruning_params)
 	}
 
 	/// Get the KeystoreParams for this object
