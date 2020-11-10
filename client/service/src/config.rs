@@ -66,12 +66,12 @@ pub struct Configuration {
 	pub rpc_methods: RpcMethods,
 	// /// Should offchain workers be executed.
 	// pub offchain_worker: OffchainWorkerConfig, // todo may need offchain in future
-	/// Development key seed.
-	///
-	/// When running in development mode, the seed will be used to generate authority keys by the keystore.
-	///
-	/// Should only be set when `node` is running development mode.
-	pub dev_key_seed: Option<String>, // todo check later
+	// /// Development key seed.
+	// ///
+	// /// When running in development mode, the seed will be used to generate authority keys by the keystore.
+	// ///
+	// /// Should only be set when `node` is running development mode.
+	// pub dev_key_seed: Option<String>, // todo may need offchain in future
 	/// Tracing targets
 	pub tracing_targets: Option<String>,
 	/// Tracing receiver

@@ -174,33 +174,12 @@ impl CliConfiguration for RunCmd {
 		Ok(name)
 	}
 
-	fn dev_key_seed(&self, _is_dev: bool) -> Result<Option<String>> {
-		Ok(Some("//Alice".into()))
-	}
-
 	fn rpc_ws_max_connections(&self) -> Result<Option<usize>> {
 		Ok(self.ws_max_connections)
 	}
 
-	fn rpc_cors(&self, is_dev: bool) -> Result<Option<Vec<String>>> {
-		Ok(self
-			.rpc_cors
-			.clone()
-			.unwrap_or_else(|| {
-				if is_dev {
-					log::warn!("Running in --dev mode, RPC CORS has been disabled.");
-					Cors::All
-				} else {
-					Cors::List(vec![
-						"http://localhost:*".into(),
-						"http://127.0.0.1:*".into(),
-						"https://localhost:*".into(),
-						"https://127.0.0.1:*".into(),
-						"https://polkadot.js.org".into(),
-					])
-				}
-			})
-			.into())
+	fn rpc_cors(&self) -> Result<Option<Vec<String>>> {
+		Ok(self.rpc_cors.clone().unwrap_or_else(|| Cors::All).into())
 	}
 
 	fn rpc_http(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
