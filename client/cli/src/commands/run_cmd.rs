@@ -142,7 +142,7 @@ pub struct RunCmd {
 	///
 	/// Note: the directory is random per process execution. This directory is used as base path
 	/// which includes: database, node key and keystore.
-	#[structopt(long, conflicts_with = "base-path")]
+	#[structopt(long, conflicts_with_all = &["base-path", "workspace"])]
 	pub tmp: bool,
 }
 impl CliConfiguration for RunCmd {
@@ -244,7 +244,6 @@ impl CliConfiguration for RunCmd {
 	}
 
 	fn base_path(&self) -> Result<Option<BasePath>> {
-		// TODO add workspace path here
 		Ok(if self.tmp {
 			Some(BasePath::new_temp_dir()?)
 		} else {
