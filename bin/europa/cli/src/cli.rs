@@ -1,6 +1,6 @@
 use structopt::StructOpt;
 
-use ec_cli::{RunCmd, StateKvCmd};
+use ec_cli::{RunCmd, StateKvCmd, WorkspaceCmd};
 
 #[derive(Debug, StructOpt)]
 pub struct Cli {
@@ -13,6 +13,9 @@ pub struct Cli {
 
 #[derive(Debug, StructOpt)]
 pub enum Subcommand {
-	/// print modified stored state kvs for a block.
+	/// Print modified stored state kvs for a block.
 	StateKv(StateKvCmd),
+
+	/// Related to workspace operation.
+	Workspace(WorkspaceCmd),
 }

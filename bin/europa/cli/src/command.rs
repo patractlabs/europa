@@ -54,6 +54,7 @@ pub fn run() -> sc_cli::Result<()> {
 					cmd.run::<europa_runtime::opaque::Block, _>(state_kv)
 				})
 			}
+			Subcommand::Workspace(cmd) => cmd.init_and_run::<Cli>(),
 		},
 		None => {
 			let command = &cli.run;

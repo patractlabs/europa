@@ -24,8 +24,10 @@ use log::warn;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 
+use serde::{Deserialize, Serialize};
+
 use sc_cli::{
-	arg_enums::Database, generate_node_name, init_logger, DefaultConfigurationValues, Result,
+	arg_enums::Database, generate_node_name, init_logger, DefaultConfigurationValues, Error, Result,
 };
 // TODO may use local
 pub use sc_cli::{DatabaseParams, KeystoreParams, SubstrateCli};
@@ -73,6 +75,11 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 	/// By default this is retrieved from `SharedParams`.
 	fn base_path(&self) -> Result<Option<BasePath>> {
 		Ok(self.shared_params().base_path())
+	}
+
+	/// Get the current workspace or
+	fn workspace(&self) -> Option<&str> {
+		self.shared_params().workspace()
 	}
 
 	/// Get the transaction pool options
@@ -256,9 +263,48 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 	) -> Result<Configuration> {
 		let chain_id = self.chain_id()?;
 		let chain_spec = cli.load_spec(chain_id.as_str())?;
-		let base_path = self
+		let mut base_path = self
 			.base_path()?
 			.unwrap_or_else(|| BasePath::from_project("", "", &C::executable_name()));
+
+		let metadata = metadata(&base_path, |mut metadata| {
+			let workspace = self.workspace().unwrap_or(
+				metadata
+					.current_workspace
+					.as_ref()
+					.map(AsRef::as_ref)
+					.unwrap_or(DEFAULT_WORKSPACE),
+			);
+			match metadata.workspaces {
+				Some(ref mut list) => {
+					if !list.iter().any(|x| x == workspace) {
+						list.push(workspace.to_string());
+					}
+				}
+				None => metadata.workspaces = Some(vec![workspace.to_string()]),
+			}
+			metadata.current_workspace = Some(workspace.to_string());
+			metadata
+		})?;
+
+		let workspace = metadata
+			.current_workspace
+			.as_ref()
+			.map(ToString::to_string)
+			.expect("workspace must exist");
+		let workspace_list = metadata
+			.workspaces
+			.as_ref()
+			.map(Clone::clone)
+			.expect("workspace must exist");
+		match base_path {
+			BasePath::Permanenent(ref mut p) => {
+				// replace old path to new path with workspace
+				*p = p.join(&workspace);
+			}
+			BasePath::Temporary(_) => { /* no thing for temporary dir*/ }
+		}
+
 		let config_dir = base_path
 			.path()
 			.to_path_buf()
@@ -296,6 +342,8 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 			chain_spec,
 			announce_block: self.announce_block()?,
 			base_path: Some(base_path),
+			workspace,
+			workspace_list,
 			informant_output_format: Default::default(),
 		})
 	}
@@ -340,4 +388,39 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 
 		Ok(())
 	}
+}
+
+pub const METADATA_FILE: &'static str = "_metadata";
+pub const DEFAULT_WORKSPACE: &'static str = "default";
+
+#[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
+pub struct Metadata {
+	pub workspaces: Option<Vec<String>>,
+	pub current_workspace: Option<String>,
+}
+
+pub fn metadata(base_path: &BasePath, f: impl Fn(Metadata) -> Metadata) -> Result<Metadata> {
+	use std::fs;
+	let mut p = base_path.path().to_path_buf();
+	if !p.exists() {
+		fs::create_dir_all(&p)?;
+	}
+	p.push(METADATA_FILE);
+	if !p.exists() {
+		fs::write(&p, "{}")?;
+	}
+	let data = fs::read(&p)?;
+	let metadata: Metadata = serde_json::from_slice(&data).map_err(|e| {
+		Error::Other(format!(
+			"metadata file do not contains a valid json, e:{:?}",
+			e
+		))
+	})?;
+	let old_metadata = metadata.clone();
+	let new_metadata = f(metadata);
+	if old_metadata != new_metadata {
+		let bytes = serde_json::to_vec(&new_metadata).expect("must be valid metadata struct json");
+		fs::write(p, bytes)?;
+	}
+	Ok(new_metadata)
 }

@@ -80,18 +80,10 @@ pub struct Configuration {
 	pub announce_block: bool,
 	/// Base path of the configuration
 	pub base_path: Option<BasePath>,
+	/// Workspace for current node execution environment
+	pub workspace: String,
+	/// All workspace list
+	pub workspace_list: Vec<String>,
 	/// Configuration of the output format that the informant uses.
 	pub informant_output_format: sc_informant::OutputFormat, // todo may also need in future
 }
-
-// impl Configuration {
-// 	/// Returns a string displaying the node role.
-// 	pub fn display_role(&self) -> String {
-// 		self.role.to_string()
-// 	}
-//
-// 	/// Returns the prometheus metrics registry, if available.
-// 	pub fn prometheus_registry<'a>(&'a self) -> Option<&'a Registry> {
-// 		self.prometheus_config.as_ref().map(|config| &config.registry)
-// 	}
-// }

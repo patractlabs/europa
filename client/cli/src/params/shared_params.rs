@@ -34,6 +34,10 @@ pub struct SharedParams {
 	#[structopt(long, short = "d", value_name = "PATH", parse(from_os_str))]
 	pub base_path: Option<PathBuf>,
 
+	/// Specify workspace.
+	#[structopt(long, short = "w", value_name = "WORKSPACE")]
+	pub workspace: Option<String>,
+
 	/// Sets a custom logging filter. Syntax is <target>=<level>, e.g. -lsync=debug.
 	///
 	/// Log levels (least to most verbose) are error, warn, info, debug, and trace.
@@ -54,6 +58,11 @@ impl SharedParams {
 			Some(ref chain) => chain.clone(),
 			None => "".into(),
 		}
+	}
+
+	/// Get the workspace for the parameters provided
+	pub fn workspace(&self) -> Option<&str> {
+		self.workspace.as_ref().map(AsRef::as_ref)
 	}
 
 	/// Get the filters for the logging
