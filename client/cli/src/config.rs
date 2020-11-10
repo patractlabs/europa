@@ -24,6 +24,8 @@ use log::warn;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 
+use serde::{Deserialize, Serialize};
+
 use sc_cli::{
 	arg_enums::Database, generate_node_name, init_logger, DefaultConfigurationValues, Error, Result,
 };
@@ -265,7 +267,7 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 			.base_path()?
 			.unwrap_or_else(|| BasePath::from_project("", "", &C::executable_name()));
 
-		let metadata = metadata(&base_path, |metadata| {
+		let metadata = metadata(&base_path, |mut metadata| {
 			let workspace = self.workspace().unwrap_or(
 				metadata
 					.current_workspace
@@ -282,6 +284,7 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 				None => metadata.workspaces = Some(vec![workspace.to_string()]),
 			}
 			metadata.current_workspace = Some(workspace.to_string());
+			metadata
 		})?;
 
 		let workspace = metadata
@@ -388,16 +391,15 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 }
 
 pub const METADATA_FILE: &'static str = "_metadata";
-const DEFAULT_WORKSPACE: &'static str = "default";
+pub const DEFAULT_WORKSPACE: &'static str = "default";
 
-use serde::{Deserialize, Serialize};
-#[derive(Serialize, Deserialize, Clone)]
-struct Metadata {
-	workspaces: Option<Vec<String>>,
-	current_workspace: Option<String>,
+#[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
+pub struct Metadata {
+	pub workspaces: Option<Vec<String>>,
+	pub current_workspace: Option<String>,
 }
 
-fn metadata(base_path: &BasePath, f: impl Fn(&mut Metadata)) -> Result<Metadata> {
+pub fn metadata(base_path: &BasePath, f: impl Fn(Metadata) -> Metadata) -> Result<Metadata> {
 	use std::fs;
 	let mut p = base_path.path().to_path_buf();
 	if !p.exists() {
@@ -408,14 +410,17 @@ fn metadata(base_path: &BasePath, f: impl Fn(&mut Metadata)) -> Result<Metadata>
 		fs::write(&p, "{}")?;
 	}
 	let data = fs::read(&p)?;
-	let mut metadata: Metadata = serde_json::from_slice(&data).map_err(|e| {
+	let metadata: Metadata = serde_json::from_slice(&data).map_err(|e| {
 		Error::Other(format!(
 			"metadata file do not contains a valid json, e:{:?}",
 			e
 		))
 	})?;
-	f(&mut metadata);
-	let bytes = serde_json::to_vec(&metadata).expect("must be valid metadata struct json");
-	fs::write(p, bytes)?;
-	Ok(metadata)
+	let old_metadata = metadata.clone();
+	let new_metadata = f(metadata);
+	if old_metadata != new_metadata {
+		let bytes = serde_json::to_vec(&new_metadata).expect("must be valid metadata struct json");
+		fs::write(p, bytes)?;
+	}
+	Ok(new_metadata)
 }
