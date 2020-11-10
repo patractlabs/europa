@@ -215,15 +215,8 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 	/// Get the RPC cors (`None` if disabled)
 	///
 	/// By default this is `Some(Vec::new())`.
-	fn rpc_cors(&self, _is_dev: bool) -> Result<Option<Vec<String>>> {
+	fn rpc_cors(&self) -> Result<Option<Vec<String>>> {
 		Ok(Some(Vec::new()))
-	}
-
-	/// Get the development key seed from the current object
-	///
-	/// By default this is `None`.
-	fn dev_key_seed(&self, _is_dev: bool) -> Result<Option<String>> {
-		Ok(Default::default())
 	}
 
 	/// Get the tracing targets from the current object (if any)
@@ -335,8 +328,7 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 			rpc_ipc: self.rpc_ipc()?,
 			rpc_methods: self.rpc_methods()?,
 			rpc_ws_max_connections: self.rpc_ws_max_connections()?,
-			rpc_cors: self.rpc_cors(true)?,
-			dev_key_seed: self.dev_key_seed(true)?, // TODO may remove is_dev
+			rpc_cors: self.rpc_cors()?,
 			tracing_targets: self.tracing_targets()?,
 			tracing_receiver: self.tracing_receiver()?,
 			chain_spec,
