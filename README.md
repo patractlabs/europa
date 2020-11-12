@@ -142,7 +142,7 @@ Nov 12 17:25:47.428  INFO 📖 Workspace: another-workspace | Current workspace 
 Nov 12 17:25:47.428  INFO ⛓  Native runtime: europa-1 (europa-1.tx1.au1)  
 ```
 ##### Set default workspace
-stop the europa, the execute:
+stop the europa, than execute:
 ```bash
 # another-workspace is the workspace name which we what to set as default.
 $ ./target/debug/europa workspace default another-workspace
@@ -151,7 +151,7 @@ Nov 12 17:28:41.981  INFO       default
 Nov 12 17:28:41.981  INFO     
 Nov 12 17:28:41.981  INFO Set [another-workspace] as default workspace.  
 ```
-then start europa, would use "another-workspace" as default workspace.
+then start europa, europa would use "another-workspace" as default workspace.
 ```bash
 $ ./target/debug/europa
 # ...
