@@ -172,6 +172,10 @@ impl<C: SubstrateCli> Runner<C> {
 				.map_or_else(|| "<unknown>".to_owned(), |p| p.display().to_string())
 		);
 		info!(
+			"📖 Workspace: {} | Current workspace list: {:?}",
+			self.config.workspace, self.config.workspace_list,
+		);
+		info!(
 			"⛓  Native runtime: {}",
 			C::native_runtime_version(&self.config.chain_spec)
 		);
