@@ -62,12 +62,15 @@ pub trait EuropaApi<B>
 where
 	B: BlockT,
 {
+	/// The rpc provide a way to produce a batch of empty block to reach target block height.
 	#[rpc(name = "europa_forwardToHeight")]
 	fn forward_to_height(&self, height: NumberOf<B>) -> Result<()>;
 
+	/// The rpc could revert current best height to the specified height which is less than current best height.
 	#[rpc(name = "europa_backwardToHeight")]
 	fn backward_to_height(&self, height: NumberOf<B>) -> Result<()>;
 
+	/// The rpc could print the modified state kvs for a specified block height or hash.
 	#[rpc(name = "europa_modifiedStateKvs")]
 	fn state_kvs(
 		&self,
