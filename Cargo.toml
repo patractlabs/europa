@@ -19,3 +19,4 @@ members = [
     "client/service",
     "client/rpc",
 ]
+exclude = [ "vendor/substrate" ]

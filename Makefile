@@ -43,8 +43,8 @@ pre-format: unset-override
 	@rustup component add rustfmt-preview
 
 format: pre-format
-	@cargo fmt --all -- --check >/dev/null || \
-	cargo fmt --all
+	@cargo +nightly fmt --all -- --check >/dev/null || \
+	cargo +nightly fmt --all
 
 clean:
 	@cargo clean
