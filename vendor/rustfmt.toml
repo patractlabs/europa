@@ -1,0 +1,4 @@
+# This folder is exclued in the workspace of jupiter, so the format script
+# will not affect here, but In case body run `rustfmt` while editing files
+# under this directory.
+ignore = ["**/*"]

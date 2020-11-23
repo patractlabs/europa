@@ -36,9 +36,9 @@ pallet-transaction-payment = { version = "2.0.0" , default-features = false }
 pallet-transaction-payment-rpc-runtime-api = { version = "2.0.0" , default-features = false }
 pallet-sudo = { version = "2.0.0" , default-features = false }
 
-pallet-contracts = { version = "2.0.0" , default-features = false }
-pallet-contracts-primitives = { version = "2.0.0", default-features = false }
-pallet-contracts-rpc-runtime-api = { version = "0.8.0" , default-features = false }
+pallet-contracts = { version = "2.0.0" , default-features = false, path = "../../../vendor/substrate/frame/contracts" }
+pallet-contracts-primitives = { version = "2.0.0", default-features = false, path = "../../../vendor/substrate/frame/contracts/common" }
+pallet-contracts-rpc-runtime-api = { version = "0.8.0" , default-features = false, path = "../../../vendor/substrate/frame/contracts/rpc/runtime-api" }
 
 [features]
 default = ["std"]
