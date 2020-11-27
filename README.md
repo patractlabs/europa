@@ -6,6 +6,35 @@ We also provide a local database, a detailed log print function, a concept of wo
 
 Riot Group for disscusion: https://app.element.io/#/room/#PatractLabsDev:matrix.org
 
+**Note: Because currently `pallet-contract` is under developing, may contains some breaking changes. Thus we use branch to distinguish different features.**
+
+We provide tow branches now:
+* `master`: run newest `pallet-contracts` on v2.0.0 substrate dependencies now.
+* `substrate-v2.0.0`: run v2.0.0 `pallet-contracts` based on v2.0.0 substrate dependencies.
+
+We may keep it in this way until `pallet-contracts` release v3.0.0
+* `master` branch is our default branch, which provides our forked `pallet-contracts` crate that tracks the newest substrate `pallet-contracts` module.
+    We provide our forked `pallet-contracts` in `vendor` directory which tracks a pointed version for substrate. This forked `pallet-contracts` is from 
+    the branch `europa-contracts` in our substrate repo. In this forked `pallet-contracts` we would provide many self test features.
+    
+    More information about this forked substrate refers to [this repo](https://github.com/patractlabs/substrate)
+    
+    Currently, the tracked substrate commit is [756212f36693491b232d98942f437ad054a0510e](https://github.com/paritytech/substrate/commit/756212f36693491b232d98942f437ad054a0510e)
+    
+    For substrate change log:
+    -[x] [contracts: Add missing instruction to the `Schedule`](https://github.com/paritytech/substrate/pull/7527)
+    -[ ] [contracts: Add `salt` argument to contract instantiation #7482](https://github.com/paritytech/substrate/pull/7482) (Not catch up this pr yet)
+
+    For our change log:
+    
+    (Not yet now)
+
+* `substrate-v2.0.0` branch is fixed in v2.0.0 substrate, both for `pallet-contracts` module and all substrate dependencies.
+
+    If you just need v2.0.0 contract test, do not need to clone git submodule in vendor, just switch to this branch.
+
+Europa is tracking v2.0.0 substrate now. We would update v2.0.0 substrate to git dependencies later, and retain the v2.0.0 dependencies in branch `substrate-v2.0.0`.
+    
 ## Features
 In details, current Europa provide:
 1. Europa sandbox framework is another implementation for [substrate client](https://github.com/paritytech/substrate/tree/master/client).
@@ -79,6 +108,23 @@ In details, current Europa provide:
 
 ## Build and run
 ### Build
+#### clone this repo
+```bash
+> git clone --recurse-submodules https://github.com/patractlabs/europa.git
+## or do following commands
+> git clone https://github.com/patractlabs/europa.git
+> cd europa/vendor
+> git submodule update --init --recursive
+```
+If you want to use `substrate-v2.0.0` branch, do following commands:
+```bash
+> git clone --branch substrate-v2.0.0 https://github.com/patractlabs/europa.git
+## or do following commands:
+> git clone https://github.com/patractlabs/europa.git
+> git checkout -t origin/substrate-v2.0.0
+```
+
+#### compile
 The building for this project is same as [substrate](https://github.com/paritytech/substrate/).
 
 When building finish, current executable file is named `europa` in `target` directory.
