@@ -1,14 +1,20 @@
 # Europa
-Europa is a sandbox framework of [substrate](https://github.com/paritytech/substrate/) runtime environment, which would be used to simplify the developing, debugging, and integration test when developers develop Substrate runtime pallets and test pallet-contracts. 
-The sandbox framework will remove WASM executor, p2p, consensus functions and other unnecessary parts, just remaining the native execution environment and RPC interface. 
+Europa is a sandbox environment that runs [`FRAME Contracts pallet`](https://substrate.dev/docs/en/knowledgebase/smart-contracts/contracts-pallet), and it is also a framework that provides a sandbox environment for [substrate](https://github.com/paritytech/substrate/) runtime. Europa could be used to simplify the developing, debugging, and integration test when developers develop Substrate runtime pallets and test smart contract for `FRAME Contracts pallet`. 
 
-We also provide a local database, a detailed log print function, a concept of workspaces which isolates different developing environments, and maybe become an electron wrapper app in future.
+The sandbox framework already removes WASM executor, p2p, consensus functions and other unnecessary parts, just remaining the native execution environment and RPC interface. 
+
+Europa sandbox framework also provides a local database, a detailed log print function, a concept of workspaces which isolates different developing environments. 
+
+Regarding Europa as a sandbox with `FRAME Contracts pallet`, We would provide more debugging  features in v0.2 Europa, refers to [Patract Hub's treasury proposal for Europa (sandbox) v0.2](https://polkadot.polkassembly.io/post/189), and we may build it as an electron app to allow developers to download and run directly in future.
 
 Riot Group for disscusion: https://app.element.io/#/room/#PatractLabsDev:matrix.org
 
-**Note: Because currently `pallet-contract` is under developing, may contains some breaking changes. Thus we use branch to distinguish different features.**
+**Note: Because currently `FRAME Contracts pallet(pallet-contract)` is under developing, may contains some breaking changes. Thus we use branch to distinguish different features.**
+
+*Note: We name `FRAME Contracts pallet` as `pallet-contract` in following doc.*
 
 We provide tow branches now:
+
 * `master`: run newest `pallet-contracts` on v2.0.0 substrate dependencies now.
 * `substrate-v2.0.0`: run v2.0.0 `pallet-contracts` based on v2.0.0 substrate dependencies.
 
@@ -52,7 +58,7 @@ In details, current Europa provide:
     We think runtime `no-std` could not debug easily, like set breaking point for gdb debug and add log print for any formatted printing (Substrate provide a log in runtime, but it's limited). And when someone wants to integrate experimental features in runtime to verify them which do not support WASM yet, Europa provides a friendly environment.
     
     e.g. We would fork `wasmi` and change it a lot to provide more features. Those features are just used for testing contracts, not used in production blockchain. 
-           
+    
 4. Provide another database called `state-kv` to records every block modified state.
 
     The sandbox framework could export modified state kvs for every block, including state kvs and child state kvs. Currently Europa just provides a way to export all state for a specified block state, but for debugging, we just need to know the changed state after executing a block.
@@ -99,9 +105,9 @@ In details, current Europa provide:
             }
         }
         ```
-      
-6. Use workspace to isolate different node environment.
     
+6. Use workspace to isolate different node environment.
+   
     Europa sandbox framework provides the concept of workspace to isolate node environment. In Substrate, developer could use command `-d/--base-path` to isolate different data environment. 
     
     We think `-d/--base-path` should be used for assigning the workspace directory for Europa, and using `-w/--workspace` command to specify a separate environment. And on the other hand, all existed workspaces would be recorded, developer could switch between different workspace.  
