@@ -28,8 +28,8 @@ We may keep it in this way until `pallet-contracts` release v3.0.0
     Currently, the tracked substrate commit is [756212f36693491b232d98942f437ad054a0510e](https://github.com/paritytech/substrate/commit/756212f36693491b232d98942f437ad054a0510e)
     
     For substrate change log:
-    -[x] [contracts: Add missing instruction to the `Schedule`](https://github.com/paritytech/substrate/pull/7527)
-    -[ ] [contracts: Add `salt` argument to contract instantiation #7482](https://github.com/paritytech/substrate/pull/7482) (Not catch up this pr yet)
+    - [x] [contracts: Add missing instruction to the `Schedule`](https://github.com/paritytech/substrate/pull/7527)
+    - [ ] [contracts: Add `salt` argument to contract instantiation #7482](https://github.com/paritytech/substrate/pull/7482) (Not catch up this pr yet)
 
     For our change log:
     
