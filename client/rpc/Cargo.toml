@@ -11,11 +11,11 @@ jsonrpc-derive = "15.0.0"
 serde = { version = "1.0.101", features = ["derive"] }
 hex = "0.4"
 
-sp-utils = { version = "2.0.0" }
-sp-blockchain = { version = "2.0.0" }
-sp-runtime = { version = "2.0.0" }
-sp-core = { version = "2.0.0" }
+sp-utils = { version = "2.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-blockchain = { version = "2.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-runtime = { version = "2.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { version = "2.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 
-sc-client-api = { version = "2.0.0" }
+sc-client-api = { version = "2.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 
 ec-client-api = { path = "../api" }

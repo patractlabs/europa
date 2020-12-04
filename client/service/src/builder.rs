@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use futures::StreamExt;
 use jsonrpc_pubsub::manager::SubscriptionManager;
-use parking_lot::RwLock;
 
 use sc_client_api::{
 	BlockBackend, BlockchainEvents, ExecutorProvider, ProofProvider, StorageProvider, UsageProvider,
@@ -11,7 +10,8 @@ use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_blockchain::{HeaderBackend, HeaderMetadata};
 use sp_consensus::block_validation::Chain;
 use sp_core::traits::{CodeExecutor, SpawnNamed};
-use sp_runtime::traits::BlockIdTo;
+use sp_keystore::{CryptoStore, SyncCryptoStorePtr};
+use sp_runtime::traits::{BlockIdTo, Zero};
 use sp_runtime::{traits::Block as BlockT, BuildStorage};
 use sp_transaction_pool::MaintainedTransactionPool;
 use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
@@ -21,7 +21,7 @@ use sc_client_api::{
 	ExecutionStrategy,
 };
 use sc_client_db::{Backend, DatabaseSettings};
-use sc_keystore::Store as Keystore;
+use sc_keystore::LocalKeystore;
 use sc_service::{error::Error, MallocSizeOfWasm, RpcExtensionBuilder};
 
 use ec_client_db::StateKv;
@@ -51,9 +51,58 @@ pub type TFullCallExecutor<TBl, TExecDisp> =
 pub type TFullParts<TBl, TRtApi, TExecDisp> = (
 	TFullClient<TBl, TRtApi, TExecDisp>,
 	Arc<TFullBackend<TBl>>,
-	Arc<RwLock<sc_keystore::Store>>,
+	KeystoreContainer,
 	TaskManager,
 );
+
+enum KeystoreContainerInner {
+	Local(Arc<LocalKeystore>),
+}
+
+/// Construct and hold different layers of Keystore wrappers
+pub struct KeystoreContainer(KeystoreContainerInner);
+
+impl KeystoreContainer {
+	/// Construct KeystoreContainer
+	pub fn new(config: &KeystoreConfig) -> Result<Self, Error> {
+		let keystore = Arc::new(match config {
+			KeystoreConfig::Path { path, password } => {
+				LocalKeystore::open(path.clone(), password.clone())?
+			}
+			KeystoreConfig::InMemory => LocalKeystore::in_memory(),
+		});
+
+		Ok(Self(KeystoreContainerInner::Local(keystore)))
+	}
+
+	/// Returns an adapter to the asynchronous keystore that implements `CryptoStore`
+	pub fn keystore(&self) -> Arc<dyn CryptoStore> {
+		match self.0 {
+			KeystoreContainerInner::Local(ref keystore) => keystore.clone(),
+		}
+	}
+
+	/// Returns the synchrnous keystore wrapper
+	pub fn sync_keystore(&self) -> SyncCryptoStorePtr {
+		match self.0 {
+			KeystoreContainerInner::Local(ref keystore) => keystore.clone() as SyncCryptoStorePtr,
+		}
+	}
+
+	/// Returns the local keystore if available
+	///
+	/// The function will return None if the available keystore is not a local keystore.
+	///
+	/// # Note
+	///
+	/// Using the [`LocalKeystore`] will result in loosing the ability to use any other keystore implementation, like
+	/// a remote keystore for example. Only use this if you a certain that you require it!
+	pub fn local_keystore(&self) -> Option<Arc<LocalKeystore>> {
+		match self.0 {
+			KeystoreContainerInner::Local(ref keystore) => Some(keystore.clone()),
+		}
+	}
+}
 
 /// Create the initial parts of a full node.
 pub fn new_full_parts<TBl, TRtApi, TExecDisp>(
@@ -64,10 +113,7 @@ where
 	TBl: BlockT,
 	TExecDisp: NativeExecutionDispatch + 'static,
 {
-	let keystore = match &config.keystore {
-		KeystoreConfig::Path { path, password } => Keystore::open(path.clone(), password.clone())?,
-		KeystoreConfig::InMemory => Keystore::new_in_memory(),
-	};
+	let keystore_container = KeystoreContainer::new(&config.keystore)?;
 
 	let task_manager = TaskManager::new(config.task_executor.clone());
 
@@ -86,7 +132,7 @@ where
 				offchain_worker: ExecutionStrategy::NativeElseWasm,
 				other: ExecutionStrategy::NativeElseWasm,
 			},
-			Some(keystore.clone()),
+			Some(keystore_container.sync_keystore()),
 		);
 
 		new_client(
@@ -99,7 +145,7 @@ where
 		)?
 	};
 
-	Ok((client, backend, keystore, task_manager))
+	Ok((client, backend, keystore_container, task_manager))
 }
 pub fn database_settings(config: &Configuration) -> sc_client_db::DatabaseSettings {
 	sc_client_db::DatabaseSettings {
@@ -171,7 +217,7 @@ pub struct SpawnTasksParams<'a, TBl: BlockT, TCl, TExPool, TRpc, Backend, S> {
 	/// A task manager returned by `new_full_parts`/`new_light_parts`.
 	pub task_manager: &'a mut TaskManager,
 	/// A shared keystore returned by `new_full_parts`/`new_light_parts`.
-	pub keystore: Arc<RwLock<Keystore>>,
+	pub keystore: SyncCryptoStorePtr,
 	/// A shared transaction pool.
 	pub transaction_pool: Arc<TExPool>,
 	/// A RPC extension builder. Use `NoopRpcExtensionBuilder` if you just want to pass in the
@@ -263,13 +309,14 @@ where
 			europa_rpc.clone(),
 		)
 	};
-	// TODO add custom rpc
-	let rpc = start_rpc_servers(&config, gen_handler, None)?;
+
+	let rpc_metrics = sc_rpc_server::RpcMetrics::new(None).expect("this metrics can't be error");
+	let rpc = start_rpc_servers(&config, gen_handler, rpc_metrics.clone())?;
 	// This is used internally, so don't restrict access to unsafe RPC
 	let rpc_handlers = RpcHandlers(Arc::new(
 		gen_handler(
 			sc_rpc::DenyUnsafe::No,
-			sc_rpc_server::RpcMiddleware::new(None, "inbrowser"),
+			sc_rpc_server::RpcMiddleware::new(rpc_metrics, "inbrowser"),
 		)
 		.into(),
 	));
@@ -295,7 +342,7 @@ fn gen_handler<TBl, TBackend, TStateKv, TExPool, TRpc, TCl>(
 	spawn_handle: SpawnTaskHandle,
 	client: Arc<TCl>,
 	transaction_pool: Arc<TExPool>,
-	keystore: Arc<RwLock<Keystore>>,
+	keystore: SyncCryptoStorePtr,
 	rpc_extensions_builder: &(dyn RpcExtensionBuilder<Output = TRpc> + Send),
 	system_rpc_tx: TracingUnboundedSender<sc_rpc::system::Request<TBl>>,
 	europa_rpc: Option<ec_rpc::Europa<TCl, TBl, TBackend, TStateKv>>,
@@ -338,7 +385,8 @@ where
 
 	let (chain, state, child_state) = {
 		let chain = sc_rpc::chain::new_full(client.clone(), subscriptions.clone());
-		let (state, child_state) = sc_rpc::state::new_full(client.clone(), subscriptions.clone());
+		let (state, child_state) =
+			sc_rpc::state::new_full(client.clone(), subscriptions.clone(), deny_unsafe);
 		(chain, state, child_state)
 	};
 
@@ -423,6 +471,15 @@ where
 					}
 					sc_rpc::system::Request::NodeRoles(sender) => {
 						let _ = sender.send(vec![]);
+					}
+					sc_rpc::system::Request::SyncState(sender) => {
+						use sc_rpc::system::SyncState;
+
+						let _ = sender.send(SyncState {
+							starting_block: Zero::zero(),
+							current_block: Zero::zero(),
+							highest_block: None,
+						});
 					}
 				}
 			} else {

@@ -32,12 +32,9 @@ use sc_cli::{
 // TODO may use local
 pub use sc_cli::{DatabaseParams, KeystoreParams, SubstrateCli};
 
-use ec_service::{
-	config::{
-		BasePath, Configuration, DatabaseConfig, KeystoreConfig, PruningMode, RpcMethods,
-		TaskExecutor, TransactionPoolOptions,
-	},
-	TracingReceiver,
+use ec_service::config::{
+	BasePath, Configuration, DatabaseConfig, KeystoreConfig, PruningMode, RpcMethods, TaskExecutor,
+	TransactionPoolOptions,
 };
 
 use crate::params::{ImportParams, PruningParams, SharedParams};
@@ -224,21 +221,7 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 	/// By default this is retrieved from `ImportParams` if it is available. Otherwise its
 	/// `None`.
 	fn tracing_targets(&self) -> Result<Option<String>> {
-		Ok(self
-			.import_params()
-			.map(|x| x.tracing_targets())
-			.unwrap_or_else(|| Default::default()))
-	}
-
-	/// Get the TracingReceiver value from the current object
-	///
-	/// By default this is retrieved from `ImportParams` if it is available. Otherwise its
-	/// `TracingReceiver::default()`.
-	fn tracing_receiver(&self) -> Result<TracingReceiver> {
-		Ok(self
-			.import_params()
-			.map(|x| x.tracing_receiver())
-			.unwrap_or_default())
+		Ok(self.shared_params().tracing_targets())
 	}
 
 	/// Activate or not the automatic announcing of blocks after import
@@ -330,7 +313,6 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 			rpc_ws_max_connections: self.rpc_ws_max_connections()?,
 			rpc_cors: self.rpc_cors()?,
 			tracing_targets: self.tracing_targets()?,
-			tracing_receiver: self.tracing_receiver()?,
 			chain_spec,
 			announce_block: self.announce_block()?,
 			base_path: Some(base_path),
@@ -350,6 +332,11 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 		Ok(self.shared_params().log_filters().join(","))
 	}
 
+	/// Is log reloading disabled (enabled by default)
+	fn is_log_filter_reloading_disabled(&self) -> Result<bool> {
+		Ok(self.shared_params().is_log_filter_reloading_disabled())
+	}
+
 	/// Initialize substrate. This must be done only once per process.
 	///
 	/// This method:
@@ -359,12 +346,17 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 	/// 3. Raises the FD limit
 	fn init<C: SubstrateCli>(&self) -> Result<()> {
 		let logger_pattern = self.log_filters()?;
-		let tracing_receiver = self.tracing_receiver()?;
 		let tracing_targets = self.tracing_targets()?;
+		let disable_log_reloading = self.is_log_filter_reloading_disabled()?;
 
 		sp_panic_handler::set(&C::support_url(), &C::impl_version());
 
-		if let Err(e) = init_logger(&logger_pattern, tracing_receiver, tracing_targets) {
+		if let Err(e) = init_logger(
+			&logger_pattern,
+			sc_tracing::TracingReceiver::Log,
+			tracing_targets,
+			disable_log_reloading,
+		) {
 			log::warn!("💬 Problem initializing global logging framework: {:}", e)
 		}
 
@@ -403,10 +395,7 @@ pub fn metadata(base_path: &BasePath, f: impl Fn(Metadata) -> Metadata) -> Resul
 	}
 	let data = fs::read(&p)?;
 	let metadata: Metadata = serde_json::from_slice(&data).map_err(|e| {
-		Error::Other(format!(
-			"metadata file do not contains a valid json, e:{:?}",
-			e
-		))
+		Error::Application(format!("metadata file do not contains a valid json, e:{:?}", e).into())
 	})?;
 	let old_metadata = metadata.clone();
 	let new_metadata = f(metadata);

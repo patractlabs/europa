@@ -105,7 +105,9 @@ where
 			method,
 			call_data,
 			extensions.unwrap_or_default(),
-			&state_runtime_code.runtime_code()?,
+			&state_runtime_code
+				.runtime_code()
+				.map_err(sp_blockchain::Error::RuntimeCode)?,
 			self.spawn_handle.clone(),
 		)
 		.execute_using_consensus_failure_handler::<DefaultHandler<_, _>, NeverNativeValue, fn() -> _>(
@@ -177,7 +179,9 @@ where
 					sp_state_machine::backend::BackendRuntimeCode::new(&trie_state);
 				// It is important to extract the runtime code here before we create the proof
 				// recorder.
-				let runtime_code = state_runtime_code.runtime_code()?;
+				let runtime_code = state_runtime_code
+					.runtime_code()
+					.map_err(sp_blockchain::Error::RuntimeCode)?;
 
 				let backend = sp_state_machine::ProvingBackend::new_with_recorder(
 					trie_state,
@@ -203,7 +207,9 @@ where
 			}
 			None => {
 				let state_runtime_code = sp_state_machine::backend::BackendRuntimeCode::new(&state);
-				let runtime_code = state_runtime_code.runtime_code()?;
+				let runtime_code = state_runtime_code
+					.runtime_code()
+					.map_err(sp_blockchain::Error::RuntimeCode)?;
 				let mut state_machine = StateMachine::new(
 					&state,
 					changes_trie_state,
@@ -243,7 +249,12 @@ where
 		);
 		let state_runtime_code = sp_state_machine::backend::BackendRuntimeCode::new(&state);
 		self.executor
-			.runtime_version(&mut ext, &state_runtime_code.runtime_code()?)
+			.runtime_version(
+				&mut ext,
+				&state_runtime_code
+					.runtime_code()
+					.map_err(sp_blockchain::Error::RuntimeCode)?,
+			)
 			.map_err(|e| sp_blockchain::Error::VersionInvalid(format!("{:?}", e)).into())
 	}
 
@@ -261,7 +272,9 @@ where
 			self.spawn_handle.clone(),
 			method,
 			call_data,
-			&sp_state_machine::backend::BackendRuntimeCode::new(trie_state).runtime_code()?,
+			&sp_state_machine::backend::BackendRuntimeCode::new(trie_state)
+				.runtime_code()
+				.map_err(sp_blockchain::Error::RuntimeCode)?,
 		)
 		.map_err(Into::into)
 	}
