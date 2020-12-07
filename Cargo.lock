@@ -1122,6 +1122,68 @@ dependencies = [
 ]
 
 [[package]]
+name = "europa"
+version = "0.1.0"
+dependencies = [
+ "europa-cli",
+]
+
+[[package]]
+name = "europa-cli"
+version = "0.1.0"
+dependencies = [
+ "ec-cli",
+ "ec-service",
+ "europa-executor",
+ "europa-rpc",
+ "europa-runtime",
+ "pallet-contracts",
+ "sc-basic-authorship",
+ "sc-cli",
+ "sc-consensus",
+ "sc-consensus-manual-seal",
+ "sc-transaction-pool",
+ "serde_json",
+ "sp-consensus",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-timestamp",
+ "structopt",
+ "substrate-build-script-utils",
+]
+
+[[package]]
+name = "europa-executor"
+version = "0.1.0"
+dependencies = [
+ "ec-executor",
+ "europa-runtime",
+]
+
+[[package]]
+name = "europa-rpc"
+version = "0.1.0"
+dependencies = [
+ "europa-runtime",
+ "jsonrpc-core",
+ "pallet-contracts-rpc",
+ "pallet-transaction-payment-rpc",
+ "sc-client-api",
+ "sc-consensus-epochs",
+ "sc-keystore",
+ "sc-rpc",
+ "sc-rpc-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-runtime",
+ "sp-transaction-pool",
+ "substrate-frame-rpc-system",
+]
+
+[[package]]
 name = "europa-runtime"
 version = "0.1.0"
 dependencies = [
@@ -3354,6 +3416,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-contracts-rpc"
+version = "0.8.0"
+source = "git+https://github.com/paritytech/substrate?branch=master#f73ac5eb0df68b72d42d25faf4da411f2d3581b6"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "pallet-contracts-primitives",
+ "pallet-contracts-rpc-runtime-api",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
+]
+
+[[package]]
 name = "pallet-contracts-rpc-runtime-api"
 version = "0.8.0"
 source = "git+https://github.com/paritytech/substrate?branch=master#f73ac5eb0df68b72d42d25faf4da411f2d3581b6"
@@ -3424,6 +3505,24 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-transaction-payment-rpc"
+version = "2.0.0"
+source = "git+https://github.com/paritytech/substrate?branch=master#f73ac5eb0df68b72d42d25faf4da411f2d3581b6"
+dependencies = [
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "parity-scale-codec",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-rpc",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -3789,6 +3888,12 @@ name = "pkg-config"
 version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d36492546b6af1463394d46f0c834346f31548646f6ba10849802c9c9a27ac33"
+
+[[package]]
+name = "platforms"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "feb3b2b1033b8a60b4da6ee470325f887758c95d5320f52f9ce0df055a55940e"
 
 [[package]]
 name = "polling"
@@ -6235,6 +6340,37 @@ dependencies = [
  "schnorrkel",
  "sha2 0.8.2",
  "zeroize",
+]
+
+[[package]]
+name = "substrate-build-script-utils"
+version = "2.0.0"
+source = "git+https://github.com/paritytech/substrate?branch=master#f73ac5eb0df68b72d42d25faf4da411f2d3581b6"
+dependencies = [
+ "platforms",
+]
+
+[[package]]
+name = "substrate-frame-rpc-system"
+version = "2.0.0"
+source = "git+https://github.com/paritytech/substrate?branch=master#f73ac5eb0df68b72d42d25faf4da411f2d3581b6"
+dependencies = [
+ "frame-system-rpc-runtime-api",
+ "futures 0.3.5",
+ "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "log",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-rpc-api",
+ "serde",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "sp-transaction-pool",
 ]
 
 [[package]]
