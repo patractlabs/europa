@@ -46,7 +46,7 @@ use sp_runtime::{
 	generic::{BlockId, SignedBlock},
 	traits::{
 		Block as BlockT, DigestFor, HashFor, Header as HeaderT, NumberFor, One,
-		SaturatedConversion, Zero,
+		UniqueSaturatedInto, Zero,
 	},
 	BuildStorage, Justification,
 };
@@ -928,7 +928,7 @@ where
 		let mut ancestor = load_header(ancestor_hash)?;
 		let mut uncles = Vec::new();
 
-		for _generation in 0..max_generation.saturated_into() {
+		for _generation in 0u32..UniqueSaturatedInto::<u32>::unique_saturated_into(max_generation) {
 			let children = self.backend.blockchain().children(ancestor_hash)?;
 			uncles.extend(children.into_iter().filter(|h| h != &current_hash));
 			current_hash = ancestor_hash;
@@ -1038,8 +1038,9 @@ where
 	E: CallExecutor<Block> + Send + Sync + 'static,
 	Block: BlockT,
 	Self: ChainHeaderBackend<Block> + ProvideRuntimeApi<Block>,
-	<Self as ProvideRuntimeApi<Block>>::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>>
-		+ BlockBuilderApi<Block, Error = Error>,
+	<Self as ProvideRuntimeApi<Block>>::Api:
+		ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>>
+			+ BlockBuilderApi<Block, Error = Error>,
 {
 	fn new_block_at<R: Into<RecordProof>>(
 		&self,

@@ -74,23 +74,25 @@ where
 	// for import_queue
 	TFullClient<TBl, TRtApi, TExecDisp>:
 		sp_consensus::BlockImport<TBl, Error = sp_consensus::Error>,
-	<TFullClient<TBl, TRtApi, TExecDisp> as sp_api::ProvideRuntimeApi<TBl>>::Api: sp_api::Core<TBl, Error = sp_blockchain::Error>
-		+ ApiExt<
-			TBl,
-			StateBackend = <TFullBackend<TBl> as sc_client_api::backend::Backend<TBl>>::State,
-		>,
+	<TFullClient<TBl, TRtApi, TExecDisp> as sp_api::ProvideRuntimeApi<TBl>>::Api:
+		sp_api::Core<TBl, Error = sp_blockchain::Error>
+			+ ApiExt<
+				TBl,
+				StateBackend = <TFullBackend<TBl> as sc_client_api::backend::Backend<TBl>>::State,
+			>,
 	// spawn_tasks
-	TFullClient<TBl, TRtApi, TExecDisp>: sp_blockchain::HeaderMetadata<TBl, Error = sp_blockchain::Error>
-		+ sp_consensus::block_validation::Chain<TBl>
-		+ sp_runtime::traits::BlockIdTo<TBl, Error = sp_blockchain::Error>
-		+ sc_client_api::ProofProvider<TBl>
-		+ sp_blockchain::HeaderBackend<TBl>
-		+ sc_client_api::BlockchainEvents<TBl>
-		+ sc_client_api::UsageProvider<TBl>
-		+ sc_client_api::StorageProvider<TBl, TFullBackend<TBl>>
-		+ sp_api::CallApiAt<TBl, Error = sp_blockchain::Error>
-		+ Send
-		+ 'static,
+	TFullClient<TBl, TRtApi, TExecDisp>:
+		sp_blockchain::HeaderMetadata<TBl, Error = sp_blockchain::Error>
+			+ sp_consensus::block_validation::Chain<TBl>
+			+ sp_runtime::traits::BlockIdTo<TBl, Error = sp_blockchain::Error>
+			+ sc_client_api::ProofProvider<TBl>
+			+ sp_blockchain::HeaderBackend<TBl>
+			+ sc_client_api::BlockchainEvents<TBl>
+			+ sc_client_api::UsageProvider<TBl>
+			+ sc_client_api::StorageProvider<TBl, TFullBackend<TBl>>
+			+ sp_api::CallApiAt<TBl, Error = sp_blockchain::Error>
+			+ Send
+			+ 'static,
 	<TFullClient<TBl, TRtApi, TExecDisp> as sp_api::ProvideRuntimeApi<TBl>>::Api:
 		sp_api::Metadata<TBl>
 			+ sp_session::SessionKeys<TBl>
