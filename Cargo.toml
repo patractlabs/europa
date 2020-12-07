@@ -10,7 +10,7 @@ members = [
 #    "bin/europa/cli",
 #    "bin/europa/rpc",
 #    "bin/europa/executor",
-#    "bin/europa/runtime",
+    "bin/europa/runtime",
 
     "client/api",
     "client/cli",
