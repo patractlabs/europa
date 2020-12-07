@@ -13,13 +13,12 @@ pub use jsonrpc_core::IoHandler;
 
 pub use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 
-pub use sc_keystore::KeyStorePtr as KeyStore;
 pub use sc_service::{
 	build_network, error, BasePath, BuildNetworkParams, ChainSpec, ChainType, GenericChainSpec,
 	NoopRpcExtensionBuilder, RpcExtensionBuilder, RpcMethods, TaskType, TransactionPoolOptions,
 };
-pub use sc_tracing::TracingReceiver;
 
+use crate::builder::KeystoreContainer;
 pub use crate::builder::{
 	build_mock_network, database_settings, new_client, new_full_parts, new_state_kv, spawn_tasks,
 	SpawnTasksParams, TFullBackend, TFullCallExecutor, TFullClient, TFullParts, TFullStateKv,
@@ -37,8 +36,8 @@ pub struct PartialComponents<Client, Backend, SelectChain, ImportQueue, Transact
 	pub backend: Arc<Backend>,
 	/// The chain task manager.
 	pub task_manager: TaskManager,
-	/// A shared keystore instance.
-	pub keystore: KeyStore,
+	/// A keystore container instance..
+	pub keystore_container: KeystoreContainer,
 	/// A chain selection algorithm instance.
 	pub select_chain: SelectChain,
 	/// An import queue.
@@ -147,7 +146,7 @@ fn start_rpc_servers<
 >(
 	config: &Configuration,
 	mut gen_handler: H,
-	rpc_metrics: Option<&sc_rpc_server::RpcMetrics>, // todo may remove metrics
+	rpc_metrics: sc_rpc_server::RpcMetrics, // todo may remove metrics
 ) -> Result<Box<dyn std::any::Any + Send + Sync>, error::Error> {
 	fn maybe_start_server<T, F>(
 		address: Option<SocketAddr>,
@@ -186,7 +185,7 @@ fn start_rpc_servers<
 				&*path,
 				gen_handler(
 					sc_rpc::DenyUnsafe::No,
-					sc_rpc_server::RpcMiddleware::new(rpc_metrics.cloned(), "ipc"),
+					sc_rpc_server::RpcMiddleware::new(rpc_metrics.clone(), "ipc"),
 				),
 			)
 		}),
@@ -196,7 +195,7 @@ fn start_rpc_servers<
 				config.rpc_cors.as_ref(),
 				gen_handler(
 					deny_unsafe(&address, &config.rpc_methods),
-					sc_rpc_server::RpcMiddleware::new(rpc_metrics.cloned(), "http"),
+					sc_rpc_server::RpcMiddleware::new(rpc_metrics.clone(), "http"),
 				),
 			)
 		})?
@@ -208,7 +207,7 @@ fn start_rpc_servers<
 				config.rpc_cors.as_ref(),
 				gen_handler(
 					deny_unsafe(&address, &config.rpc_methods),
-					sc_rpc_server::RpcMiddleware::new(rpc_metrics.cloned(), "ws"),
+					sc_rpc_server::RpcMiddleware::new(rpc_metrics.clone(), "ws"),
 				),
 			)
 		})?

@@ -6,8 +6,8 @@ use sp_inherents::InherentDataProviders;
 use sp_runtime::traits::Block as BlockT;
 
 use sc_basic_authorship::ProposerFactory;
-pub use sc_keystore::KeyStorePtr as KeyStore;
 use sc_transaction_pool::FullPool;
+use sp_keystore::SyncCryptoStorePtr;
 
 use ec_executor::NativeExecutionDispatch;
 
@@ -32,7 +32,7 @@ where
 	/// A shared backend instance.
 	pub backend: Arc<TFullBackend<TBl>>,
 	/// A shared keystore instance.
-	pub keystore: KeyStore,
+	pub keystore: SyncCryptoStorePtr,
 	/// A chain selection algorithm instance.
 	pub select_chain: sc_consensus::LongestChain<TFullBackend<TBl>, TBl>,
 	/// An import queue.
@@ -99,7 +99,7 @@ where
 	<TFullClient<TBl, TRtApi, TExecDisp> as sp_api::ProvideRuntimeApi<TBl>>::Api:
 		sc_block_builder::BlockBuilderApi<TBl, Error = sp_blockchain::Error>,
 {
-	let (client, backend, keystore, mut task_manager) =
+	let (client, backend, keystore_container, mut task_manager) =
 		new_full_parts::<TBl, TRtApi, TExecDisp>(&config, false)?;
 	let client = Arc::new(client);
 
@@ -122,7 +122,7 @@ where
 		client: client.clone(),
 		backend: backend.clone(),
 		import_queue,
-		keystore: keystore.clone(),
+		keystore: keystore_container.sync_keystore(),
 		select_chain: select_chain.clone(),
 		transaction_pool: transaction_pool.clone(),
 		inherent_data_providers: inherent_data_providers.clone(),
@@ -135,7 +135,7 @@ where
 
 	spawn_tasks(SpawnTasksParams {
 		client: client.clone(),
-		keystore,
+		keystore: keystore_container.sync_keystore(),
 		task_manager: &mut task_manager,
 		transaction_pool: transaction_pool.clone(),
 		rpc_extensions_builder,
@@ -146,7 +146,12 @@ where
 	})?;
 
 	let proposer: ProposerFactory<_, TFullBackend<TBl>, _> =
-		sc_basic_authorship::ProposerFactory::new(client.clone(), transaction_pool.clone(), None);
+		sc_basic_authorship::ProposerFactory::new(
+			task_manager.spawn_handle(),
+			client.clone(),
+			transaction_pool.clone(),
+			None,
+		);
 
 	// manual_seal stream
 	let pool_import_stream = transaction_pool

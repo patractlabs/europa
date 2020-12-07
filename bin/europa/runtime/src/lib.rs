@@ -5,7 +5,7 @@
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::traits::{
-	BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, Saturating, Verify,
+	AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Saturating, Verify,
 };
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
@@ -16,6 +16,8 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+
+use pallet_transaction_payment::CurrencyAdapter;
 
 pub use frame_support::{
 	construct_runtime, parameter_types,
@@ -124,7 +126,7 @@ parameter_types! {
 
 // Configure FRAME pallets to include in runtime.
 
-impl frame_system::Trait for Runtime {
+impl frame_system::Config for Runtime {
 	/// The basic call filter to use in dispatchable.
 	type BaseCallFilter = ();
 	/// The identifier used to distinguish between accounts.
@@ -132,7 +134,7 @@ impl frame_system::Trait for Runtime {
 	/// The aggregated dispatch type that is available for extrinsics.
 	type Call = Call;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = IdentityLookup<AccountId>;
+	type Lookup = AccountIdLookup<AccountId, ()>;
 	/// The index type for storing how many extrinsics an account has signed.
 	type Index = Index;
 	/// The index type for blocks.
@@ -187,7 +189,7 @@ parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
 
-impl pallet_timestamp::Trait for Runtime {
+impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
 	type OnTimestampSet = ();
@@ -200,7 +202,7 @@ parameter_types! {
 	pub const MaxLocks: u32 = 50;
 }
 
-impl pallet_balances::Trait for Runtime {
+impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
 	/// The type for recording an account's balance.
 	type Balance = Balance;
@@ -216,9 +218,8 @@ parameter_types! {
 	pub const TransactionByteFee: Balance = 1;
 }
 
-impl pallet_transaction_payment::Trait for Runtime {
-	type Currency = Balances;
-	type OnTransactionPayment = ();
+impl pallet_transaction_payment::Config for Runtime {
+	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate = ();
@@ -229,29 +230,31 @@ parameter_types! {
 	pub const RentByteFee: Balance = 4 * MILLICENTS;
 	pub const RentDepositOffset: Balance = 1000 * MILLICENTS;
 	pub const SurchargeReward: Balance = 150 * MILLICENTS;
+	pub const SignedClaimHandicap: u32 = 2;
+	pub const MaxDepth: u32 = 32;
+	pub const StorageSizeOffset: u32 = 8;
+	pub const MaxValueSize: u32 = 16 * 1024;
 }
 
-impl pallet_contracts::Trait for Runtime {
+impl pallet_contracts::Config for Runtime {
 	type Time = Timestamp;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
 	type Event = Event;
-	type DetermineContractAddress = pallet_contracts::SimpleAddressDeterminer<Runtime>;
-	type TrieIdGenerator = pallet_contracts::TrieIdFromParentCounter<Runtime>;
 	type RentPayment = ();
-	type SignedClaimHandicap = pallet_contracts::DefaultSignedClaimHandicap;
+	type SignedClaimHandicap = SignedClaimHandicap;
 	type TombstoneDeposit = TombstoneDeposit;
-	type StorageSizeOffset = pallet_contracts::DefaultStorageSizeOffset;
+	type StorageSizeOffset = StorageSizeOffset;
 	type RentByteFee = RentByteFee;
 	type RentDepositOffset = RentDepositOffset;
 	type SurchargeReward = SurchargeReward;
-	type MaxDepth = pallet_contracts::DefaultMaxDepth;
-	type MaxValueSize = pallet_contracts::DefaultMaxValueSize;
+	type MaxDepth = MaxDepth;
+	type MaxValueSize = MaxValueSize;
 	type WeightPrice = pallet_transaction_payment::Module<Self>;
 	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
 }
 
-impl pallet_sudo::Trait for Runtime {
+impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 }
@@ -276,7 +279,7 @@ construct_runtime!(
 );
 
 /// The address format for describing accounts.
-pub type Address = AccountId;
+pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 /// Block header type as expected by this runtime.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.

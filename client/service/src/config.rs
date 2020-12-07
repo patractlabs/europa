@@ -74,8 +74,6 @@ pub struct Configuration {
 	// pub dev_key_seed: Option<String>, // todo may need offchain in future
 	/// Tracing targets
 	pub tracing_targets: Option<String>,
-	/// Tracing receiver
-	pub tracing_receiver: sc_tracing::TracingReceiver,
 	/// Announce block automatically after they have been imported
 	pub announce_block: bool,
 	/// Base path of the configuration

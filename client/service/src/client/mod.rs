@@ -221,7 +221,9 @@ where
 			.header(BlockId::Number(Zero::zero()))?
 			.is_none()
 		{
-			let genesis_storage = build_genesis_storage.build_storage()?;
+			let genesis_storage = build_genesis_storage
+				.build_storage()
+				.map_err(sp_blockchain::Error::Storage)?;
 			let mut op = backend.begin_operation()?;
 			backend.begin_state_operation(&mut op, BlockId::Hash(Default::default()))?;
 			let state_root = op.reset_storage(genesis_storage)?;
@@ -618,11 +620,9 @@ where
 				let changes_trie_state =
 					changes_tries_state_at_block(&at, self.backend.changes_trie_storage())?;
 
-				let gen_storage_changes = runtime_api.into_storage_changes(
-					&state,
-					changes_trie_state.as_ref(),
-					*parent_hash,
-				)?;
+				let gen_storage_changes = runtime_api
+					.into_storage_changes(&state, changes_trie_state.as_ref(), *parent_hash)
+					.map_err(sp_blockchain::Error::Storage)?;
 
 				if import_block.header.state_root() != &gen_storage_changes.transaction_storage_root
 				{
