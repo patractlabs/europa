@@ -25,11 +25,12 @@ We may keep it in this way until `pallet-contracts` release v3.0.0
     
     More information about this forked substrate refers to [this repo](https://github.com/patractlabs/substrate)
     
-    Currently, the tracked substrate commit is [756212f36693491b232d98942f437ad054a0510e](https://github.com/paritytech/substrate/commit/756212f36693491b232d98942f437ad054a0510e)
+    Currently, the tracked substrate commit is [60387fd76dbc6d92654eee4c4d24eebac01b75db](https://github.com/paritytech/substrate/commit/60387fd76dbc6d92654eee4c4d24eebac01b75db)
     
     For substrate change log:
     - [x] [contracts: Add missing instruction to the `Schedule`](https://github.com/paritytech/substrate/pull/7527)
-    - [ ] [contracts: Add `salt` argument to contract instantiation #7482](https://github.com/paritytech/substrate/pull/7482) (Not catch up this pr yet)
+    - [x] [contracts: Add `salt` argument to contract instantiation #7482](https://github.com/paritytech/substrate/pull/7482)
+    - [ ] [contracts: Allow runtime authors to define a chain extension #7548](https://github.com/paritytech/substrate/pull/7548) (Not catch up this pr yet)
 
     For our change log:
     
@@ -39,7 +40,18 @@ We may keep it in this way until `pallet-contracts` release v3.0.0
 
     If you just need v2.0.0 contract test, do not need to clone git submodule in vendor, just switch to this branch.
 
-Europa is tracking v2.0.0 substrate now. We would update v2.0.0 substrate to git dependencies later, and retain the v2.0.0 dependencies in branch `substrate-v2.0.0`.
+Europa is tracking [newest substrate (60387f)](https://github.com/paritytech/substrate/commit/60387fd76dbc6d92654eee4c4d24eebac01b75db) now. Thus `pallet-contracts` could use newest features.
+
+## Extending types
+When using [Substrate Portal](https://polkadot.js.org/apps), [@polkadot/api](https://github.com/polkadot-js/api) and [Redspot](https://github.com/patractlabs/redspot) or other 3rd parties client to connect Europa `pallet-contracts` node, please remember to add ["extending types"](https://polkadot.js.org/docs/api/start/types.extend/) for Europa requirements.
+
+Europa **current** "extending types" is (This may be changed for different Europa version):
+```json
+{
+  "Address": "LookupSource",
+  "LookupSource": "MultiAddress"
+}
+```
     
 ## Features
 In details, current Europa provide:
@@ -76,7 +88,7 @@ In details, current Europa provide:
    
 5. Provide some particular rpc to operate this sandbox.
 
-    Currently Europa framework is compatible with all rpc in Substrate except the rpc related to network (like `system_networkState` and others). Thus the node which is integrated with Europa framework could use apps: [https://polkadot.js.org/apps/](https://polkadot.js.org/apps/) to operate directly.
+    Currently Europa framework is compatible with all rpc in Substrate except the rpc related to network (like `system_networkState` and others). Thus the node which is integrated with Europa framework could use Substrate Protal: [https://polkadot.js.org/apps/](https://polkadot.js.org/apps/) to operate directly.
     
     Besides, Europa provides following rpc:
     * `europa_forwardToHeight` (params: \[`height: NumberOf<B>`\])
@@ -159,14 +171,9 @@ Nov 12 17:10:14.991  INFO Listening for new connections on 127.0.0.1:9944.
 #### Access Europa
 now, you could use apps([https://polkadot.js.org/apps/](https://polkadot.js.org/apps/)) to access Europa:
 * click left tab to switch `DEVELOPMENT` - `Local Node`.
-* click `Settings` - `Developer`, and paste:
-    ```json
-    {
-      "Address": "AccountId",
-      "LookupSource": "AccountId"
-    }
-    ```
+* click `Settings` - `Developer`, and paste "extending types"(see [above](#extending-types)) to here:
 * click "save"
+
 then, you could do transfer call as normal and could see the Europa log like:
 ```bash
 Nov 12 17:21:23.544  INFO Accepted a new tcp connection from 127.0.0.1:44210.    
@@ -174,12 +181,14 @@ Nov 12 17:21:32.238  INFO 🙌 Starting consensus session on top of parent 0xc7e
 Nov 12 17:21:32.252  INFO 🎁 Prepared block for proposing at 1 [hash: 0x0109608217316a298c88135cf39a87cc31c37729fbe567b4a1a9f8dcdb81ebeb; parent_hash: 0xc7e1…7529; extrinsics (2): [0x2194…baf8, 0x0931…58bb]]    
 Nov 12 17:21:32.267  INFO Instant Seal success: CreatedBlock { hash: 0x0109608217316a298c88135cf39a87cc31c37729fbe567b4a1a9f8dcdb81ebeb, aux: ImportedAux { header_only: false, clear_justification_requests: false, needs_justification: false, bad_justification: false, needs_finality_proof: false, is_new_best: true } }    
 ```
+
 #### Export modified state kvs
 ```bash
 $ ./target/debug/europa state-kv 1
 # if you have specified a directory, add `-d` or `--base-path`
 $ ./target/debug/europa state-kv -d database 1
 ```
+
 #### Use another workspace
 ##### Specify another workspace
 ```bash
@@ -193,6 +202,7 @@ Nov 12 17:25:47.428  INFO 💾 Database: RocksDb at .sub/another-workspace/chain
 Nov 12 17:25:47.428  INFO 📖 Workspace: another-workspace | Current workspace list: ["default", "another-workspace"]    
 Nov 12 17:25:47.428  INFO ⛓  Native runtime: europa-1 (europa-1.tx1.au1)  
 ```
+
 ##### Set default workspace
 stop the Europa, than execute:
 ```bash
@@ -211,6 +221,7 @@ Nov 12 17:29:33.862  INFO 💾 Database: RocksDb at .sub/another-workspace/chain
 Nov 12 17:29:33.862  INFO 📖 Workspace: another-workspace | Current workspace list: ["default", "another-workspace"]    
 Nov 12 17:29:33.862  INFO ⛓  Native runtime: europa-1 (europa-1.tx1.au1)    
 ```
+
 ##### Delete workspace
 ```bash
 $ ./target/debug/europa workspace delete another-workspace
@@ -221,6 +232,7 @@ Nov 12 17:30:49.550  INFO Delete workspace [another-workspace].
 Nov 12 17:30:49.550  INFO       delete default record: [another-workspace]    
 Nov 12 17:30:49.550  INFO       delete workspace:[another-workspace] from workspace list
 ```
+
 ## Plan
 1. v0.1: Have an independent runtime environment to facilitate more subsequent expansion directions.
 
