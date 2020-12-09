@@ -3376,7 +3376,6 @@ dependencies = [
 [[package]]
 name = "pallet-contracts"
 version = "2.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=master#60387fd76dbc6d92654eee4c4d24eebac01b75db"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3408,7 +3407,6 @@ dependencies = [
 [[package]]
 name = "pallet-contracts-proc-macro"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/substrate?branch=master#60387fd76dbc6d92654eee4c4d24eebac01b75db"
 dependencies = [
  "proc-macro2",
  "quote",
