@@ -48,7 +48,6 @@ When using [Substrate Portal](https://polkadot.js.org/apps), [@polkadot/api](htt
 Europa **current** "extending types" is (This may be changed for different Europa version):
 ```json
 {
-  "Address": "LookupSource",
   "LookupSource": "MultiAddress"
 }
 ```
