@@ -15,20 +15,17 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
-pub use pallet_balances::Call as BalancesCall;
-pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::CurrencyAdapter;
 
-pub use frame_support::{
+use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{KeyOwnerProofSystem, Randomness},
+	traits::Randomness,
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight,
+		DispatchClass, Weight,
 	},
-	StorageValue,
 };
-pub use frame_system::limits::{BlockLength, BlockWeights};
+use frame_system::limits::{BlockLength, BlockWeights};
 
 mod constants;
 use crate::constants::{currency::*, fee::WeightToFee};
@@ -176,8 +173,9 @@ impl frame_system::Config for Runtime {
 	type Origin = Origin;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
-	/// Maximum weight of each block.
+	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = RuntimeBlockWeights;
+	/// The maximum length of a block (in bytes).
 	type BlockLength = RuntimeBlockLength;
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
