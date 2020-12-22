@@ -124,7 +124,7 @@ impl<D: NativeExecutionDispatch> sp_core::traits::CallInWasm for NativeExecutor<
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// sc_executor::native_executor_instance!(
 ///     pub MyExecutor,
 ///     substrate_test_runtime::api::dispatch,
