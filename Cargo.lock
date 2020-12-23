@@ -1147,13 +1147,23 @@ name = "ep-sandbox"
 version = "0.8.0"
 dependencies = [
  "assert_matches",
+ "ep-wasm-interface",
  "parity-scale-codec",
  "sp-core",
  "sp-io",
  "sp-std",
- "sp-wasm-interface",
- "wasmi",
+ "wasmi 0.7.0",
  "wat",
+]
+
+[[package]]
+name = "ep-wasm-interface"
+version = "2.0.0"
+dependencies = [
+ "impl-trait-for-tuples",
+ "parity-scale-codec",
+ "sp-std",
+ "wasmi 0.7.0",
 ]
 
 [[package]]
@@ -4878,7 +4888,7 @@ dependencies = [
  "sp-trie",
  "sp-version",
  "sp-wasm-interface",
- "wasmi",
+ "wasmi 0.6.2",
 ]
 
 [[package]]
@@ -4894,7 +4904,7 @@ dependencies = [
  "sp-serializer",
  "sp-wasm-interface",
  "thiserror",
- "wasmi",
+ "wasmi 0.6.2",
 ]
 
 [[package]]
@@ -4909,7 +4919,7 @@ dependencies = [
  "sp-core",
  "sp-runtime-interface",
  "sp-wasm-interface",
- "wasmi",
+ "wasmi 0.6.2",
 ]
 
 [[package]]
@@ -5948,7 +5958,7 @@ dependencies = [
  "tiny-bip39",
  "tiny-keccak",
  "twox-hash",
- "wasmi",
+ "wasmi 0.6.2",
  "zeroize",
 ]
 
@@ -6150,7 +6160,7 @@ dependencies = [
  "sp-io",
  "sp-std",
  "sp-wasm-interface",
- "wasmi",
+ "wasmi 0.6.2",
 ]
 
 [[package]]
@@ -6327,7 +6337,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "sp-std",
- "wasmi",
+ "wasmi 0.6.2",
 ]
 
 [[package]]
@@ -7319,7 +7329,21 @@ dependencies = [
 [[package]]
 name = "wasmi"
 version = "0.6.2"
-source = "git+https://github.com/patractlabs/wasmi?branch=v0.6.2#8a8e98d9a224847438d5c4250b0f2884bde6a929"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf617d864d25af3587aa745529f7aaa541066c876d57e050c0d0c85c61c92aff"
+dependencies = [
+ "libc",
+ "memory_units",
+ "num-rational",
+ "num-traits",
+ "parity-wasm",
+ "wasmi-validation 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "wasmi"
+version = "0.7.0"
+source = "git+https://github.com/patractlabs/wasmi#448bebd4bc812b7e886d56c2120c9cf7ae2526c0"
 dependencies = [
  "downcast-rs",
  "libc",
@@ -7327,7 +7351,8 @@ dependencies = [
  "num-rational",
  "num-traits",
  "parity-wasm",
- "wasmi-validation 0.3.0 (git+https://github.com/patractlabs/wasmi?branch=v0.6.2)",
+ "rustc-demangle",
+ "wasmi-validation 0.3.0 (git+https://github.com/patractlabs/wasmi)",
 ]
 
 [[package]]
@@ -7342,7 +7367,7 @@ dependencies = [
 [[package]]
 name = "wasmi-validation"
 version = "0.3.0"
-source = "git+https://github.com/patractlabs/wasmi?branch=v0.6.2#8a8e98d9a224847438d5c4250b0f2884bde6a929"
+source = "git+https://github.com/patractlabs/wasmi#448bebd4bc812b7e886d56c2120c9cf7ae2526c0"
 dependencies = [
  "parity-wasm",
 ]
