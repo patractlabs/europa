@@ -935,6 +935,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "downcast-rs"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
+
+[[package]]
 name = "dyn-clonable"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3460,7 +3466,7 @@ dependencies = [
  "sp-runtime",
  "sp-sandbox",
  "sp-std",
- "wasmi-validation",
+ "wasmi-validation 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -7313,15 +7319,15 @@ dependencies = [
 [[package]]
 name = "wasmi"
 version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf617d864d25af3587aa745529f7aaa541066c876d57e050c0d0c85c61c92aff"
+source = "git+https://github.com/patractlabs/wasmi?branch=v0.6.2#8a8e98d9a224847438d5c4250b0f2884bde6a929"
 dependencies = [
+ "downcast-rs",
  "libc",
  "memory_units",
  "num-rational",
  "num-traits",
  "parity-wasm",
- "wasmi-validation",
+ "wasmi-validation 0.3.0 (git+https://github.com/patractlabs/wasmi?branch=v0.6.2)",
 ]
 
 [[package]]
@@ -7329,6 +7335,14 @@ name = "wasmi-validation"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea78c597064ba73596099281e2f4cfc019075122a65cdda3205af94f0b264d93"
+dependencies = [
+ "parity-wasm",
+]
+
+[[package]]
+name = "wasmi-validation"
+version = "0.3.0"
+source = "git+https://github.com/patractlabs/wasmi?branch=v0.6.2#8a8e98d9a224847438d5c4250b0f2884bde6a929"
 dependencies = [
  "parity-wasm",
 ]

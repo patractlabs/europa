@@ -2,7 +2,7 @@
 panic = "unwind"
 
 [patch.crates-io]
-# patch for substrate crate
+wasmi = { git = "https://github.com/patractlabs/wasmi", branch = "v0.6.2", optional = true }
 
 [workspace]
 members = [
