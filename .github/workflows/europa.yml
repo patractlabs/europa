@@ -1,0 +1,36 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the source code
+        uses: actions/checkout@v1
+      - name: Set nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-2020-10-05
+          target: wasm32-unknown-unknown
+          override: true
+      - name: Cache substrate deps
+        uses: actions/cache@v1
+        env:
+          cache-name: substrate-cache
+        with:
+          path: ./target
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./Cargo.lock') }}
+      - name: Init
+        run: git submodule update --init --remote
+      - name: Build
+        run: cargo build --all -vv
+      - name: Run tests
+        run: cargo test --all -vv

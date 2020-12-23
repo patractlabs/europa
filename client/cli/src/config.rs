@@ -91,9 +91,17 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 	/// Bu default this is retrieved from `KeystoreParams` if it is available. Otherwise it uses
 	/// `KeystoreConfig::InMemory`.
 	fn keystore_config(&self, base_path: &PathBuf) -> Result<KeystoreConfig> {
-		self.keystore_params()
+		Ok(self
+			.keystore_params()
 			.map(|x| x.keystore_config(base_path))
-			.unwrap_or(Ok(KeystoreConfig::InMemory))
+			.unwrap_or(Ok((
+				Some(format!(
+					"Couldn't find keystore at {}",
+					base_path.to_string_lossy()
+				)),
+				KeystoreConfig::InMemory,
+			)))?
+			.1)
 	}
 
 	/// Get the database cache size.
