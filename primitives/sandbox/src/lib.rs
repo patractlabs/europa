@@ -34,18 +34,14 @@
 //!
 //! - implementing smart-contract runtimes that use wasm for contract code
 //! - executing a wasm substrate runtime inside of a wasm parachain
-
 #![warn(missing_docs)]
-#![cfg_attr(not(feature = "std"), no_std)]
 
 use sp_std::prelude::*;
 
 pub use sp_core::sandbox::HostError;
 pub use sp_wasm_interface::{ReturnValue, Value};
 
-mod imp {
-	include!("../with_std.rs");
-}
+mod imp;
 
 /// Error that can occur while using this crate.
 #[derive(sp_core::RuntimeDebug)]
