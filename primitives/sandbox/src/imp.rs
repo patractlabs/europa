@@ -247,7 +247,9 @@ impl<T> Instance<T> {
 		env_def_builder: &EnvironmentDefinitionBuilder<T>,
 		state: &mut T,
 	) -> Result<Instance<T>, Error> {
-		let module = Module::from_buffer(code).map_err(|_| Error::Module)?;
+		let module = Module::from_buffer(code)
+			.map_err(|_| Error::Module)?
+			.try_parse_names();
 		let not_started_instance =
 			ModuleInstance::new(&module, env_def_builder).map_err(|_| Error::Module)?;
 
@@ -277,7 +279,6 @@ impl<T> Instance<T> {
 		state: &mut T,
 	) -> Result<ReturnValue, Error> {
 		let args = args.iter().cloned().map(Into::into).collect::<Vec<_>>();
-
 		let mut externals = GuestExternals {
 			state,
 			defined_host_functions: &self.defined_host_functions,
@@ -287,7 +288,10 @@ impl<T> Instance<T> {
 		match result {
 			Ok(None) => Ok(ReturnValue::Unit),
 			Ok(Some(val)) => Ok(ReturnValue::Value(val.into())),
-			Err(_err) => Err(Error::Execution),
+			Err(e) => {
+				println!("{:#?}", e);
+				Err(Error::Execution)
+			}
 		}
 	}
 
