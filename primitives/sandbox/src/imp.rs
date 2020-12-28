@@ -15,15 +15,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use sp_std::collections::btree_map::BTreeMap;
-use sp_std::fmt;
+use sp_std::{collections::btree_map::BTreeMap, fmt, mem::transmute};
 
 use super::{Error, HostError, HostFuncType, ReturnValue, Value};
-use wasmi::memory_units::Pages;
-use wasmi::{
-	Externals, FuncInstance, FuncRef, GlobalDescriptor, GlobalRef, ImportResolver,
-	MemoryDescriptor, MemoryInstance, MemoryRef, Module, ModuleInstance, ModuleRef, RuntimeArgs,
-	RuntimeValue, Signature, TableDescriptor, TableRef, Trap, TrapKind,
+use patract_wasmi::{
+	memory_units::Pages, Externals, FuncInstance, FuncRef, GlobalDescriptor, GlobalRef,
+	ImportResolver, MemoryDescriptor, MemoryInstance, MemoryRef, Module, ModuleInstance, ModuleRef,
+	RuntimeArgs, RuntimeValue, Signature, TableDescriptor, TableRef, Trap, TrapKind,
 };
 
 #[derive(Clone)]
@@ -92,7 +90,7 @@ impl fmt::Display for DummyHostError {
 	}
 }
 
-impl wasmi::HostError for DummyHostError {}
+impl patract_wasmi::HostError for DummyHostError {}
 
 struct GuestExternals<'a, T: 'a> {
 	state: &'a mut T,
@@ -109,13 +107,20 @@ impl<'a, T> Externals for GuestExternals<'a, T> {
 			.as_ref()
 			.iter()
 			.cloned()
-			.map(Into::into)
+			.map(|v: patract_wasmi::RuntimeValue| unsafe {
+				transmute::<patract_wasmi::RuntimeValue, wasmi::RuntimeValue>(v).into()
+			})
 			.collect::<Vec<_>>();
 
 		let result = (self.defined_host_functions.funcs[index])(self.state, &args);
 		match result {
 			Ok(value) => Ok(match value {
-				ReturnValue::Value(v) => Some(v.into()),
+				ReturnValue::Value(v) => {
+					let wv: wasmi::RuntimeValue = v.into();
+					Some(unsafe {
+						transmute::<wasmi::RuntimeValue, patract_wasmi::RuntimeValue>(wv).into()
+					})
+				}
 				ReturnValue::Unit => None,
 			}),
 			Err(HostError) => Err(TrapKind::Host(Box::new(DummyHostError)).into()),
@@ -167,18 +172,21 @@ impl<T> ImportResolver for EnvironmentDefinitionBuilder<T> {
 		module_name: &str,
 		field_name: &str,
 		signature: &Signature,
-	) -> Result<FuncRef, wasmi::Error> {
+	) -> Result<FuncRef, patract_wasmi::Error> {
 		let key = (
 			module_name.as_bytes().to_owned(),
 			field_name.as_bytes().to_owned(),
 		);
 		let externval = self.map.get(&key).ok_or_else(|| {
-			wasmi::Error::Instantiation(format!("Export {}:{} not found", module_name, field_name))
+			patract_wasmi::Error::Instantiation(format!(
+				"Export {}:{} not found",
+				module_name, field_name
+			))
 		})?;
 		let host_func_idx = match *externval {
 			ExternVal::HostFunc(ref idx) => idx,
 			_ => {
-				return Err(wasmi::Error::Instantiation(format!(
+				return Err(patract_wasmi::Error::Instantiation(format!(
 					"Export {}:{} is not a host func",
 					module_name, field_name
 				)))
@@ -192,8 +200,8 @@ impl<T> ImportResolver for EnvironmentDefinitionBuilder<T> {
 		_module_name: &str,
 		_field_name: &str,
 		_global_type: &GlobalDescriptor,
-	) -> Result<GlobalRef, wasmi::Error> {
-		Err(wasmi::Error::Instantiation(format!(
+	) -> Result<GlobalRef, patract_wasmi::Error> {
+		Err(patract_wasmi::Error::Instantiation(format!(
 			"Importing globals is not supported yet"
 		)))
 	}
@@ -203,18 +211,21 @@ impl<T> ImportResolver for EnvironmentDefinitionBuilder<T> {
 		module_name: &str,
 		field_name: &str,
 		_memory_type: &MemoryDescriptor,
-	) -> Result<MemoryRef, wasmi::Error> {
+	) -> Result<MemoryRef, patract_wasmi::Error> {
 		let key = (
 			module_name.as_bytes().to_owned(),
 			field_name.as_bytes().to_owned(),
 		);
 		let externval = self.map.get(&key).ok_or_else(|| {
-			wasmi::Error::Instantiation(format!("Export {}:{} not found", module_name, field_name))
+			patract_wasmi::Error::Instantiation(format!(
+				"Export {}:{} not found",
+				module_name, field_name
+			))
 		})?;
 		let memory = match *externval {
 			ExternVal::Memory(ref m) => m,
 			_ => {
-				return Err(wasmi::Error::Instantiation(format!(
+				return Err(patract_wasmi::Error::Instantiation(format!(
 					"Export {}:{} is not a memory",
 					module_name, field_name
 				)))
@@ -228,8 +239,8 @@ impl<T> ImportResolver for EnvironmentDefinitionBuilder<T> {
 		_module_name: &str,
 		_field_name: &str,
 		_table_type: &TableDescriptor,
-	) -> Result<TableRef, wasmi::Error> {
-		Err(wasmi::Error::Instantiation(format!(
+	) -> Result<TableRef, patract_wasmi::Error> {
+		Err(patract_wasmi::Error::Instantiation(format!(
 			"Importing tables is not supported yet"
 		)))
 	}
@@ -278,7 +289,14 @@ impl<T> Instance<T> {
 		args: &[Value],
 		state: &mut T,
 	) -> Result<ReturnValue, Error> {
-		let args = args.iter().cloned().map(Into::into).collect::<Vec<_>>();
+		let args = args
+			.iter()
+			.cloned()
+			.map(|v| unsafe {
+				let wv: wasmi::RuntimeValue = v.into();
+				transmute::<wasmi::RuntimeValue, patract_wasmi::RuntimeValue>(wv)
+			})
+			.collect::<Vec<_>>();
 		let mut externals = GuestExternals {
 			state,
 			defined_host_functions: &self.defined_host_functions,
@@ -287,17 +305,20 @@ impl<T> Instance<T> {
 
 		match result {
 			Ok(None) => Ok(ReturnValue::Unit),
-			Ok(Some(val)) => Ok(ReturnValue::Value(val.into())),
-			Err(e) => {
-				println!("{:#?}", e);
-				Err(Error::Execution)
-			}
+			Ok(Some(val)) => unsafe {
+				Ok(ReturnValue::Value(
+					transmute::<patract_wasmi::RuntimeValue, wasmi::RuntimeValue>(val).into(),
+				))
+			},
+			Err(e) => Err(Error::WasmiExecution(e)),
 		}
 	}
 
 	pub fn get_global_val(&self, name: &str) -> Option<Value> {
 		let global = self.instance.export_by_name(name)?.as_global()?.get();
 
-		Some(global.into())
+		Some(unsafe {
+			transmute::<patract_wasmi::RuntimeValue, wasmi::RuntimeValue>(global).into()
+		})
 	}
 }

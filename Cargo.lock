@@ -1152,7 +1152,8 @@ dependencies = [
  "sp-io",
  "sp-std",
  "sp-wasm-interface",
- "wasmi",
+ "wasmi 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wasmi 0.6.2 (git+https://github.com/patractlabs/wasmi?branch=v0.6.2)",
  "wat",
 ]
 
@@ -4881,7 +4882,7 @@ dependencies = [
  "sp-trie",
  "sp-version",
  "sp-wasm-interface",
- "wasmi",
+ "wasmi 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4897,7 +4898,7 @@ dependencies = [
  "sp-serializer",
  "sp-wasm-interface",
  "thiserror",
- "wasmi",
+ "wasmi 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4912,7 +4913,7 @@ dependencies = [
  "sp-core",
  "sp-runtime-interface",
  "sp-wasm-interface",
- "wasmi",
+ "wasmi 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -5951,7 +5952,7 @@ dependencies = [
  "tiny-bip39",
  "tiny-keccak",
  "twox-hash",
- "wasmi",
+ "wasmi 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "zeroize",
 ]
 
@@ -6317,7 +6318,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "sp-std",
- "wasmi",
+ "wasmi 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -7304,6 +7305,20 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+]
+
+[[package]]
+name = "wasmi"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf617d864d25af3587aa745529f7aaa541066c876d57e050c0d0c85c61c92aff"
+dependencies = [
+ "libc",
+ "memory_units",
+ "num-rational",
+ "num-traits",
+ "parity-wasm",
+ "wasmi-validation 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

@@ -36,6 +36,7 @@
 //! - executing a wasm substrate runtime inside of a wasm parachain
 #![warn(missing_docs)]
 
+pub use patract_wasmi::Error as WasmiError;
 use sp_std::prelude::*;
 
 pub use sp_core::sandbox::HostError;
@@ -56,6 +57,9 @@ pub enum Error {
 
 	/// Failed to invoke the start function or an exported function for some reason.
 	Execution,
+
+	/// wasmi execution
+	WasmiExecution(WasmiError),
 }
 
 impl From<Error> for HostError {
