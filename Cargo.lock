@@ -11,6 +11,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "add_getters_setters"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "efdf677ab1744b2b6026c4d148bc532f0497be585941ef600cab4c682904ea09"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -874,6 +885,17 @@ name = "data-encoding"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "993a608597367c6377b258c25d7120740f00ed23a2252b729b1932dd7866f908"
+
+[[package]]
+name = "derivative"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb582b60359da160a9477ee80f15c8d784c477e69c217ef2cdd4169c24ea380f"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "derive_more"
@@ -3454,9 +3476,13 @@ dependencies = [
 name = "pallet-contracts"
 version = "2.0.0"
 dependencies = [
+ "add_getters_setters",
+ "derivative",
+ "environmental",
  "ep-sandbox",
  "frame-support",
  "frame-system",
+ "hex",
  "pallet-contracts-primitives",
  "pallet-contracts-proc-macro",
  "parity-scale-codec",
@@ -3484,8 +3510,8 @@ dependencies = [
 [[package]]
 name = "pallet-contracts-proc-macro"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/substrate?branch=master#5c70d7bb2b78d4ed5e3aa4fd0449cc6c81d3db98"
 dependencies = [
+ "heck",
  "proc-macro2",
  "quote",
  "syn",
