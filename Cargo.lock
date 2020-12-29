@@ -3726,10 +3726,7 @@ dependencies = [
 [[package]]
 name = "parity-wasm"
 version = "0.41.0"
-source = "git+https://github.com/patractlabs/parity-wasm?branch=v0.41.0#231c227b3be4e1fa045f3323f08064d2f99b496e"
-dependencies = [
- "sp-std",
-]
+source = "git+https://github.com/patractlabs/parity-wasm?branch=v0.41.0#a5739f6193309957d469a1df96cd0f3504b23728"
 
 [[package]]
 name = "parity-ws"
@@ -4145,12 +4142,11 @@ dependencies = [
 [[package]]
 name = "pwasm-utils"
 version = "0.16.0"
-source = "git+https://github.com/patractlabs/wasm-utils?branch=v0.16.0#5830da9dee88b8e504093d8e9591bcf73e1b67ea"
+source = "git+https://github.com/patractlabs/wasm-utils?branch=v0.16.0#5cfdfb94763a86f6e072755f77d48fca02822461"
 dependencies = [
  "byteorder",
  "log",
  "parity-wasm",
- "sp-std",
 ]
 
 [[package]]
