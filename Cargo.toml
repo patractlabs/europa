@@ -2,7 +2,7 @@
 panic = "unwind"
 
 [patch.crates-io]
-# patch for substrate crate
+parity-wasm = { git = "https://github.com/patractlabs/parity-wasm", branch = "v0.41.0" }
 
 [workspace]
 members = [
@@ -18,5 +18,7 @@ members = [
     "client/executor",
     "client/service",
     "client/rpc",
+
+    "primitives/sandbox",
 ]
 exclude = [ "vendor/substrate" ]

@@ -1,4 +1,4 @@
 [submodule "vendor/substrate"]
 	path = vendor/substrate
 	url = https://github.com/patractlabs/substrate
-	branch = europa-contracts
+	branch = europa/at-chain-extension
