@@ -4142,7 +4142,7 @@ dependencies = [
 [[package]]
 name = "pwasm-utils"
 version = "0.16.0"
-source = "git+https://github.com/patractlabs/wasm-utils?branch=v0.16.0#5cfdfb94763a86f6e072755f77d48fca02822461"
+source = "git+https://github.com/patractlabs/wasm-utils?branch=v0.16.0#1d89878aaa52220c90fff8e706a49f195b6f2c89"
 dependencies = [
  "byteorder",
  "log",
