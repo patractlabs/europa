@@ -1123,14 +1123,14 @@ dependencies = [
 
 [[package]]
 name = "europa"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "europa-cli",
 ]
 
 [[package]]
 name = "europa-cli"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "ec-cli",
  "ec-service",
