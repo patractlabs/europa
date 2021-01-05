@@ -7320,8 +7320,9 @@ dependencies = [
 [[package]]
 name = "wasmi"
 version = "0.6.2"
-source = "git+https://github.com/patractlabs/wasmi?branch=v0.6.2#62e1bdc85e4802f842a1f19caed3bf4037fd8624"
+source = "git+https://github.com/patractlabs/wasmi?branch=v0.6.2#465ee81a740ff826dd17d0f00701d6febbfa5c5f"
 dependencies = [
+ "cfg-if 1.0.0",
  "downcast-rs",
  "libc",
  "memory_units",
@@ -7344,7 +7345,7 @@ dependencies = [
 [[package]]
 name = "wasmi-validation"
 version = "0.3.0"
-source = "git+https://github.com/patractlabs/wasmi?branch=v0.6.2#62e1bdc85e4802f842a1f19caed3bf4037fd8624"
+source = "git+https://github.com/patractlabs/wasmi?branch=v0.6.2#465ee81a740ff826dd17d0f00701d6febbfa5c5f"
 dependencies = [
  "parity-wasm",
 ]
