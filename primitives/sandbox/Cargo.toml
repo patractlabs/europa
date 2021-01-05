@@ -13,7 +13,7 @@ readme = "README.md"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-patract-wasmi = { package = "wasmi", git = "https://github.com/patractlabs/wasmi", branch = "v0.6.2", optional = true, features = [ "substrate" ] }
+patract-wasmi = { package = "wasmi", git = "https://github.com/patractlabs/wasmi", branch = "v0.6.2", optional = true }
 wasmi = { version = "0.6.2", optional = true }
 codec = { package = "parity-scale-codec", version = "1.3.1" }
 
