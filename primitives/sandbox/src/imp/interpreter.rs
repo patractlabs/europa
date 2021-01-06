@@ -14,10 +14,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+#![cfg(feature = "interpreter")]
 use sp_std::{collections::btree_map::BTreeMap, fmt, mem::transmute};
 
-use super::{Error, HostError, HostFuncType, ReturnValue, Value};
+use crate::{Error, HostError, HostFuncType, ReturnValue, Value};
 use patract_wasmi::{
 	memory_units::Pages, Externals, FuncInstance, FuncRef, GlobalDescriptor, GlobalRef,
 	ImportResolver, MemoryDescriptor, MemoryInstance, MemoryRef, Module, ModuleInstance, ModuleRef,
@@ -310,7 +310,7 @@ impl<T> Instance<T> {
 					transmute::<patract_wasmi::RuntimeValue, wasmi::RuntimeValue>(val).into(),
 				))
 			},
-			Err(e) => Err(Error::WasmiExecution(e)),
+			Err(e) => Err(Error::WasmExecution(e)),
 		}
 	}
 

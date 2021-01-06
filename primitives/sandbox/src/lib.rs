@@ -36,7 +36,6 @@
 //! - executing a wasm substrate runtime inside of a wasm parachain
 #![warn(missing_docs)]
 
-pub use patract_wasmi::Error as WasmiError;
 use sp_std::prelude::*;
 
 pub use sp_core::sandbox::HostError;
@@ -59,7 +58,11 @@ pub enum Error {
 	Execution,
 
 	/// wasmi execution
-	WasmiExecution(WasmiError),
+	#[cfg(feature = "interpreter")]
+	WasmExecution(patract_wasmi::Error),
+	/// wasmtime execution
+	#[cfg(feature = "jit")]
+	WasmExecution(wasmtime::Trap),
 }
 
 impl From<Error> for HostError {
