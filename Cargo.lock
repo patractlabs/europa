@@ -4142,7 +4142,7 @@ dependencies = [
 [[package]]
 name = "pwasm-utils"
 version = "0.16.0"
-source = "git+https://github.com/patractlabs/wasm-utils?branch=v0.16.0#753b159462994130460c7cce91b7380e83a078c8"
+source = "git+https://github.com/patractlabs/wasm-utils?branch=v0.16.0#fe038997c8096e53a638d839774821da374f3c6f"
 dependencies = [
  "byteorder",
  "log",
@@ -7320,7 +7320,7 @@ dependencies = [
 [[package]]
 name = "wasmi"
 version = "0.6.2"
-source = "git+https://github.com/patractlabs/wasmi?branch=v0.6.2#db068efcc1101fd61cf9498c4afd7826a3acaf61"
+source = "git+https://github.com/patractlabs/wasmi?branch=v0.6.2#7a6feaea70f47aa6e62f097fb0d9a4ea0ce7d1fc"
 dependencies = [
  "downcast-rs",
  "libc",
@@ -7344,7 +7344,7 @@ dependencies = [
 [[package]]
 name = "wasmi-validation"
 version = "0.3.0"
-source = "git+https://github.com/patractlabs/wasmi?branch=v0.6.2#db068efcc1101fd61cf9498c4afd7826a3acaf61"
+source = "git+https://github.com/patractlabs/wasmi?branch=v0.6.2#7a6feaea70f47aa6e62f097fb0d9a4ea0ce7d1fc"
 dependencies = [
  "parity-wasm",
 ]
