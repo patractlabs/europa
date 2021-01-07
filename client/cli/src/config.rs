@@ -27,7 +27,8 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
 use sc_cli::{
-	arg_enums::Database, generate_node_name, init_logger, DefaultConfigurationValues, Error, Result,
+	arg_enums::Database, generate_node_name, init_logger, DefaultConfigurationValues, Error,
+	InitLoggerParams, Result,
 };
 // TODO may use local
 pub use sc_cli::{DatabaseParams, KeystoreParams, SubstrateCli};
@@ -345,6 +346,11 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 		Ok(self.shared_params().is_log_filter_reloading_disabled())
 	}
 
+	/// Should the log color output be disabled?
+	fn disable_log_color(&self) -> Result<bool> {
+		Ok(self.shared_params().disable_log_color())
+	}
+
 	/// Initialize substrate. This must be done only once per process.
 	///
 	/// This method:
@@ -356,17 +362,17 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 		let logger_pattern = self.log_filters()?;
 		let tracing_targets = self.tracing_targets()?;
 		let disable_log_reloading = self.is_log_filter_reloading_disabled()?;
+		let disable_log_color = self.disable_log_color()?;
 
 		sp_panic_handler::set(&C::support_url(), &C::impl_version());
 
-		if let Err(e) = init_logger(
-			&logger_pattern,
-			sc_tracing::TracingReceiver::Log,
+		init_logger(InitLoggerParams {
+			pattern: logger_pattern,
+			tracing_receiver: sc_tracing::TracingReceiver::Log,
 			tracing_targets,
 			disable_log_reloading,
-		) {
-			log::warn!("💬 Problem initializing global logging framework: {:}", e)
-		}
+			disable_log_color,
+		})?;
 
 		if let Some(new_limit) = fdlimit::raise_fd_limit() {
 			if new_limit < RECOMMENDED_OPEN_FILE_DESCRIPTOR_LIMIT {
