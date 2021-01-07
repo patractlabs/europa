@@ -25,13 +25,17 @@ We may keep it in this way until `pallet-contracts` release v3.0.0
     
     More information about this forked substrate refers to [this repo](https://github.com/patractlabs/substrate)
     
-    Currently, the tracked substrate commit is [5c70d7bb2b78d4ed5e3aa4fd0449cc6c81d3db98](https://github.com/paritytech/substrate/commit/5c70d7bb2b78d4ed5e3aa4fd0449cc6c81d3db98)
+    Currently, the tracked substrate commit is [b27503591d019b94a0eea7510578dadc5ad3196c](https://github.com/paritytech/substrate/commit/b27503591d019b94a0eea7510578dadc5ad3196c)
     
     For substrate change log:
     - [x] [contracts: Add missing instruction to the `Schedule`](https://github.com/paritytech/substrate/pull/7527)
     - [x] [contracts: Add `salt` argument to contract instantiation #7482](https://github.com/paritytech/substrate/pull/7482)
-    - [x] [contracts: No longer put delta keys back after a failed restoration #7747](https://github.com/paritytech/substrate/pull/7747)  
-    - [ ] [contracts: Allow runtime authors to define a chain extension #7548](https://github.com/paritytech/substrate/pull/7548) (Not catch up this pr yet)
+    - [x] [contracts: No longer put delta keys back after a failed restoration #7747](https://github.com/paritytech/substrate/pull/7747)
+    - [x] [contracts: Allow runtime authors to define a chain extension #7548](https://github.com/paritytech/substrate/pull/7548)
+    - [x] [contracts: Lazy storage removal #7740](https://github.com/paritytech/substrate/pull/7740)
+    - [x] [contracts: Change `define_env!` to expect a `Result<T, DispatchError>` for every function #7762](https://github.com/paritytech/substrate/pull/7762)  
+    - [x] [contracts: Prevent contracts from allocating a too large buffer #7818](https://github.com/paritytech/substrate/pull/7818)
+    - [x] [contracts: Add configurable per-storage item cost #7819](https://github.com/paritytech/substrate/pull/7819)
 
     For our change log:
     
@@ -41,7 +45,7 @@ We may keep it in this way until `pallet-contracts` release v3.0.0
 
     If you just need v2.0.0 contract test, do not need to clone git submodule in vendor, just switch to this branch.
 
-Europa is tracking [newest substrate (5c70d7)](https://github.com/paritytech/substrate/commit/5c70d7bb2b78d4ed5e3aa4fd0449cc6c81d3db98) now. Thus `pallet-contracts` could use newest features.
+Europa is tracking [newest substrate (b27503)](https://github.com/paritytech/substrate/commit/b27503591d019b94a0eea7510578dadc5ad3196c) now. Thus `pallet-contracts` could use newest features.
 
 ## Extending types
 When using [Substrate Portal](https://polkadot.js.org/apps), [@polkadot/api](https://github.com/polkadot-js/api) and [Redspot](https://github.com/patractlabs/redspot) or other 3rd parties client to connect Europa `pallet-contracts` node, please remember to add ["extending types"](https://polkadot.js.org/docs/api/start/types.extend/) for Europa requirements.
