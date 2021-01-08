@@ -36,7 +36,7 @@ impl Memory {
 				Pages(initial as usize),
 				maximum.map(|m| Pages(m as usize)),
 			)
-			.map_err(|_| Error::Module)?,
+			.map_err(|e| Error::Module(e))?,
 		})
 	}
 
@@ -259,10 +259,10 @@ impl<T> Instance<T> {
 		state: &mut T,
 	) -> Result<Instance<T>, Error> {
 		let module = Module::from_buffer(code)
-			.map_err(|_| Error::Module)?
+			.map_err(|e| Error::Module(e))?
 			.try_parse_names();
 		let not_started_instance =
-			ModuleInstance::new(&module, env_def_builder).map_err(|_| Error::Module)?;
+			ModuleInstance::new(&module, env_def_builder).map_err(|e| Error::Module(e))?;
 
 		let defined_host_functions = env_def_builder.defined_host_functions.clone();
 		let instance = {

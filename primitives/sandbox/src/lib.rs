@@ -48,7 +48,7 @@ mod imp;
 #[derive(sp_core::RuntimeDebug)]
 pub enum Error {
 	/// Module is not valid, couldn't be instantiated.
-	Module,
+	Module(WasmiError),
 
 	/// Access to a memory or table was made with an address or an index which is out of bounds.
 	///
