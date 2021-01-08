@@ -12,6 +12,10 @@ pub mod currency {
 	pub const fn deposit(items: u32, bytes: u32) -> Balance {
 		items as Balance * 20 * DOLLARS + (bytes as Balance) * 100 * MILLICENTS
 	}
+
+	pub const fn europa_deposit(items: u32, bytes: u32) -> Balance {
+		items as Balance * 10 * CENTS + (bytes as Balance) * 10 * MILLICENTS
+	}
 }
 
 /// Fee-related.

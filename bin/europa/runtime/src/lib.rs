@@ -212,7 +212,7 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 500;
+	pub const ExistentialDeposit: u128 = 100 * CENTS;
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -240,7 +240,7 @@ impl pallet_transaction_payment::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TombstoneDeposit: Balance = deposit(
+	pub const TombstoneDeposit: Balance = europa_deposit(
 		1,
 		sp_std::mem::size_of::<pallet_contracts::ContractInfo<Runtime>>() as u32
 	);
