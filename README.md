@@ -25,7 +25,7 @@ We may keep it in this way until `pallet-contracts` release v3.0.0
     
     More information about this forked substrate refers to [this repo](https://github.com/patractlabs/substrate)
     
-    Currently, the tracked substrate commit is [b27503591d019b94a0eea7510578dadc5ad3196c](https://github.com/paritytech/substrate/commit/b27503591d019b94a0eea7510578dadc5ad3196c)
+    Currently, the tracked substrate commit is [712085115cdef4a79a66747338c920d6ba4e479f](https://github.com/paritytech/substrate/commit/712085115cdef4a79a66747338c920d6ba4e479f)
     
     For substrate change log:
     - [x] [contracts: Add missing instruction to the `Schedule`](https://github.com/paritytech/substrate/pull/7527)
@@ -38,14 +38,15 @@ We may keep it in this way until `pallet-contracts` release v3.0.0
     - [x] [contracts: Add configurable per-storage item cost #7819](https://github.com/paritytech/substrate/pull/7819)
 
     For our change log:
-    
-    (Not yet now)
+
+    - [x] Using `ep-sandbox` instead of `sp-sandbox` in `pallet-contracts`.
+    - [x] Supporting `NestedRuntime` event track feature to record all useful thing in `pallet-contracts`.
 
 * `substrate-v2.0.0` branch is fixed in v2.0.0 substrate, both for `pallet-contracts` module and all substrate dependencies.
 
     If you just need v2.0.0 contract test, do not need to clone git submodule in vendor, just switch to this branch.
 
-Europa is tracking [newest substrate (b27503)](https://github.com/paritytech/substrate/commit/b27503591d019b94a0eea7510578dadc5ad3196c) now. Thus `pallet-contracts` could use newest features.
+Europa is tracking [newest substrate (712085)](https://github.com/paritytech/substrate/commit/712085115cdef4a79a66747338c920d6ba4e479f) now. Thus `pallet-contracts` could use newest features.
 
 ## Extending types
 When using [Substrate Portal](https://polkadot.js.org/apps), [@polkadot/api](https://github.com/polkadot-js/api) and [Redspot](https://github.com/patractlabs/redspot) or other 3rd parties client to connect Europa `pallet-contracts` node, please remember to add ["extending types"](https://polkadot.js.org/docs/api/start/types.extend/) for Europa requirements.
