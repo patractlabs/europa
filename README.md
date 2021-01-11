@@ -41,6 +41,13 @@ We may keep it in this way until `pallet-contracts` release v3.0.0
 
     - [x] Using `ep-sandbox` instead of `sp-sandbox` in `pallet-contracts`.
     - [x] Supporting `NestedRuntime` event track feature to record all useful thing in `pallet-contracts`.
+    
+    ChainExtensions:
+  
+    - [x] Contract Logger support, refer to this link [PIP-102](https://github.com/patractlabs/PIPs/blob/main/PIPs/pip-102.md)
+    - [x] Zero-Knowledge support, refer to this link [PIP-101](https://github.com/patractlabs/PIPs/blob/main/PIPs/pip-101.md)
+
+      *Currently we use a simple static way to charge weight for ZKP, we would change this part with benchmarks result in future.*
 
 * `substrate-v2.0.0` branch is fixed in v2.0.0 substrate, both for `pallet-contracts` module and all substrate dependencies.
 
