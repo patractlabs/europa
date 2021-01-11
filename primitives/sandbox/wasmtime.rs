@@ -1,8 +1,10 @@
 //! Sandbox wasmtime implementation
-#![cfg(feature = "jit")]
 use crate::{Error, HostError, HostFuncType, ReturnValue, Value};
 use sp_std::{collections::btree_map::BTreeMap, fmt, mem::transmute};
-use wasmtime::{FuncType, Limits, Memory as MemoryRef, MemoryType, Module, Store};
+use wasmtime::{
+	Func, FuncType, IntoFunc, Limits, Memory as MemoryRef, MemoryType, Module, Store, WasmRet,
+	WasmTy,
+};
 
 /// This memory is for adapt the wasmi interface of pallet-contract
 #[derive(Clone)]
@@ -124,29 +126,6 @@ impl<T> Instance<T> {
 		state: &mut T,
 	) -> Result<Instance<T>, Error> {
 		unimplemented!();
-		// let module = Module::from_buffer(code)
-		// 	.map_err(|_| Error::Module)?
-		// 	.try_parse_names();
-		// let not_started_instance =
-		// 	ModuleInstance::new(&module, env_def_builder).map_err(|_| Error::Module)?;
-		//
-		// let defined_host_functions = env_def_builder.defined_host_functions.clone();
-		// let instance = {
-		// 	let mut externals = GuestExternals {
-		// 		state,
-		// 		defined_host_functions: &defined_host_functions,
-		// 	};
-		// 	let instance = not_started_instance
-		// 		.run_start(&mut externals)
-		// 		.map_err(|_| Error::Execution)?;
-		// 	instance
-		// };
-		//
-		// Ok(Instance {
-		// 	instance,
-		// 	defined_host_functions,
-		// 	_marker: std::marker::PhantomData::<T>,
-		// })
 	}
 
 	pub fn invoke(
@@ -156,29 +135,6 @@ impl<T> Instance<T> {
 		state: &mut T,
 	) -> Result<ReturnValue, Error> {
 		unimplemented!();
-		// let args = args
-		// 	.iter()
-		// 	.cloned()
-		// 	.map(|v| unsafe {
-		// 		let wv: wasmi::RuntimeValue = v.into();
-		// 		transmute::<wasmi::RuntimeValue, patract_wasmi::RuntimeValue>(wv)
-		// 	})
-		// 	.collect::<Vec<_>>();
-		// let mut externals = GuestExternals {
-		// 	state,
-		// 	defined_host_functions: &self.defined_host_functions,
-		// };
-		// let result = self.instance.invoke_export(&name, &args, &mut externals);
-		//
-		// match result {
-		// 	Ok(None) => Ok(ReturnValue::Unit),
-		// 	Ok(Some(val)) => unsafe {
-		// 		Ok(ReturnValue::Value(
-		// 			transmute::<patract_wasmi::RuntimeValue, wasmi::RuntimeValue>(val).into(),
-		// 		))
-		// 	},
-		// 	Err(e) => Err(Error::WasmExecution(e)),
-		// }
 	}
 
 	pub fn get_global_val(&self, name: &str) -> Option<Value> {

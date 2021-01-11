@@ -171,6 +171,6 @@ fn cant_return_unmatching_type() {
 	// But this fails since we imported a function that returns i32 as if it returned i64.
 	assert_matches!(
 		instance.invoke("call", &[], &mut ()),
-		Err(Error::WasmiExecution(WasmiError::Trap(_)))
+		Err(Error::WasmExecution(WasmiError::Trap(_)))
 	);
 }
