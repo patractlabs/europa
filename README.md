@@ -1,11 +1,23 @@
 # Europa
-Europa is a sandbox environment that runs [`FRAME Contracts pallet`](https://substrate.dev/docs/en/knowledgebase/smart-contracts/contracts-pallet), and it is also a framework that provides a sandbox environment for [substrate](https://github.com/paritytech/substrate/) runtime. Europa could be used to simplify the developing, debugging, and integration test when developers develop Substrate runtime pallets and test smart contract for `FRAME Contracts pallet`. 
+Europa is a sandbox environment that runs [`FRAME Contracts pallet`](https://substrate.dev/docs/en/knowledgebase/smart-contracts/contracts-pallet), 
+and it is also a framework that provides a sandbox environment for [substrate](https://github.com/paritytech/substrate/) runtime. 
+Europa could be used to simplify the developing, debugging, and integration test when developers develop Substrate 
+runtime pallets and test smart contract (like [ink!](https://github.com/paritytech/ink), [ask!](https://github.com/patractlabs/ask) and [Solang](https://github.com/hyperledger-labs/solang)) for `FRAME Contracts pallet`. 
 
-The sandbox framework already removes WASM executor, p2p, consensus functions and other unnecessary parts, just remaining the native execution environment and RPC interface. 
+* **As the framework for Substrate runtime**
 
-Europa sandbox framework also provides a local database, a detailed log print function, a concept of workspaces which isolates different developing environments. 
+    When regarding this project as a lib framework, this sandbox framework already removes WASM executor, p2p, 
+    consensus functions and other unnecessary parts, **just remaining the native execution environment and RPC interface**. 
 
-Regarding Europa as a sandbox with `FRAME Contracts pallet`, We would provide more debugging  features in v0.2 Europa, refers to [Patract Hub's treasury proposal for Europa (sandbox) v0.2](https://polkadot.polkassembly.io/post/189), and we may build it as an electron app to allow developers to download and run directly in future.
+    Europa sandbox framework also provides a local database, a concept of workspaces which isolates different developing environments. 
+
+* **As the sandbox for `FRAME Contracts pallet` module for debugging and testing contracts**
+
+    When regarding this project as an executable file which is used for running contracts, Europa provides more detail and richer
+    information and wasm panic backtrace for executing contracts. Those information is very useful to help developers 
+    to locate the bugs and errors in contracts, especially for the cases which multiple contracts call each other in a
+    complex way, like defi or else.
+    And in future, We may build it as an electron app to allow developers to download and run directly.
 
 Riot Group for disscusion: https://app.element.io/#/room/#PatractLabsDev:matrix.org
 
