@@ -1,10 +1,25 @@
-//! Sandbox wasmtime implementation
+/// Sandbox wasmtime implementation
 use crate::{Error, HostError, HostFuncType, ReturnValue, Value};
-use sp_std::{collections::btree_map::BTreeMap, fmt, mem::transmute};
+use sp_std::{
+	cell::RefCell, collections::btree_map::BTreeMap, fmt, mem::transmute, ops::Fn, sync::Arc,
+};
 use wasmtime::{
 	Func, FuncType, IntoFunc, Limits, Memory as MemoryRef, MemoryType, Module, Store, WasmRet,
 	WasmTy,
 };
+
+mod convert {
+    use super::{WasmTy, WasmRet, ReturnValue, HostError, Value, Arc, RefCell, HostFuncType, Error};
+    /// Build HostFuncType to custom `fn` with wasmtime standard
+    pub fn wrap_fn<'f, T: 'f>(
+        f: HostFuncType<T>
+    ) -> Box<dyn Fn(Arc<RefCell<T>>, &[Value]) -> Result<ReturnValue, HostError> + 'f> {
+        Box::new(move |state: Arc<RefCell<T>>, args: &[Value] | {
+            let mut mut_state = state.borrow_mut();
+            f(&mut mut_state, args)
+        })
+    }
+}
 
 /// This memory is for adapt the wasmi interface of pallet-contract
 #[derive(Clone)]

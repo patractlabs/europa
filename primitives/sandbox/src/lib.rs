@@ -64,10 +64,10 @@ pub enum Error {
 	Execution,
 
 	/// wasmi execution
-	#[cfg(feature = "interpreter")]
+	#[cfg(feature = "wasmi")]
 	WasmExecution(patract_wasmi::Error),
 	/// wasmtime execution
-	#[cfg(feature = "jit")]
+	#[cfg(feature = "wasmtime")]
 	WasmExecution(wasmtime::Trap),
 }
 

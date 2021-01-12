@@ -1,6 +1,10 @@
 use assert_matches::assert_matches;
 use ep_sandbox::{EnvironmentDefinitionBuilder, Error, HostError, Instance, ReturnValue, Value};
-use patract_wasmi::Error as WasmiError;
+
+#[cfg(feature = "wasmi")]
+use patract_wasmi::Error as WasmError;
+#[cfg(feature = "wasmtime")]
+use wasmtime::Trap as WasmError;
 
 fn execute_sandboxed(code: &[u8], args: &[Value]) -> Result<ReturnValue, HostError> {
 	struct State {
@@ -171,6 +175,6 @@ fn cant_return_unmatching_type() {
 	// But this fails since we imported a function that returns i32 as if it returned i64.
 	assert_matches!(
 		instance.invoke("call", &[], &mut ()),
-		Err(Error::WasmExecution(WasmiError::Trap(_)))
+		Err(Error::WasmExecution(_))
 	);
 }
