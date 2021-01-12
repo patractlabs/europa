@@ -23,7 +23,7 @@ In details, current Europa sandbox framework provides:
 
    The sandbox framework could export modified state kvs for every block, including state kvs and child state kvs. Currently Europa just provides a way to export all state for a specified block state, but for debugging, we just need to know the changed state after executing a block.
 
-   [`substrate-archive`](https://github.com/paritytech/substrate-archive) provides a way to store the modified state kvs by constructing an outside executing environment to do this thing. In Europa, we directly store the modified state kvs for every block in `state-kv` db, so developer could easily lookup those changed state kvs.
+   [`substrate-archive`](https://github.com/paritytech/substrate-archive) provides a way to store the modified state kvs by constructing an outside executing environment to do this thing. In Europa, we directly store the modified state kvs for every block in `state-kv` db, so developers could easily lookup those changed state kvs.
 
     ```bash
     # print the modified state kvs for block 1
@@ -68,19 +68,73 @@ In details, current Europa sandbox framework provides:
 
 6. Use workspace to isolate different node environment.
 
-   Europa sandbox framework provides the concept of workspace to isolate node environment. In Substrate, developer could use command `-d/--base-path` to isolate different data environment.
+   Europa sandbox framework provides the concept of workspace to isolate node environment. In Substrate, developers could use command `-d/--base-path` to isolate different data environment.
 
-   We think `-d/--base-path` should be used for assigning the workspace directory for Europa, and using `-w/--workspace` command to specify a separate environment. And on the other hand, all existed workspaces would be recorded, developer could switch between different workspace.  
+   We think `-d/--base-path` should be used for assigning the workspace directory for Europa, and using `-w/--workspace` command to specify a separate environment. And on the other hand, all existed workspaces would be recorded, developers could switch between different workspace.  
 
+### Europa framework operations
+#### Run
+
+Running the following command could run the europa node directly.
+
+```bash
+$ ./target/debug/europa
+```
+
+Same to substrate, the node data is stored in:
+* Linux: `$XDG_DATA_HOME/europa`or`~/.local/share/europa`
+* macOS: `$HOMELibrary/Application Support/europa`
+* Windows: `{FOLDERID_LocalAppData}\europa\data`
+
+(In your project, europa would be replaced by your project name.) 
+
+We advice developers use command `-d` or `--base-path` to assign a specific path for data
+
+```bash
+$ ./target/debug/europa -d <data_path>
+```
+
+Or developers aware that he just need temp store data and drop later, he could use `--tmp` instead of `-d/--base-path`.
+**But notice if specify `--tmp`, the command `--workspace` is useless**. (for the data directory would be dropped when node shutdown):
+
+```bash
+$ ./target/debug/europa --tmp
+```
 
 #### Export modified state kvs
+The exported k/v state could help developers to analyse the final changed data for this block, judging whether the execution
+result is matching with expectation, counting changed data for a specified key or other situations.
+
+Currently Europa just could export the raw hex k/v, in the future, we could design other tools to debug the raw k/v to specific value.
+
+If developers want to export the k/v state for a block, he could do the following command.
 ```bash
+# block number is 1, export state for height 1
 $ ./target/debug/europa state-kv 1
 # if you have specified a directory, add `-d` or `--base-path`
 $ ./target/debug/europa state-kv -d database 1
+# or use block hash instead of block number
+$ ./target/debug/europa state-kv 0x6c119a8f7de42e...
 ```
+**This command could run while the node is running**. The output log is like:
+```bash
+$ ./target/debug/europa state-kv 0x6c119a8f7de42e330aca8b9d3587937aacbbc203cc21650b60644c2f2d33e7fb
+2021-01-12 14:56:07  modified state for block:0x6c119a8f7de42e330aca8b9d3587937aacbbc203cc21650b60644c2f2d33e7fb    
+2021-01-12 14:56:07  	key:26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac|value:[DELETED]    
+2021-01-12 14:56:07  	key:26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850|value:05000000
+# ...  
+```
+`key` means the hex-like value for state key and `value` means the hex-like state value for this key. If this value is 
+deleted in this block, the value is marked as `[DELETED]` to distinguish the encode value of type `()`.
 
 #### Use another workspace
+
+Workspace is used for isolating different spaces to store data in same directory. This is useful to test different
+contracts or use Europa as the backend for contract integration testing.
+
+Though developers can use `-d/--base-path` to accomplish same thing, but they need to pay more to manage the different paths.
+Workspace concept provides a simplified method to do this thing.
+
 ##### Specify another workspace
 ```bash
 $ ./target/debug/europa -w another-workspace
