@@ -21,7 +21,8 @@ runtime pallets and test smart contract (like [ink!](https://github.com/parityte
 
 Riot Group for disscusion: https://app.element.io/#/room/#PatractLabsDev:matrix.org
 
-**Note: Because currently `FRAME Contracts pallet(pallet-contract)` is under developing, may contains some breaking changes. Thus we use branch to distinguish different features.**
+**Note: Currently, `FRAME Contracts pallet(pallet-contract)` is under developing, which may contain some breaking changes. 
+Thus we use different branch to distinguish different `FRAME Contracts pallet` version.**
 
 *Note: We name `FRAME Contracts pallet` as `pallet-contract` in following doc.*
 
@@ -31,13 +32,16 @@ We provide tow branches now:
 * `substrate-v2.0.0`: run v2.0.0 `pallet-contracts` based on v2.0.0 substrate dependencies.
 
 We may keep it in this way until `pallet-contracts` release v3.0.0
+
 * `master` branch is our default branch, which provides our forked `pallet-contracts` crate that tracks the newest substrate `pallet-contracts` module.
-    We provide our forked `pallet-contracts` in `vendor` directory which tracks a pointed version for substrate. This forked `pallet-contracts` is from 
-    the branch `europa-contracts` in our substrate repo. In this forked `pallet-contracts` we would provide many self test features.
+    
+    In `master` branch, Europa use `vender/substrate`'s `pallet-contracts` as dependency. This forked `pallet-contracts` is from 
+    the branch `europa-contracts` in our `vendor/substrate` repo. In this forked `pallet-contracts` Europa provides 
+    many self test features.
     
     More information about this forked substrate refers to [this repo](https://github.com/patractlabs/substrate)
     
-    Currently, the tracked substrate commit is [712085115cdef4a79a66747338c920d6ba4e479f](https://github.com/paritytech/substrate/commit/712085115cdef4a79a66747338c920d6ba4e479f)
+    Currently, the tracked substrate commit is [b27503591d019b94a0eea7510578dadc5ad3196c](https://github.com/paritytech/substrate/commit/b27503591d019b94a0eea7510578dadc5ad3196c)
     
     For substrate change log:
     - [x] [contracts: Add missing instruction to the `Schedule`](https://github.com/paritytech/substrate/pull/7527)
@@ -48,106 +52,85 @@ We may keep it in this way until `pallet-contracts` release v3.0.0
     - [x] [contracts: Change `define_env!` to expect a `Result<T, DispatchError>` for every function #7762](https://github.com/paritytech/substrate/pull/7762)  
     - [x] [contracts: Prevent contracts from allocating a too large buffer #7818](https://github.com/paritytech/substrate/pull/7818)
     - [x] [contracts: Add configurable per-storage item cost #7819](https://github.com/paritytech/substrate/pull/7819)
-
-    For our change log:
-
-    - [x] Using `ep-sandbox` instead of `sp-sandbox` in `pallet-contracts`.
-    - [x] Supporting `NestedRuntime` event track feature to record all useful thing in `pallet-contracts`.
     
-    ChainExtensions:
-  
-    - [x] Contract Logger support, refer to this link [PIP-102](https://github.com/patractlabs/PIPs/blob/main/PIPs/pip-102.md)
-    - [x] Zero-Knowledge support, refer to this link [PIP-101](https://github.com/patractlabs/PIPs/blob/main/PIPs/pip-101.md)
-
-      *Currently we use a simple static way to charge weight for ZKP, we would change this part with benchmarks result in future.*
-
 * `substrate-v2.0.0` branch is fixed in v2.0.0 substrate, both for `pallet-contracts` module and all substrate dependencies.
 
     If you just need v2.0.0 contract test, do not need to clone git submodule in vendor, just switch to this branch.
 
-Europa is tracking [newest substrate (712085)](https://github.com/paritytech/substrate/commit/712085115cdef4a79a66747338c920d6ba4e479f) now. Thus `pallet-contracts` could use newest features.
+Europa is tracking [newest substrate (712085)](https://github.com/paritytech/substrate/commit/712085115cdef4a79a66747338c920d6ba4e479f) now. 
+Thus `pallet-contracts` could use newest features.
 
 ## Extending types
-When using [Substrate Portal](https://polkadot.js.org/apps), [@polkadot/api](https://github.com/polkadot-js/api) and [Redspot](https://github.com/patractlabs/redspot) or other 3rd parties client to connect Europa `pallet-contracts` node, please remember to add ["extending types"](https://polkadot.js.org/docs/api/start/types.extend/) for Europa requirements.
+When using [Substrate Portal](https://polkadot.js.org/apps), [@polkadot/api](https://github.com/polkadot-js/api) and [Redspot](https://github.com/patractlabs/redspot) or other 3rd parties clients to connect Europa `pallet-contracts` node, please remember to add ["extending types"](https://polkadot.js.org/docs/api/start/types.extend/) for Europa requirements.
 
 Europa **current** "extending types" is (This may be changed for different Europa version):
 ```json
 {
-  "LookupSource": "MultiAddress"
+  "LookupSource": "MultiAddress",
+  "Address": "MultiAddress"
 }
 ```
     
 ## Features
-In details, current Europa provide:
-1. Europa sandbox framework is another implementation for [substrate client](https://github.com/paritytech/substrate/tree/master/client).
+In details, current Europa sandbox framework provides:
+1. This framework is another implementation for [substrate client](https://github.com/paritytech/substrate/tree/master/client).
 
-    Europa client crate is named `ec-*`, for Substrate client crate is named `sc-*`. Thus, Europa sandbox framework could also be used by any blockchain projects which are based on Substrate.
+    Europa client crates are named `ec-*`, for Substrate client crates are named `sc-*`. Thus, Europa sandbox framework could also be used by any blockchain projects which are based on Substrate.
     
-    The directory `bin/europa` is the implementation example for Europa like [`bin/node`](https://github.com/paritytech/substrate/tree/master/bin/node), [`bin/node-template`](https://github.com/paritytech/substrate/tree/master/bin/node-template) in Substrate. Substrate blockchain could integrate Europa to provide following features.  
+    The directory `bin/europa` is the implementation example for Europa like [`bin/node`](https://github.com/paritytech/substrate/tree/master/bin/node), [`bin/node-template`](https://github.com/paritytech/substrate/tree/master/bin/node-template) in Substrate. Substrate blockchain could integrate Europa framework for following features.  
 
-2. Produce a block only when receive new extrinsic.
-
-    Europa sandbox framework uses `sc-consensus-manual-seal` to produce blocks. So that when debugging contracts or runtime pallet developers do not need to wait the interval time for consensus. Currently once receiving an extrinsic would produce a new block. In the future, we would provide a rpc to allow developers to submit a batch of extrinsics and produce one block to contains this batch of extrinsics. 
-
-3. Remove all WASM related part.
-
-    We think runtime `no-std` could not debug easily, like set breaking point for gdb debug and add log print for any formatted printing (Substrate provide a log in runtime, but it's limited). And when someone wants to integrate experimental features in runtime to verify them which do not support WASM yet, Europa provides a friendly environment.
-    
-    e.g. We would fork `wasmi` and change it a lot to provide more features. Those features are just used for testing contracts, not used in production blockchain. 
-    
-4. Provide another database called `state-kv` to records every block modified state.
-
-    The sandbox framework could export modified state kvs for every block, including state kvs and child state kvs. Currently Europa just provides a way to export all state for a specified block state, but for debugging, we just need to know the changed state after executing a block.
-    
-    [`substrate-archive`](https://github.com/paritytech/substrate-archive) provides a way to store the modified state kvs by constructing an outside executing environment to do this thing. In Europa, we directly store the modified state kvs for every block in `state-kv` db, so developer could easily lookup those changed state kvs.
-    
-    ```bash
-    # print the modified state kvs for block 1
-    $ ./target/debug/europa state-kv 1
-    Nov 12 15:53:27.699  INFO modified state for block:0x6c119a8f7de42e330aca8b9d3587937aacbbc203cc21650b60644c2f2d33e7fb    
-    Nov 12 15:53:27.699  INFO       key:26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac|value:[DELETED]    
-    Nov 12 15:53:27.699  INFO       key:26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850|value:05000000
-    # ...    
-    ```
-   
-5. Provide some particular rpc to operate this sandbox.
-
-    Currently Europa framework is compatible with all rpc in Substrate except the rpc related to network (like `system_networkState` and others). Thus the node which is integrated with Europa framework could use Substrate Protal: [https://polkadot.js.org/apps/](https://polkadot.js.org/apps/) to operate directly.
-    
-    Besides, Europa provides following rpc:
-    * `europa_forwardToHeight` (params: \[`height: NumberOf<B>`\])
-    
-        The rpc provide a way to produce a batch of empty block to reach target block height. This rpc is very useful when testing a feature related to block height like staking locking time, the rent calculating in `pallet-contracts` and so on. 
-    
-        e.g. Currently best height is 100, and when call this rpc and pass 199, the best height would reach to 199.  
-    
-    * `europa_backwardToHeight` (params: \[`height: NumberOf<B>`\])
-    
-        The rpc could revert current best height to the specified height which is less than current best height. This rpc provide a way to back to an old state to do testing repeatedly. So that when debugging, there is no need to construct the testing state environment every time, just using this rpc to revert to an old state.
-        
-        e.g. Currently best height is 100, and when call this rpc and pass 88, the best height would back to 88 and the state is reverted to 88 block state.
-    
-    * `europa_modifiedStateKvs` (params: \[`number_or_hash: NumberOrHash<B>`\])
-    
-        The rpc could print the modified state kvs for a specified block height or hash. This rpc is same to the feature 4, just using rpc to return the information.
-        
-        ```json
-        {
-            "jsonrpc": "2.0",
-            "result": {
-                "0x26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac": null,
-                "0x26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850": "0x05000000",
-                // ...
-            }
-        }
-        ```
+2. Producing a block only when receive new extrinsic.
+3. Removing all WASM related parts.
+4. Providing another database called `state-kv` to records every block modified state.
+5. Providing some particular rpc to operate this sandbox.
+    * `europa_forwardToHeight`: developer can call this rpc to auto generate empty blocks to pointed height. 
+    * `europa_backwardToHeight`: developer could revert block height and states to pointed height.
+    * ...
     
 6. Use workspace to isolate different node environment.
-   
-    Europa sandbox framework provides the concept of workspace to isolate node environment. In Substrate, developer could use command `-d/--base-path` to isolate different data environment. 
-    
-    We think `-d/--base-path` should be used for assigning the workspace directory for Europa, and using `-w/--workspace` command to specify a separate environment. And on the other hand, all existed workspaces would be recorded, developer could switch between different workspace.  
 
+More information about sandbox framework detailed features refers to the doc: [basic.md](./doc/basic.md)
+
+And for Europa `pallet-contracts` sandbox, we split into two parts:
+
+Europa self modifications:
+
+- [x] Using `ep-sandbox` instead of `sp-sandbox` in `pallet-contracts`.
+    - [x] Using [`forked wasmi`](https://github.com/patractlabs/wasmi) to support **WASM panic backtrace**.
+    - [ ] Using `wasmtime` as WASM JIT-executor and support gdb/lldb debug. (developing)
+    - [ ] Using `wasm3` as a more faster WASM interpreter. (not in plan)
+- [x] Supporting `NestedRuntime` event track feature to record all useful thing in `pallet-contracts`.
+    When instantiate or call a contract (This contract needs to be compiled by [PatractLabs's `cargo-contract`](https://github.com/patractlabs/cargo-contract/tree/cmd/debug) now), Europa would print:
+    ```bash
+    1: NestedRuntime {
+        ext_result: [success] ExecReturnValue { flags: 0, data: 01 },
+        caller: 0000000000000000000000000000000000000000000000000000000000000000 (5C4hrfjw...),
+        self_account: 3790ddf4d8c63d559b3b46b96ca9b7b5f07b772c9ad4587eca6c0738e5d48422 (5DKZXRQN...),
+        selector: 0x1e5ca456,
+        args: None,
+        value: 0,
+        gas_limit: 4999999999999,
+        gas_left: 4998334662707,
+        env_trace: [
+            seal_value_transferred(Some(0x00000000000000000000000000000000)),
+            seal_input(Some(0x1e5ca456)),
+            seal_get_storage((Some(0x0000000000000000000000000000000000000000000000000000000000000000), Some(0x01))),
+            seal_return((0, Some(0x01))),
+        ],
+        trap_reason: TrapReason::Return(ReturnData { flags: 0, data: 01 }),
+        nest: [],
+    }
+    ```
+
+ChainExtensions features:
+
+- [x] Contract Logger support, refer to this link [PIP-102](https://github.com/patractlabs/PIPs/blob/main/PIPs/pip-102.md)
+- [x] Zero-Knowledge support, refer to this link [PIP-101](https://github.com/patractlabs/PIPs/blob/main/PIPs/pip-101.md)
+
+  *Currently we use a simple static way to charge weight for ZKP, we would change this part with benchmarks result in future.*
+
+More information about Europa `pallet-contracts` sandbox detailed features refers to the doc: [europa.md](./doc/europa.md)
+   
 ## Build and run
 ### Build
 #### clone this repo
@@ -178,6 +161,8 @@ When building finish, current executable file is named `europa` in `target` dire
 $ ./target/debug/europa 
 # if you what to specify a directory, add `-d` or `--base-path`
 $ ./target/debug/europa -d database
+# if you just want to test in tmp, add `--tmp`
+$ ./target/debug/europa --tmp
 ```
 then, the Europa sandbox is starting:
 ```bash
@@ -206,72 +191,23 @@ Nov 12 17:21:32.252  INFO 🎁 Prepared block for proposing at 1 [hash: 0x010960
 Nov 12 17:21:32.267  INFO Instant Seal success: CreatedBlock { hash: 0x0109608217316a298c88135cf39a87cc31c37729fbe567b4a1a9f8dcdb81ebeb, aux: ImportedAux { header_only: false, clear_justification_requests: false, needs_justification: false, bad_justification: false, needs_finality_proof: false, is_new_best: true } }    
 ```
 
-#### Export modified state kvs
-```bash
-$ ./target/debug/europa state-kv 1
-# if you have specified a directory, add `-d` or `--base-path`
-$ ./target/debug/europa state-kv -d database 1
-```
-
-#### Use another workspace
-##### Specify another workspace
-```bash
-$ ./target/debug/europa -w another-workspace
-# if you have specified a directory, add `-d` or `--base-path`
-$ ./target/debug/europa -d database -w another-workspace
-```
-the log would like:
-```bash
-Nov 12 17:25:47.428  INFO 💾 Database: RocksDb at .sub/another-workspace/chains/dev/db    
-Nov 12 17:25:47.428  INFO 📖 Workspace: another-workspace | Current workspace list: ["default", "another-workspace"]    
-Nov 12 17:25:47.428  INFO ⛓  Native runtime: europa-1 (europa-1.tx1.au1)  
-```
-
-##### Set default workspace
-stop the Europa, than execute:
-```bash
-# another-workspace is the workspace name which we what to set as default.
-$ ./target/debug/europa workspace default another-workspace
-Nov 12 17:28:41.980  INFO Current default workspace:    
-Nov 12 17:28:41.981  INFO       default    
-Nov 12 17:28:41.981  INFO     
-Nov 12 17:28:41.981  INFO Set [another-workspace] as default workspace.  
-```
-then start Europa, Europa would use "another-workspace" as default workspace.
-```bash
-$ ./target/debug/europa
-# ...
-Nov 12 17:29:33.862  INFO 💾 Database: RocksDb at .sub/another-workspace/chains/dev/db    
-Nov 12 17:29:33.862  INFO 📖 Workspace: another-workspace | Current workspace list: ["default", "another-workspace"]    
-Nov 12 17:29:33.862  INFO ⛓  Native runtime: europa-1 (europa-1.tx1.au1)    
-```
-
-##### Delete workspace
-```bash
-$ ./target/debug/europa workspace delete another-workspace
-Nov 12 17:30:49.549  INFO Current default workspace:    
-Nov 12 17:30:49.549  INFO       another-workspace    
-Nov 12 17:30:49.549  INFO     
-Nov 12 17:30:49.550  INFO Delete workspace [another-workspace].    
-Nov 12 17:30:49.550  INFO       delete default record: [another-workspace]    
-Nov 12 17:30:49.550  INFO       delete workspace:[another-workspace] from workspace list
-```
+More operations please refers to the doc [basic.md](./doc/basic.md)
 
 ## Plan
-1. v0.1: Have an independent runtime environment to facilitate more subsequent expansion directions.
+1. v0.1: Have an independent runtime environment to facilitate more subsequent expansion directions. (finish)
 
     The independent runtime environment of excluded nodes can be expanded more without the constraints of the node environment and WASM compilation, and can be easily integrated with other components. In this version, it is more like simulating the Ganache project in Ethereum ecosystem, enabling contract developers to develop without having to build a contract blockchain. Developers can quickly fire up a personal Substrate chain, which can be used to run tests, execute commands, and inspect state while controlling how the chain operates.
 
-2. v0.2: Modify at contract module level to provide more information
+2. v0.2: Modify at contract module level to provide more information. (finish)
 
     In this version, we will fork the pallet-contracts module for secondary development. We will strengthen the part of the error notification for contract developers, such as providing:
     * WASM stack traces, the function call stack during WASM contract execution;
     * Contracts stack traces, the call stack of a contract calling another contract;
     * Console.log, provides libraries and methods to print command lines during contract development;
     * Strengthen the error type and error display of the contract module;
-    * Simple integration with Redspot;
+    * Simple integration with Redspot; (not yet)
     
-3. v0.3: Improve the developement experience, strengthen collaboration with other tools, and extend the sandbox to be compatible with other runtime modules
+3. v0.3: Improve the development experience, strengthen collaboration with other tools, and extend the sandbox to be compatible with other runtime modules. (in future)
 
     * Strengthen the integration with Redspot
     * Strengthen the integration with polkadot.js.org/apps to achieve complete RPC support
