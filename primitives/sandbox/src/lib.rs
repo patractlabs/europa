@@ -41,13 +41,7 @@ use sp_std::prelude::*;
 pub use sp_core::sandbox::HostError;
 pub use sp_wasm_interface::{ReturnValue, Value};
 
-mod imp {
-	#[cfg(feature = "wasmi")]
-	include!("../wasmi.rs");
-
-	#[cfg(feature = "wasmtime")]
-	include!("../wasmtime.rs");
-}
+mod imp;
 
 /// Error that can occur while using this crate.
 #[derive(sp_core::RuntimeDebug)]
