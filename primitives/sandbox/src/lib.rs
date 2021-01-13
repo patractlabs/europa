@@ -75,7 +75,7 @@ impl From<Error> for HostError {
 /// supervisor in [`EnvironmentDefinitionBuilder`].
 ///
 /// [`EnvironmentDefinitionBuilder`]: struct.EnvironmentDefinitionBuilder.html
-pub type HostFuncType<T> = fn(&mut T, &[Value]) -> Result<ReturnValue, HostError>;
+pub type HostFuncType<'h, T> = fn(&mut T, &[Value]) -> Result<ReturnValue, HostError>;
 
 /// Reference to a sandboxed linear memory, that
 /// will be used by the guest module.
@@ -123,13 +123,13 @@ impl Memory {
 ///
 /// The sandboxed module can access only the entities which were defined and passed
 /// to the module at the instantiation time.
-pub struct EnvironmentDefinitionBuilder<T> {
-	inner: imp::EnvironmentDefinitionBuilder<T>,
+pub struct EnvironmentDefinitionBuilder<'e, T> {
+	inner: imp::EnvironmentDefinitionBuilder<'e, T>,
 }
 
-impl<T> EnvironmentDefinitionBuilder<T> {
+impl<'e, T> EnvironmentDefinitionBuilder<'e, T> {
 	/// Construct a new `EnvironmentDefinitionBuilder`.
-	pub fn new() -> EnvironmentDefinitionBuilder<T> {
+	pub fn new() -> EnvironmentDefinitionBuilder<'e, T> {
 		EnvironmentDefinitionBuilder {
 			inner: imp::EnvironmentDefinitionBuilder::new(),
 		}
@@ -162,11 +162,11 @@ impl<T> EnvironmentDefinitionBuilder<T> {
 /// Sandboxed instance of a wasm module.
 ///
 /// This instance can be used for invoking exported functions.
-pub struct Instance<T> {
-	inner: imp::Instance<T>,
+pub struct Instance<'i, T> {
+	inner: imp::Instance<'i, T>,
 }
 
-impl<T> Instance<T> {
+impl<'i, T> Instance<'i, T> {
 	/// Instantiate a module with the given [`EnvironmentDefinitionBuilder`]. It will
 	/// run the `start` function (if it is present in the module) with the given `state`.
 	///
@@ -177,9 +177,9 @@ impl<T> Instance<T> {
 	/// [`EnvironmentDefinitionBuilder`]: struct.EnvironmentDefinitionBuilder.html
 	pub fn new(
 		code: &[u8],
-		env_def_builder: &EnvironmentDefinitionBuilder<T>,
+		env_def_builder: &'i EnvironmentDefinitionBuilder<T>,
 		state: &mut T,
-	) -> Result<Instance<T>, Error> {
+	) -> Result<Instance<'i, T>, Error> {
 		Ok(Instance {
 			inner: imp::Instance::new(code, &env_def_builder.inner, state)?,
 		})
