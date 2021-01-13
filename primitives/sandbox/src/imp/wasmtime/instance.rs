@@ -1,5 +1,5 @@
 //! Wasmtime Instance
-use super::{DefinedHostFunctions, EnvironmentDefinitionBuilder};
+use super::{util, DefinedHostFunctions, EnvironmentDefinitionBuilder};
 use crate::{Error, ReturnValue, Value};
 use wasmtime::{Engine, Extern, Global, Instance as InstanceRef, Module, Store, Val};
 
@@ -43,11 +43,18 @@ impl<T> Instance<T> {
 		let args = args
 			.iter()
 			.cloned()
-			.map(|v| super::util::to_val(v))
+			.map(|v| util::to_val(v))
 			.collect::<Vec<_>>();
 
-		// Externals
-		todo!()
+		let func = self.instance.get_func(name).ok_or(Error::Execution)?;
+		let result = func.call(&args).map_err(|_| Error::Execution)?;
+
+		Ok(util::to_ret_val(if result.len() != 1 {
+			return Err(Error::Execution);
+		} else {
+			result[0].to_owned()
+		})
+		.ok_or(Error::Execution)?)
 	}
 
 	pub fn get_global_val(&self, name: &str) -> Option<Value> {

@@ -1,7 +1,7 @@
 //! Host Functions
 use crate::HostFuncType;
 use sp_std::fmt;
-use wasmtime::{FuncType, Val};
+use wasmtime::{ExternRef, Func, FuncType, Store, Val};
 
 pub struct HostFuncIndex(usize);
 
