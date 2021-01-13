@@ -21,7 +21,7 @@ pub struct Memory {
 }
 
 impl Memory {
-	/// New memory
+	/// New memory with config
 	pub fn new(initial: u32, maximum: Option<u32>) -> Result<Memory, Error> {
 		Ok(Memory {
 			inner: MemoryRef::new(
