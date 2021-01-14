@@ -15,7 +15,7 @@ pub struct Instance<T> {
 	_marker: std::marker::PhantomData<T>,
 }
 
-impl<T> Instance<T> {
+impl<T: 'static> Instance<T> {
 	pub fn new(
 		code: &[u8],
 		env_def_builder: &EnvironmentDefinitionBuilder<T>,

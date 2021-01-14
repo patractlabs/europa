@@ -124,7 +124,7 @@ impl Memory {
 ///
 /// The sandboxed module can access only the entities which were defined and passed
 /// to the module at the instantiation time.
-pub struct EnvironmentDefinitionBuilder<T> {
+pub struct EnvironmentDefinitionBuilder<T: 'static> {
 	inner: imp::EnvironmentDefinitionBuilder<T>,
 }
 
@@ -168,7 +168,7 @@ impl<T> EnvironmentDefinitionBuilder<T> {
 /// Sandboxed instance of a wasm module.
 ///
 /// This instance can be used for invoking exported functions.
-pub struct Instance<T> {
+pub struct Instance<T: 'static> {
 	inner: imp::Instance<T>,
 }
 

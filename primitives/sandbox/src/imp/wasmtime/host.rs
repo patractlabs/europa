@@ -10,7 +10,7 @@ pub struct DefinedHostFunctions<T> {
 	// _marker: &std::marker::PhantomData<T>,
 }
 
-impl<T> DefinedHostFunctions<T> {
+impl<T: 'static> DefinedHostFunctions<T> {
 	pub fn new() -> Self {
 		Self {
 			funcs: Vec::new(),

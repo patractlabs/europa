@@ -6,15 +6,13 @@ use wasmtime::{Extern, Store};
 pub struct EnvironmentDefinitionBuilder<T> {
 	pub memory: Option<Memory>,
 	pub defined_host_functions: DefinedHostFunctions<T>,
-	// _marker: &'e std::marker::PhantomData<T>,
 }
 
-impl<T> EnvironmentDefinitionBuilder<T> {
+impl<T: 'static> EnvironmentDefinitionBuilder<T> {
 	pub fn new() -> Self {
 		EnvironmentDefinitionBuilder {
 			memory: None,
 			defined_host_functions: DefinedHostFunctions::new(),
-			// _marker: &std::marker::PhantomData::<T>,
 		}
 	}
 
@@ -51,6 +49,6 @@ impl<T> EnvironmentDefinitionBuilder<T> {
 		let mem = self.memory.clone().ok_or(Error::Module)?;
 		imports.push(Extern::Memory(mem.cast()));
 
-		Ok(imports)
+		Ok(vec![])
 	}
 }

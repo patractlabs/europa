@@ -1,7 +1,6 @@
 //! Util
 use crate::{FunctionType, HostFuncType, ReturnValue, Value};
 use parity_wasm::elements::ValueType;
-use sp_std::{cell::RefCell, sync::Arc};
 use wasmtime::{Caller, Func, FuncType, Store, Trap, Val, ValType};
 
 pub fn to_val_ty(ty: ValueType) -> ValType {
@@ -28,7 +27,12 @@ fn wasmtime_sig(sig: FunctionType) -> FuncType {
 	FuncType::new(params, results)
 }
 
-pub fn wrap_fn<T>(store: &Store, state: &mut T, f: HostFuncType<T>, sig: FunctionType) -> Func {
+pub fn wrap_fn<T: 'static>(
+	store: &Store,
+	state: &mut T,
+	f: HostFuncType<T>,
+	sig: FunctionType,
+) -> Func {
 	let state_mut = state as *mut T;
 	let func = move |_: Caller<'_>, args: &[Val], results: &mut [Val]| {
 		let mut inner_args = vec![];
@@ -40,17 +44,16 @@ pub fn wrap_fn<T>(store: &Store, state: &mut T, f: HostFuncType<T>, sig: Functio
 			}
 		}
 
-		// match unsafe { f(&mut *state_mut, &inner_args) } {
-		// 	Ok(ret) => {
-		// 		if let Some(ret) = from_ret_val(ret) {
-		// 			results = &mut [ret];
-		// 		}
-		// 		Ok(())
-		// 	}
-		// 	Err(_) => Err(Trap::new("Could not wrap host function")),
-		// }
-
-		return Err(Trap::new("Could not wrap host function"));
+		match unsafe { f(&mut *state_mut, &inner_args) } {
+			Ok(ret) => {
+				if let Some(ret) = from_ret_val(ret) {
+					// TODO: check the signature
+					results[0] = ret;
+				}
+				Ok(())
+			}
+			Err(_) => Err(Trap::new("Could not wrap host function")),
+		}
 	};
 	Func::new(store, wasmtime_sig(sig), func)
 }
