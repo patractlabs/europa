@@ -27,20 +27,29 @@ fn wasmtime_sig(sig: FunctionType) -> FuncType {
 	FuncType::new(params, results)
 }
 
-fn wrap_fn<T>(store: &Store, state: &mut T, f: HostFuncType<T>, sig: FunctionType) -> Func {
-	let state_mut = state as *mut T;
-	let func = move |_: Caller<'_>, args: &[Val], results: &mut [Val]| {
-		let result = unsafe { f(*state_mut, args) };
-		match result {
-			Ok(ret) => {
-				if let Some(ret) = from_ret_val(ret) {
-					results = &[ret];
-				}
-				Ok(())
+pub fn wrap_fn<T>(store: &Store, _state: &mut T, _f: HostFuncType<T>, sig: FunctionType) -> Func {
+	let func = move |_: Caller<'_>, args: &[Val], _results: &mut [Val]| {
+		let mut inner_args = vec![];
+		for arg in args {
+			if let Some(arg) = from_val(arg.clone()) {
+				inner_args.push(arg);
+			} else {
+				return Err(Trap::new("Could not wrap host function"));
 			}
-			Err(_) => Err(Trap::new("Could not wrap host function")),
 		}
-		Ok(())
+
+		// let result = unsafe { f(&mut *state_mut, &inner_args) };
+		// match result {
+		// 	Ok(ret) => {
+		// 		if let Some(ret) = from_ret_val(ret) {
+		// 			results = &mut [ret];
+		// 		}
+		// 		Ok(())
+		// 	}
+		// 	Err(_) => Err(Trap::new("Could not wrap host function")),
+		// }
+
+		return Err(Trap::new("Could not wrap host function"));
 	};
 	Func::new(store, wasmtime_sig(sig), func)
 }
@@ -68,15 +77,14 @@ pub fn to_ret_val(v: Val) -> Option<ReturnValue> {
 	from_val(v).map(|v| ReturnValue::Value(v))
 }
 
-pub fn from_ret_val(v: ReturnValue) -> Option<Val> {
-	match v {
-		ReturnValue::Value(v) => match v {
-			Value::I64(v) => Some(Val::I64(v)),
-			Value::F64(v) => Some(Val::F64(v)),
-			Value::I32(v) => Some(Val::I32(v)),
-			Value::F32(v) => Some(Val::F32(v)),
-			_ => None,
-		},
-		ReturnValue::Unit => None,
-	}
-}
+// fn from_ret_val(v: ReturnValue) -> Option<Val> {
+// 	match v {
+// 		ReturnValue::Value(v) => match v {
+// 			Value::I64(v) => Some(Val::I64(v)),
+// 			Value::F64(v) => Some(Val::F64(v)),
+// 			Value::I32(v) => Some(Val::I32(v)),
+// 			Value::F32(v) => Some(Val::F32(v)),
+// 		},
+// 		ReturnValue::Unit => None,
+// 	}
+// }

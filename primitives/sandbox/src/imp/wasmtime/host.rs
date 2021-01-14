@@ -1,13 +1,12 @@
 //! Host Functions
 use super::util;
-use crate::{Error, HostFuncType};
+use crate::HostFuncType;
+use parity_wasm::elements::FunctionType;
 use sp_std::fmt;
-use wasmtime::{Extern, Func, Store, Val};
-
-pub struct HostFuncIndex(usize);
+use wasmtime::{Func, Store};
 
 pub struct DefinedHostFunctions<T> {
-	pub funcs: Vec<HostFuncType<T>>,
+	pub funcs: Vec<(HostFuncType<T>, FunctionType)>,
 }
 
 impl<T> DefinedHostFunctions<T> {
@@ -15,16 +14,17 @@ impl<T> DefinedHostFunctions<T> {
 		Self { funcs: Vec::new() }
 	}
 
-	pub fn define(&mut self, f: HostFuncType<T>) -> HostFuncIndex {
-		let idx = self.funcs.len();
-		self.funcs.push(f);
-		HostFuncIndex(idx)
+	pub fn define(&mut self, f: HostFuncType<T>, sig: FunctionType) {
+		self.funcs.push((f, sig));
 	}
 
-	pub fn build(self, store: &Store, state: &mut T) -> Result<Vec<Extern>, Error> {
-		// self.funcs.iter().map(|v| Func::new(store));
-		// Func::wrap(store, |v: Val| {});
-		Ok(vec![])
+	pub fn build(self, store: &Store, state: &mut T) -> Vec<Func> {
+		let mut funcs = vec![];
+		for (f, sig) in self.funcs {
+			funcs.push(util::wrap_fn(store, state, f, sig));
+		}
+
+		funcs
 	}
 }
 

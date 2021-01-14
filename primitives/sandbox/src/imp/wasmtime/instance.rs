@@ -1,5 +1,5 @@
 //! Wasmtime Instance
-use super::{util, DefinedHostFunctions, EnvironmentDefinitionBuilder};
+use super::{util, EnvironmentDefinitionBuilder};
 use crate::{Error, ReturnValue, Value};
 use wasmtime::{Engine, Extern, Global, Instance as InstanceRef, Module, Store, Val};
 
@@ -22,10 +22,9 @@ impl<T> Instance<T> {
 		state: &mut T,
 	) -> Result<Instance<T>, Error> {
 		let module = Module::from_binary(&Engine::default(), code).map_err(|_| Error::Module)?;
+		let imports = env_def_builder.build(&Store::default(), state)?;
 		let instance =
-			InstanceRef::new(&Store::default(), &module, &[]).map_err(|_| Error::Module)?;
-		let defined_host_functions = env_def_builder.defined_host_functions.clone();
-		let state_ptr = state as *mut T;
+			InstanceRef::new(&Store::default(), &module, &imports).map_err(|_| Error::Module)?;
 
 		Ok(Instance {
 			instance,
@@ -37,7 +36,7 @@ impl<T> Instance<T> {
 		&mut self,
 		name: &str,
 		args: &[Value],
-		state: &mut T,
+		_state: &mut T,
 	) -> Result<ReturnValue, Error> {
 		let args = args
 			.iter()
