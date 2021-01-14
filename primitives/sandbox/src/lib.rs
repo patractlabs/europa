@@ -36,6 +36,7 @@
 //! - executing a wasm substrate runtime inside of a wasm parachain
 #![warn(missing_docs)]
 
+use parity_wasm::elements::FunctionType;
 use sp_std::prelude::*;
 
 pub use sp_core::sandbox::HostError;
@@ -141,12 +142,17 @@ impl<'e, T> EnvironmentDefinitionBuilder<'e, T> {
 	/// can import function passed here with any signature it wants. It can even import
 	/// the same function (i.e. with same `module` and `field`) several times. It's up to
 	/// the user code to check or constrain the types of signatures.
-	pub fn add_host_func<N1, N2>(&mut self, module: N1, field: N2, f: HostFuncType<T>)
-	where
+	pub fn add_host_func<N1, N2>(
+		&mut self,
+		module: N1,
+		field: N2,
+		f: HostFuncType<T>,
+		sig: FunctionType,
+	) where
 		N1: Into<Vec<u8>>,
 		N2: Into<Vec<u8>>,
 	{
-		self.inner.add_host_func(module, field, f);
+		self.inner.add_host_func(module, field, f, sig);
 	}
 
 	/// Register a memory in this environment definition.

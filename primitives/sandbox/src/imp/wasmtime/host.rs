@@ -1,7 +1,8 @@
 //! Host Functions
-use crate::HostFuncType;
+use super::util;
+use crate::{Error, HostFuncType};
 use sp_std::fmt;
-use wasmtime::{ExternRef, Func, FuncType, Store, Val};
+use wasmtime::{Extern, Func, Store, Val};
 
 pub struct HostFuncIndex(usize);
 
@@ -18,6 +19,12 @@ impl<T> DefinedHostFunctions<T> {
 		let idx = self.funcs.len();
 		self.funcs.push(f);
 		HostFuncIndex(idx)
+	}
+
+	pub fn build(self, store: &Store, state: &mut T) -> Result<Vec<Extern>, Error> {
+		// self.funcs.iter().map(|v| Func::new(store));
+		// Func::wrap(store, |v: Val| {});
+		Ok(vec![])
 	}
 }
 

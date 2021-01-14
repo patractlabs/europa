@@ -12,7 +12,6 @@ fn extern_global(extern_: &Extern) -> Option<&Global> {
 
 pub struct Instance<T> {
 	instance: InstanceRef,
-	defined_host_functions: DefinedHostFunctions<T>,
 	_marker: std::marker::PhantomData<T>,
 }
 
@@ -26,10 +25,10 @@ impl<T> Instance<T> {
 		let instance =
 			InstanceRef::new(&Store::default(), &module, &[]).map_err(|_| Error::Module)?;
 		let defined_host_functions = env_def_builder.defined_host_functions.clone();
+		let state_ptr = state as *mut T;
 
 		Ok(Instance {
 			instance,
-			defined_host_functions,
 			_marker: std::marker::PhantomData::<T>,
 		})
 	}

@@ -84,4 +84,9 @@ impl Memory {
 			slice::from_raw_parts_mut(ptr, len)
 		}
 	}
+
+	/// Get the inner memory
+	pub fn cast(self) -> MemoryRef {
+		self.inner
+	}
 }

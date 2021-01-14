@@ -1,42 +1,67 @@
 //! Wasmtime Enviroment
-use super::{DefinedHostFunctions, HostFuncIndex, Memory};
-use crate::HostFuncType;
-use sp_std::collections::btree_map::BTreeMap;
-
-pub enum ExternVal {
-	HostFunc(HostFuncIndex),
-	Memory(Memory),
-}
+use super::{util, DefinedHostFunctions, Memory};
+use crate::{Error, FunctionType, HostError, HostFuncType};
+use wasmtime::{Extern, ExternType, Func, FuncType, Store, Val, ValType};
 
 pub struct EnvironmentDefinitionBuilder<T> {
-	map: BTreeMap<(Vec<u8>, Vec<u8>), ExternVal>,
+	pub memory: Option<Memory>,
 	pub defined_host_functions: DefinedHostFunctions<T>,
 }
 
 impl<T> EnvironmentDefinitionBuilder<T> {
 	pub fn new() -> Self {
 		EnvironmentDefinitionBuilder {
-			map: BTreeMap::new(),
+			memory: None,
 			defined_host_functions: DefinedHostFunctions::new(),
 		}
 	}
 
-	pub fn add_host_func<N1, N2>(&mut self, module: N1, field: N2, f: HostFuncType<T>)
-	where
+	pub fn add_host_func<N1, N2>(
+		&mut self,
+		_module: N1,
+		_field: N2,
+		f: HostFuncType<T>,
+		sig: FunctionType,
+	) where
 		N1: Into<Vec<u8>>,
 		N2: Into<Vec<u8>>,
 	{
-		let idx = self.defined_host_functions.define(f);
-		self.map
-			.insert((module.into(), field.into()), ExternVal::HostFunc(idx));
+		self.defined_host_functions.define(f);
 	}
 
-	pub fn add_memory<N1, N2>(&mut self, module: N1, field: N2, mem: Memory)
+	pub fn add_memory<N1, N2>(&mut self, _module: N1, _field: N2, mem: Memory)
 	where
 		N1: Into<Vec<u8>>,
 		N2: Into<Vec<u8>>,
 	{
-		self.map
-			.insert((module.into(), field.into()), ExternVal::Memory(mem));
+		self.memory = Some(mem);
+	}
+
+	pub fn build(self, store: &Store, state: &mut T) -> Result<Vec<Extern>, Error> {
+		let mut imports: Vec<Extern> = vec![];
+
+		// push funcs
+		let state_ptr = state as *mut T;
+		for f in self.defined_host_functions.funcs.iter() {
+			imports.push(Extern::Func(Func::wrap(&store, |args: i32| {
+				// let args = if let Some(args) = args
+				// 	.iter()
+				// 	.map(|v| util::from_val(*v))
+				// 	.collect::<Option<Vec<_>>>()
+				// {
+				// 	args
+				// } else {
+				// 	return Err(HostError);
+				// };
+				//
+				// unsafe { f(*state_ptr, args) }
+			})));
+		}
+
+		// push memory
+		let mem = self.memory.ok_or(Error::Module)?;
+		imports.push(Extern::Memory(mem.cast()));
+
+		Ok(vec![])
 	}
 }

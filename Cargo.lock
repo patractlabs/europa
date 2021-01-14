@@ -1324,6 +1324,7 @@ version = "0.8.0"
 dependencies = [
  "assert_matches",
  "parity-scale-codec",
+ "parity-wasm",
  "sp-core",
  "sp-io",
  "sp-std",
@@ -4423,7 +4424,7 @@ dependencies = [
 [[package]]
 name = "pwasm-utils"
 version = "0.16.0"
-source = "git+https://github.com/patractlabs/wasm-utils?branch=v0.16.0#5cfdfb94763a86f6e072755f77d48fca02822461"
+source = "git+https://github.com/patractlabs/wasm-utils?branch=v0.16.0#fe038997c8096e53a638d839774821da374f3c6f"
 dependencies = [
  "byteorder",
  "log",
