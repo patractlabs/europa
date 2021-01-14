@@ -7,11 +7,15 @@ use wasmtime::{Func, Store};
 
 pub struct DefinedHostFunctions<T> {
 	pub funcs: Vec<(HostFuncType<T>, FunctionType)>,
+	// _marker: &std::marker::PhantomData<T>,
 }
 
 impl<T> DefinedHostFunctions<T> {
 	pub fn new() -> Self {
-		Self { funcs: Vec::new() }
+		Self {
+			funcs: Vec::new(),
+			// _marker: &std::marker::PhantomData::<T>,
+		}
 	}
 
 	pub fn define(&mut self, f: HostFuncType<T>, sig: FunctionType) {
@@ -32,6 +36,7 @@ impl<T> Clone for DefinedHostFunctions<T> {
 	fn clone(&self) -> DefinedHostFunctions<T> {
 		DefinedHostFunctions {
 			funcs: self.funcs.clone(),
+			// _marker: &std::marker::PhantomData::<T>,
 		}
 	}
 }

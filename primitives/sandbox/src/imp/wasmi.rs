@@ -56,26 +56,21 @@ impl Memory {
 
 struct HostFuncIndex(usize);
 
-struct DefinedHostFunctions<'h, T> {
-	funcs: Vec<HostFuncType<'h, T>>,
-	_marker: &'h std::marker::PhantomData<T>,
+struct DefinedHostFunctions<T> {
+	funcs: Vec<HostFuncType<T>>,
 }
 
-impl<'h, T> Clone for DefinedHostFunctions<'h, T> {
-	fn clone(&self) -> DefinedHostFunctions<'h, T> {
+impl<T> Clone for DefinedHostFunctions<T> {
+	fn clone(&self) -> DefinedHostFunctions<T> {
 		DefinedHostFunctions {
 			funcs: self.funcs.clone(),
-			_marker: &std::marker::PhantomData::<T>,
 		}
 	}
 }
 
-impl<'h, T> DefinedHostFunctions<'h, T> {
-	fn new() -> DefinedHostFunctions<'h, T> {
-		DefinedHostFunctions {
-			funcs: Vec::new(),
-			_marker: &std::marker::PhantomData::<T>,
-		}
+impl<T> DefinedHostFunctions<T> {
+	fn new() -> DefinedHostFunctions<T> {
+		DefinedHostFunctions { funcs: Vec::new() }
 	}
 
 	fn define(&mut self, f: HostFuncType<T>) -> HostFuncIndex {
@@ -96,9 +91,9 @@ impl fmt::Display for DummyHostError {
 
 impl patract_wasmi::HostError for DummyHostError {}
 
-struct GuestExternals<'a, T: 'a> {
+struct GuestExternals<'a, T> {
 	state: &'a mut T,
-	defined_host_functions: &'a DefinedHostFunctions<'a, T>,
+	defined_host_functions: &'a DefinedHostFunctions<T>,
 }
 
 impl<'a, T> Externals for GuestExternals<'a, T> {
@@ -137,18 +132,16 @@ enum ExternVal {
 	Memory(Memory),
 }
 
-pub struct EnvironmentDefinitionBuilder<'h, T> {
+pub struct EnvironmentDefinitionBuilder<T> {
 	map: BTreeMap<(Vec<u8>, Vec<u8>), ExternVal>,
-	defined_host_functions: DefinedHostFunctions<'h, T>,
-	_marker: &'h std::marker::PhantomData<T>,
+	defined_host_functions: DefinedHostFunctions<T>,
 }
 
-impl<'h, T> EnvironmentDefinitionBuilder<'h, T> {
-	pub fn new() -> EnvironmentDefinitionBuilder<'h, T> {
+impl<T> EnvironmentDefinitionBuilder<T> {
+	pub fn new() -> EnvironmentDefinitionBuilder<T> {
 		EnvironmentDefinitionBuilder {
 			map: BTreeMap::new(),
 			defined_host_functions: DefinedHostFunctions::new(),
-			_marker: &std::marker::PhantomData::<T>,
 		}
 	}
 
@@ -177,7 +170,7 @@ impl<'h, T> EnvironmentDefinitionBuilder<'h, T> {
 	}
 }
 
-impl<'h, T> ImportResolver for EnvironmentDefinitionBuilder<'h, T> {
+impl<T> ImportResolver for EnvironmentDefinitionBuilder<T> {
 	fn resolve_func(
 		&self,
 		module_name: &str,
@@ -257,18 +250,17 @@ impl<'h, T> ImportResolver for EnvironmentDefinitionBuilder<'h, T> {
 	}
 }
 
-pub struct Instance<'i, T> {
+pub struct Instance<T> {
 	instance: ModuleRef,
-	defined_host_functions: DefinedHostFunctions<'i, T>,
-	_marker: &'i std::marker::PhantomData<T>,
+	defined_host_functions: DefinedHostFunctions<T>,
 }
 
-impl<'i, T> Instance<'i, T> {
+impl<T> Instance<T> {
 	pub fn new(
 		code: &[u8],
-		env_def_builder: &'i EnvironmentDefinitionBuilder<T>,
+		env_def_builder: &EnvironmentDefinitionBuilder<T>,
 		state: &mut T,
-	) -> Result<Instance<'i, T>, Error> {
+	) -> Result<Instance<T>, Error> {
 		let module = Module::from_buffer(code)
 			.map_err(|_| Error::Module)?
 			.try_parse_names();
@@ -290,7 +282,6 @@ impl<'i, T> Instance<'i, T> {
 		Ok(Instance {
 			instance,
 			defined_host_functions,
-			_marker: &std::marker::PhantomData::<T>,
 		})
 	}
 

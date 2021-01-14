@@ -6,6 +6,7 @@ use wasmtime::{Extern, Store};
 pub struct EnvironmentDefinitionBuilder<T> {
 	pub memory: Option<Memory>,
 	pub defined_host_functions: DefinedHostFunctions<T>,
+	// _marker: &'e std::marker::PhantomData<T>,
 }
 
 impl<T> EnvironmentDefinitionBuilder<T> {
@@ -13,6 +14,7 @@ impl<T> EnvironmentDefinitionBuilder<T> {
 		EnvironmentDefinitionBuilder {
 			memory: None,
 			defined_host_functions: DefinedHostFunctions::new(),
+			// _marker: &std::marker::PhantomData::<T>,
 		}
 	}
 
