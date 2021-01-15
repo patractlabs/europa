@@ -8,7 +8,7 @@ pub struct EnvironmentDefinitionBuilder<T> {
 	pub defined_host_functions: DefinedHostFunctions<T>,
 }
 
-impl<T: 'static> EnvironmentDefinitionBuilder<T> {
+impl<T> EnvironmentDefinitionBuilder<T> {
 	pub fn new() -> Self {
 		EnvironmentDefinitionBuilder {
 			memory: None,

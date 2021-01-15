@@ -1,6 +1,7 @@
 //! Util
 use crate::{FunctionType, HostFuncType, ReturnValue, Value};
 use parity_wasm::elements::ValueType;
+use sp_std::mem;
 use wasmtime::{Caller, Func, FuncType, Store, Trap, Val, ValType};
 
 pub fn to_val_ty(ty: ValueType) -> ValType {
@@ -27,13 +28,7 @@ fn wasmtime_sig(sig: FunctionType) -> FuncType {
 	FuncType::new(params, results)
 }
 
-pub fn wrap_fn<T: 'static>(
-	store: &Store,
-	state: &mut T,
-	f: HostFuncType<T>,
-	sig: FunctionType,
-) -> Func {
-	let state_mut = state as *mut T;
+pub fn wrap_fn<T>(store: &Store, state: usize, f: usize, sig: FunctionType) -> Func {
 	let func = move |_: Caller<'_>, args: &[Val], results: &mut [Val]| {
 		let mut inner_args = vec![];
 		for arg in args {
@@ -44,7 +39,14 @@ pub fn wrap_fn<T: 'static>(
 			}
 		}
 
-		match unsafe { f(&mut *state_mut, &inner_args) } {
+		// HACK the LIFETIME
+		//
+		// # Safety
+		//
+		// Runtime only run for one call.
+		let state: &mut T = unsafe { mem::transmute(state) };
+		let func: HostFuncType<T> = unsafe { mem::transmute(f) };
+		match func(state, &inner_args) {
 			Ok(ret) => {
 				if let Some(ret) = from_ret_val(ret) {
 					// TODO: check the signature

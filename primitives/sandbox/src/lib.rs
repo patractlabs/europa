@@ -124,7 +124,7 @@ impl Memory {
 ///
 /// The sandboxed module can access only the entities which were defined and passed
 /// to the module at the instantiation time.
-pub struct EnvironmentDefinitionBuilder<T: 'static> {
+pub struct EnvironmentDefinitionBuilder<T> {
 	inner: imp::EnvironmentDefinitionBuilder<T>,
 }
 
