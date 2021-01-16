@@ -29,7 +29,7 @@ wat = "1.0"
 assert_matches = "1.3.0"
 
 [features]
-default = [ "std", "interpreter" ]
-std = [ "wasmi/std", "patract-wasmi/std"]
+default = [ "std" ]
+std = [ "jit"]
 jit = [ "wasmtime" ]
 interpreter = [ "patract-wasmi", "wasmi" ]

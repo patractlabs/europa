@@ -59,10 +59,10 @@ pub enum Error {
 	Execution,
 
 	/// wasmi execution
-	#[cfg(feature = "wasmi")]
+	#[cfg(feature = "interpreter")]
 	WasmExecution(patract_wasmi::Error),
 	/// wasmtime execution
-	#[cfg(feature = "wasmtime")]
+	#[cfg(feature = "jit")]
 	WasmExecution(wasmtime::Trap),
 }
 
@@ -168,7 +168,7 @@ impl<T> EnvironmentDefinitionBuilder<T> {
 /// Sandboxed instance of a wasm module.
 ///
 /// This instance can be used for invoking exported functions.
-pub struct Instance<T: 'static> {
+pub struct Instance<T> {
 	inner: imp::Instance<T>,
 }
 

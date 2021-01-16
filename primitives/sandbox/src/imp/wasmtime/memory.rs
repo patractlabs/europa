@@ -17,18 +17,22 @@ pub fn checked_range(offset: usize, len: usize, max: usize) -> Option<Range<usiz
 /// Wasmtime memory
 #[derive(Clone)]
 pub struct Memory {
+	store: Store,
 	inner: MemoryRef,
 }
 
 impl Memory {
 	/// New memory with config
 	pub fn new(initial: u32, maximum: Option<u32>) -> Result<Memory, Error> {
+		let store = Store::default();
 		Ok(Memory {
-			inner: MemoryRef::new(
-				&Store::default(),
-				MemoryType::new(Limits::new(initial, maximum)),
-			),
+			inner: MemoryRef::new(&store, MemoryType::new(Limits::new(initial, maximum))),
+			store,
 		})
+	}
+
+	pub fn store(&self) -> &Store {
+		&self.store
 	}
 
 	pub fn get(&self, ptr: u32, buf: &mut [u8]) -> Result<(), Error> {

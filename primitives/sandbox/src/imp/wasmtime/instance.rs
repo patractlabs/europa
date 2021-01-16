@@ -23,8 +23,13 @@ impl<T> Instance<T> {
 	) -> Result<Instance<T>, Error> {
 		let module = Module::from_binary(&Engine::default(), code).map_err(|_| Error::Module)?;
 		let imports = env_def_builder.build(&Store::default(), state)?;
-		let instance =
-			InstanceRef::new(&Store::default(), &module, &imports).map_err(|_| Error::Module)?;
+		let dummy_store = Store::default();
+		let store = if let Some(store) = env_def_builder.store() {
+			store
+		} else {
+			&dummy_store
+		};
+		let instance = InstanceRef::new(store, &module, &imports).map_err(|_| Error::Module)?;
 
 		Ok(Instance {
 			instance,

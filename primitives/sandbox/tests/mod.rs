@@ -1,10 +1,6 @@
 use assert_matches::assert_matches;
 use ep_sandbox::{EnvironmentDefinitionBuilder, Error, HostError, Instance, ReturnValue, Value};
-
-#[cfg(feature = "wasmi")]
-use patract_wasmi::Error as WasmError;
-#[cfg(feature = "wasmtime")]
-use wasmtime::Trap as WasmError;
+use parity_wasm::elements::{FunctionType, ValueType};
 
 fn execute_sandboxed(code: &[u8], args: &[Value]) -> Result<ReturnValue, HostError> {
 	struct State {
@@ -41,9 +37,24 @@ fn execute_sandboxed(code: &[u8], args: &[Value]) -> Result<ReturnValue, HostErr
 	let mut state = State { counter: 0 };
 
 	let mut env_builder = EnvironmentDefinitionBuilder::new();
-	env_builder.add_host_func("env", "assert", env_assert);
-	env_builder.add_host_func("env", "inc_counter", env_inc_counter);
-	env_builder.add_host_func("env", "polymorphic_id", env_polymorphic_id);
+	env_builder.add_host_func(
+		"env",
+		"assert",
+		env_assert,
+		FunctionType::new(vec![ValueType::I32], None),
+	);
+	env_builder.add_host_func(
+		"env",
+		"inc_counter",
+		env_inc_counter,
+		FunctionType::new(vec![ValueType::I32], None),
+	);
+	env_builder.add_host_func(
+		"env",
+		"polymorphic_id",
+		env_polymorphic_id,
+		FunctionType::new(vec![ValueType::I32], None),
+	);
 
 	let mut instance = Instance::new(code, &env_builder, &mut state)?;
 	let result = instance.invoke("call", args, &mut state);
@@ -83,6 +94,7 @@ fn invoke_args() {
 		&code,
 		&[Value::I32(0x12345678), Value::I64(0x1234567887654321)],
 	);
+	println!("{:#?}", result);
 	assert!(result.is_ok());
 }
 
@@ -151,7 +163,12 @@ fn cant_return_unmatching_type() {
 	}
 
 	let mut env_builder = EnvironmentDefinitionBuilder::new();
-	env_builder.add_host_func("env", "returns_i32", env_returns_i32);
+	env_builder.add_host_func(
+		"env",
+		"returns_i32",
+		env_returns_i32,
+		FunctionType::new(vec![], Some(ValueType::I32)),
+	);
 
 	let code = wat::parse_str(
 		r#"

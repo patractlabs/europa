@@ -37,6 +37,14 @@ impl<T> EnvironmentDefinitionBuilder<T> {
 		self.memory = Some(mem);
 	}
 
+	pub fn store(&self) -> Option<&Store> {
+		if let Some(memory) = &self.memory {
+			Some(memory.store())
+		} else {
+			None
+		}
+	}
+
 	pub fn build(&self, store: &Store, state: &mut T) -> Result<Vec<Extern>, Error> {
 		let mut imports: Vec<Extern> = vec![];
 
