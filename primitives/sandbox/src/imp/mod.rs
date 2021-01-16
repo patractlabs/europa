@@ -46,9 +46,6 @@ enum TrapCode {
 
 	/// Execution has potentially run too long and may be interrupted.
 	Interrupt,
-
-	/// Host function error
-	Host(String),
 }
 
 /// Wasm Trap

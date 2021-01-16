@@ -28,7 +28,8 @@ impl<T> Instance<T> {
 			&dummy_store
 		};
 		let module = Module::from_binary(&store.engine(), code).map_err(|_| Error::Module)?;
-		let imports = env_def_builder.build(store, state)?;
+		let imports =
+			env_def_builder.resolve(store, state, module.imports().collect::<Vec<_>>())?;
 		let instance = InstanceRef::new(store, &module, &imports).map_err(|e| {
 			println!("{:#?}", e);
 			Error::Module

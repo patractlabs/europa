@@ -17,7 +17,7 @@
 use sp_std::{collections::btree_map::BTreeMap, fmt, mem::transmute};
 
 use super::{Trap as OutterTrap, TrapCode};
-use crate::{Error, FunctionType, HostError, HostFuncType, ReturnValue, Value};
+use crate::{Error, HostError, HostFuncType, ReturnValue, Value};
 use patract_wasmi::{
 	memory_units::Pages, Externals, FuncInstance, FuncRef, GlobalDescriptor, GlobalRef,
 	ImportResolver, MemoryDescriptor, MemoryInstance, MemoryRef, Module, ModuleInstance, ModuleRef,
@@ -146,13 +146,8 @@ impl<T> EnvironmentDefinitionBuilder<T> {
 		}
 	}
 
-	pub fn add_host_func<N1, N2>(
-		&mut self,
-		module: N1,
-		field: N2,
-		f: HostFuncType<T>,
-		_sig: FunctionType,
-	) where
+	pub fn add_host_func<N1, N2>(&mut self, module: N1, field: N2, f: HostFuncType<T>)
+	where
 		N1: Into<Vec<u8>>,
 		N2: Into<Vec<u8>>,
 	{

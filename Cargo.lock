@@ -1467,7 +1467,6 @@ version = "0.8.0"
 dependencies = [
  "assert_matches",
  "parity-scale-codec",
- "parity-wasm",
  "sp-core",
  "sp-io",
  "sp-std",

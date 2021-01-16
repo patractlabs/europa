@@ -1,6 +1,5 @@
 use assert_matches::assert_matches;
 use ep_sandbox::{EnvironmentDefinitionBuilder, Error, HostError, Instance, ReturnValue, Value};
-use parity_wasm::elements::{FunctionType, ValueType};
 
 fn execute_sandboxed(code: &[u8], args: &[Value]) -> Result<ReturnValue, Error> {
 	struct State {
@@ -18,42 +17,27 @@ fn execute_sandboxed(code: &[u8], args: &[Value]) -> Result<ReturnValue, Error> 
 			Err(HostError)
 		}
 	}
-	// fn env_inc_counter(e: &mut State, args: &[Value]) -> Result<ReturnValue, HostError> {
-	// 	if args.len() != 1 {
-	// 		return Err(HostError);
-	// 	}
-	// 	let inc_by = args[0].as_i32().ok_or_else(|| HostError)?;
-	// 	e.counter += inc_by as u32;
-	// 	Ok(ReturnValue::Value(Value::I32(e.counter as i32)))
-	// }
+	fn env_inc_counter(e: &mut State, args: &[Value]) -> Result<ReturnValue, HostError> {
+		if args.len() != 1 {
+			return Err(HostError);
+		}
+		let inc_by = args[0].as_i32().ok_or_else(|| HostError)?;
+		e.counter += inc_by as u32;
+		Ok(ReturnValue::Value(Value::I32(e.counter as i32)))
+	}
 	// Function that takes one argument of any type and returns that value.
-	// fn env_polymorphic_id(_e: &mut State, args: &[Value]) -> Result<ReturnValue, HostError> {
-	// 	if args.len() != 1 {
-	// 		return Err(HostError);
-	// 	}
-	// 	Ok(ReturnValue::Value(args[0]))
-	// }
+	fn env_polymorphic_id(_e: &mut State, args: &[Value]) -> Result<ReturnValue, HostError> {
+		if args.len() != 1 {
+			return Err(HostError);
+		}
+		Ok(ReturnValue::Value(args[0]))
+	}
 	let mut state = State { counter: 0 };
 
 	let mut env_builder = EnvironmentDefinitionBuilder::new();
-	env_builder.add_host_func(
-		"env",
-		"assert",
-		env_assert,
-		FunctionType::new(vec![ValueType::I32], None),
-	);
-	// env_builder.add_host_func(
-	// 	"env",
-	// 	"inc_counter",
-	// 	env_inc_counter,
-	// 	FunctionType::new(vec![ValueType::I32], None),
-	// );
-	// env_builder.add_host_func(
-	// 	"env",
-	// 	"polymorphic_id",
-	// 	env_polymorphic_id,
-	// 	FunctionType::new(vec![ValueType::I32], None),
-	// );
+	env_builder.add_host_func("env", "assert", env_assert);
+	env_builder.add_host_func("env", "inc_counter", env_inc_counter);
+	env_builder.add_host_func("env", "polymorphic_id", env_polymorphic_id);
 
 	let mut instance = Instance::new(code, &env_builder, &mut state)?;
 	let result = instance.invoke("call", args, &mut state);
@@ -162,12 +146,7 @@ fn cant_return_unmatching_type() {
 	}
 
 	let mut env_builder = EnvironmentDefinitionBuilder::new();
-	env_builder.add_host_func(
-		"env",
-		"returns_i32",
-		env_returns_i32,
-		FunctionType::new(vec![], Some(ValueType::I32)),
-	);
+	env_builder.add_host_func("env", "returns_i32", env_returns_i32);
 
 	let code = wat::parse_str(
 		r#"
@@ -189,8 +168,5 @@ fn cant_return_unmatching_type() {
 	let mut instance = Instance::new(&code, &env_builder, &mut ()).unwrap();
 
 	// But this fails since we imported a function that returns i32 as if it returned i64.
-	assert_matches!(
-		instance.invoke("call", &[], &mut ()),
-		Err(Error::WasmExecution(_))
-	);
+	assert_matches!(instance.invoke("call", &[], &mut ()), Err(Error::Execution));
 }

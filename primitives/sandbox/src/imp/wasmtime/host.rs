@@ -1,12 +1,11 @@
 //! Host Functions
 use super::util;
 use crate::HostFuncType;
-use parity_wasm::elements::FunctionType;
 use sp_std::fmt;
 use wasmtime::{Func, Store};
 
 pub struct DefinedHostFunctions<T> {
-	pub funcs: Vec<(HostFuncType<T>, FunctionType)>,
+	pub funcs: Vec<(HostFuncType<T>)>,
 }
 
 impl<T> DefinedHostFunctions<T> {
@@ -14,7 +13,7 @@ impl<T> DefinedHostFunctions<T> {
 		Self { funcs: Vec::new() }
 	}
 
-	pub fn define(&mut self, f: HostFuncType<T>, sig: FunctionType) {
+	pub fn define(&mut self, f: HostFuncType<T>) {
 		self.funcs.push((f, sig));
 	}
 

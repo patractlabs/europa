@@ -1,34 +1,9 @@
 //! Util
-use crate::{FunctionType, HostFuncType, ReturnValue, Value};
-use parity_wasm::elements::ValueType;
+use crate::{HostFuncType, ReturnValue, Value};
 use sp_std::mem;
-use wasmtime::{Caller, Func, FuncType, Store, Trap, Val, ValType};
+use wasmtime::{Caller, Func, FuncType, Store, Trap, Val};
 
-pub fn to_val_ty(ty: ValueType) -> ValType {
-	match ty {
-		ValueType::I32 => ValType::I32,
-		ValueType::F32 => ValType::F32,
-		ValueType::F64 => ValType::F64,
-		ValueType::I64 => ValType::I64,
-	}
-}
-
-fn wasmtime_sig(sig: FunctionType) -> FuncType {
-	let params = sig
-		.params()
-		.iter()
-		.map(|ty| to_val_ty(*ty))
-		.collect::<Vec<_>>();
-	let results = if let Some(ret) = sig.return_type().map(to_val_ty) {
-		vec![ret]
-	} else {
-		vec![]
-	};
-
-	FuncType::new(params, results)
-}
-
-pub fn wrap_fn<T>(store: &Store, state: usize, f: usize, sig: FunctionType) -> Func {
+pub fn wrap_fn<T>(store: &Store, state: usize, f: usize, sig: FuncType) -> Func {
 	let func = move |_: Caller<'_>, args: &[Val], results: &mut [Val]| {
 		let mut inner_args = vec![];
 		for arg in args {
@@ -57,7 +32,7 @@ pub fn wrap_fn<T>(store: &Store, state: usize, f: usize, sig: FunctionType) -> F
 			Err(_) => Err(Trap::new("Could not wrap host function")),
 		}
 	};
-	Func::new(store, wasmtime_sig(sig), func)
+	Func::new(store, sig, func)
 }
 
 pub fn from_val(v: Val) -> Option<Value> {
