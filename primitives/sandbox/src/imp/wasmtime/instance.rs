@@ -1,7 +1,7 @@
 //! Wasmtime Instance
 use super::{util, EnvironmentDefinitionBuilder};
 use crate::{Error, ReturnValue, Value};
-use wasmtime::{Engine, Extern, Global, Instance as InstanceRef, Module, Store, Val};
+use wasmtime::{Extern, Global, Instance as InstanceRef, Module, Store, Val};
 
 fn extern_global(extern_: &Extern) -> Option<&Global> {
 	match extern_ {
@@ -21,15 +21,18 @@ impl<T> Instance<T> {
 		env_def_builder: &EnvironmentDefinitionBuilder<T>,
 		state: &mut T,
 	) -> Result<Instance<T>, Error> {
-		let module = Module::from_binary(&Engine::default(), code).map_err(|_| Error::Module)?;
-		let imports = env_def_builder.build(&Store::default(), state)?;
 		let dummy_store = Store::default();
 		let store = if let Some(store) = env_def_builder.store() {
 			store
 		} else {
 			&dummy_store
 		};
-		let instance = InstanceRef::new(store, &module, &imports).map_err(|_| Error::Module)?;
+		let module = Module::from_binary(&store.engine(), code).map_err(|_| Error::Module)?;
+		let imports = env_def_builder.build(store, state)?;
+		let instance = InstanceRef::new(store, &module, &imports).map_err(|e| {
+			println!("{:#?}", e);
+			Error::Module
+		})?;
 
 		Ok(Instance {
 			instance,
@@ -49,11 +52,19 @@ impl<T> Instance<T> {
 			.map(|v| util::to_val(v))
 			.collect::<Vec<_>>();
 
-		let func = self.instance.get_func(name).ok_or(Error::Execution)?;
-		let result = func.call(&args).map_err(|_| Error::Execution)?;
+		let func = self.instance.get_func(name).ok_or_else(|| {
+			println!("Get function failed");
+			Error::Execution
+		})?;
+		let result = func.call(&args).map_err(|e| {
+			println!("{}", e);
+			Error::Execution
+		})?;
 
 		Ok(util::to_ret_val(if result.len() != 1 {
-			return Err(Error::Execution);
+			println!("the length of result is not correct");
+			// return Err(Error::Execution);
+			return Ok(ReturnValue::Unit);
 		} else {
 			result[0].to_owned()
 		})

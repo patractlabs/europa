@@ -2,7 +2,7 @@ use assert_matches::assert_matches;
 use ep_sandbox::{EnvironmentDefinitionBuilder, Error, HostError, Instance, ReturnValue, Value};
 use parity_wasm::elements::{FunctionType, ValueType};
 
-fn execute_sandboxed(code: &[u8], args: &[Value]) -> Result<ReturnValue, HostError> {
+fn execute_sandboxed(code: &[u8], args: &[Value]) -> Result<ReturnValue, Error> {
 	struct State {
 		counter: u32,
 	}
@@ -18,22 +18,21 @@ fn execute_sandboxed(code: &[u8], args: &[Value]) -> Result<ReturnValue, HostErr
 			Err(HostError)
 		}
 	}
-	fn env_inc_counter(e: &mut State, args: &[Value]) -> Result<ReturnValue, HostError> {
-		if args.len() != 1 {
-			return Err(HostError);
-		}
-		let inc_by = args[0].as_i32().ok_or_else(|| HostError)?;
-		e.counter += inc_by as u32;
-		Ok(ReturnValue::Value(Value::I32(e.counter as i32)))
-	}
-	/// Function that takes one argument of any type and returns that value.
-	fn env_polymorphic_id(_e: &mut State, args: &[Value]) -> Result<ReturnValue, HostError> {
-		if args.len() != 1 {
-			return Err(HostError);
-		}
-		Ok(ReturnValue::Value(args[0]))
-	}
-
+	// fn env_inc_counter(e: &mut State, args: &[Value]) -> Result<ReturnValue, HostError> {
+	// 	if args.len() != 1 {
+	// 		return Err(HostError);
+	// 	}
+	// 	let inc_by = args[0].as_i32().ok_or_else(|| HostError)?;
+	// 	e.counter += inc_by as u32;
+	// 	Ok(ReturnValue::Value(Value::I32(e.counter as i32)))
+	// }
+	// Function that takes one argument of any type and returns that value.
+	// fn env_polymorphic_id(_e: &mut State, args: &[Value]) -> Result<ReturnValue, HostError> {
+	// 	if args.len() != 1 {
+	// 		return Err(HostError);
+	// 	}
+	// 	Ok(ReturnValue::Value(args[0]))
+	// }
 	let mut state = State { counter: 0 };
 
 	let mut env_builder = EnvironmentDefinitionBuilder::new();
@@ -43,23 +42,23 @@ fn execute_sandboxed(code: &[u8], args: &[Value]) -> Result<ReturnValue, HostErr
 		env_assert,
 		FunctionType::new(vec![ValueType::I32], None),
 	);
-	env_builder.add_host_func(
-		"env",
-		"inc_counter",
-		env_inc_counter,
-		FunctionType::new(vec![ValueType::I32], None),
-	);
-	env_builder.add_host_func(
-		"env",
-		"polymorphic_id",
-		env_polymorphic_id,
-		FunctionType::new(vec![ValueType::I32], None),
-	);
+	// env_builder.add_host_func(
+	// 	"env",
+	// 	"inc_counter",
+	// 	env_inc_counter,
+	// 	FunctionType::new(vec![ValueType::I32], None),
+	// );
+	// env_builder.add_host_func(
+	// 	"env",
+	// 	"polymorphic_id",
+	// 	env_polymorphic_id,
+	// 	FunctionType::new(vec![ValueType::I32], None),
+	// );
 
 	let mut instance = Instance::new(code, &env_builder, &mut state)?;
 	let result = instance.invoke("call", args, &mut state);
 
-	result.map_err(|_| HostError)
+	result
 }
 
 #[test]

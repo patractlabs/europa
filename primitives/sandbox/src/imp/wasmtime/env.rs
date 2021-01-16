@@ -54,9 +54,10 @@ impl<T> EnvironmentDefinitionBuilder<T> {
 		}
 
 		// push memory
-		let mem = self.memory.clone().ok_or(Error::Module)?;
-		imports.push(Extern::Memory(mem.cast()));
+		if let Some(mem) = &self.memory {
+			imports.push(Extern::Memory(mem.clone().cast()));
+		}
 
-		Ok(vec![])
+		Ok(imports)
 	}
 }
