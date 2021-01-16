@@ -48,7 +48,7 @@ mod imp;
 #[derive(sp_core::RuntimeDebug)]
 pub enum Error {
 	/// Module is not valid, couldn't be instantiated.
-	Module(WasmiError),
+	Module,
 
 	/// Access to a memory or table was made with an address or an index which is out of bounds.
 	///
@@ -58,12 +58,8 @@ pub enum Error {
 	/// Failed to invoke the start function or an exported function for some reason.
 	Execution,
 
-	/// wasmi execution
-	#[cfg(feature = "interpreter")]
-	WasmExecution(patract_wasmi::Error),
-	/// wasmtime execution
-	#[cfg(feature = "jit")]
-	WasmExecution(wasmtime::Trap),
+	/// WASM inner trap
+	Trap(imp::Trap),
 }
 
 impl From<Error> for HostError {

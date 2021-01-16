@@ -35,7 +35,7 @@ impl Memory {
 				Pages(initial as usize),
 				maximum.map(|m| Pages(m as usize)),
 			)
-			.map_err(|e| Error::Module(e))?,
+			.map_err(|_| Error::Module)?,
 		})
 	}
 
@@ -262,10 +262,10 @@ impl<T> Instance<T> {
 		state: &mut T,
 	) -> Result<Instance<T>, Error> {
 		let module = Module::from_buffer(code)
-			.map_err(|e| Error::Module(e))?
+			.map_err(|_| Error::Module)?
 			.try_parse_names();
 		let not_started_instance =
-			ModuleInstance::new(&module, env_def_builder).map_err(|e| Error::Module(e))?;
+			ModuleInstance::new(&module, env_def_builder).map_err(|_| Error::Module)?;
 
 		let defined_host_functions = env_def_builder.defined_host_functions.clone();
 		let instance = {
@@ -312,7 +312,7 @@ impl<T> Instance<T> {
 					transmute::<patract_wasmi::RuntimeValue, wasmi::RuntimeValue>(val).into(),
 				))
 			},
-			Err(e) => Err(Error::WasmExecution(e)),
+			Err(_) => Err(Error::Execution),
 		}
 	}
 
@@ -322,5 +322,42 @@ impl<T> Instance<T> {
 		Some(unsafe {
 			transmute::<patract_wasmi::RuntimeValue, wasmi::RuntimeValue>(global).into()
 		})
+	}
+}
+
+impl Into<super::Trap> for Trap {
+	fn into(self) -> super::Trap {
+		super::Trap {
+			code: match self.kind() {
+				TrapKind::StackOverflow => super::TrapCode::StackOverflow,
+				TrapKind::DivisionByZero => super::TrapCode::IntegerDivisionByZero,
+				TrapKind::ElemUninitialized => super::TrapCode::BadSignature,
+				TrapKind::InvalidConversionToInt => super::TrapCode::BadConversionToInteger,
+				TrapKind::MemoryAccessOutOfBounds => super::TrapCode::MemoryOutOfBounds,
+				TrapKind::TableAccessOutOfBounds => super::TrapCode::TableOutOfBounds,
+				TrapKind::UnexpectedSignature => super::TrapCode::BadSignature,
+				TrapKind::Unreachable => super::TrapCode::UnreachableCodeReached,
+				TrapKind::Host(_) => super::TrapCode::Host("HostError".to_string()),
+			},
+			reason: "<unknown>".to_string(),
+			trace: {
+				let trace = self.wasm_trace();
+				if trace.len() == 0 {
+					"[]".to_string()
+				} else {
+					let mut fmt = String::new();
+					for (index, trace) in trace.iter().enumerate() {
+						if index == trace.len() - 1 {
+							fmt.push_str("\n\t╰─>");
+						} else {
+							fmt.push_str("\n\t|  ");
+						}
+						fmt.push_str(trace);
+					}
+
+					fmt
+				}
+			},
+		}
 	}
 }
