@@ -16,6 +16,7 @@
 // limitations under the License.
 use sp_std::{collections::btree_map::BTreeMap, fmt, mem::transmute};
 
+use super::{Trap as OutterTrap, TrapCode};
 use crate::{Error, FunctionType, HostError, HostFuncType, ReturnValue, Value};
 use patract_wasmi::{
 	memory_units::Pages, Externals, FuncInstance, FuncRef, GlobalDescriptor, GlobalRef,
@@ -325,19 +326,19 @@ impl<T> Instance<T> {
 	}
 }
 
-impl Into<super::Trap> for Trap {
-	fn into(self) -> super::Trap {
+impl Into<OutterTrap> for Trap {
+	fn into(self) -> OutterTrap {
 		super::Trap {
 			code: match self.kind() {
-				TrapKind::StackOverflow => super::TrapCode::StackOverflow,
-				TrapKind::DivisionByZero => super::TrapCode::IntegerDivisionByZero,
-				TrapKind::ElemUninitialized => super::TrapCode::BadSignature,
-				TrapKind::InvalidConversionToInt => super::TrapCode::BadConversionToInteger,
-				TrapKind::MemoryAccessOutOfBounds => super::TrapCode::MemoryOutOfBounds,
-				TrapKind::TableAccessOutOfBounds => super::TrapCode::TableOutOfBounds,
-				TrapKind::UnexpectedSignature => super::TrapCode::BadSignature,
-				TrapKind::Unreachable => super::TrapCode::UnreachableCodeReached,
-				TrapKind::Host(_) => super::TrapCode::Host("HostError".to_string()),
+				TrapKind::StackOverflow => TrapCode::StackOverflow,
+				TrapKind::DivisionByZero => TrapCode::IntegerDivisionByZero,
+				TrapKind::ElemUninitialized => TrapCode::BadSignature,
+				TrapKind::InvalidConversionToInt => TrapCode::BadConversionToInteger,
+				TrapKind::MemoryAccessOutOfBounds => TrapCode::MemoryOutOfBounds,
+				TrapKind::TableAccessOutOfBounds => TrapCode::TableOutOfBounds,
+				TrapKind::UnexpectedSignature => TrapCode::BadSignature,
+				TrapKind::Unreachable => TrapCode::UnreachableCodeReached,
+				TrapKind::Host(_) => TrapCode::Host("HostError".to_string()),
 			},
 			reason: "<unknown>".to_string(),
 			trace: {
