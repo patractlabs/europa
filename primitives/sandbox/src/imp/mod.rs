@@ -46,6 +46,9 @@ enum TrapCode {
 
 	/// Execution has potentially run too long and may be interrupted.
 	Interrupt,
+
+	/// HostError
+	HostError,
 }
 
 /// Wasm Trap

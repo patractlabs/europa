@@ -30,10 +30,7 @@ impl<T> Instance<T> {
 		let module = Module::from_binary(&store.engine(), code).map_err(|_| Error::Module)?;
 		let imports =
 			env_def_builder.resolve(store, state, module.imports().collect::<Vec<_>>())?;
-		let instance = InstanceRef::new(store, &module, &imports).map_err(|e| {
-			println!("{:#?}", e);
-			Error::Module
-		})?;
+		let instance = InstanceRef::new(store, &module, &imports).map_err(|_| Error::Module)?;
 
 		Ok(Instance {
 			instance,
@@ -45,6 +42,8 @@ impl<T> Instance<T> {
 		&mut self,
 		name: &str,
 		args: &[Value],
+		// The ptr of this state(Runtime in pallet contract) has been packed
+		// into closures while generating the WASM module.
 		_state: &mut T,
 	) -> Result<ReturnValue, Error> {
 		let args = args
@@ -53,23 +52,16 @@ impl<T> Instance<T> {
 			.map(|v| util::to_val(v))
 			.collect::<Vec<_>>();
 
-		let func = self.instance.get_func(name).ok_or_else(|| {
-			println!("Get function failed");
-			Error::Execution
-		})?;
-		let result = func.call(&args).map_err(|e| {
-			println!("{}", e);
-			Error::Execution
-		})?;
-
-		Ok(util::to_ret_val(if result.len() != 1 {
-			println!("the length of result is not correct");
-			// return Err(Error::Execution);
-			return Ok(ReturnValue::Unit);
-		} else {
-			result[0].to_owned()
-		})
-		.ok_or(Error::Execution)?)
+		let func = self.instance.get_func(name).ok_or(Error::Execution)?;
+		match func.call(&args) {
+			Ok(result) => Ok(util::to_ret_val(if result.len() != 1 {
+				return Ok(ReturnValue::Unit);
+			} else {
+				result[0].to_owned()
+			})
+			.ok_or(Error::Execution)?),
+			Err(_) => Err(Error::Execution),
+		}
 	}
 
 	pub fn get_global_val(&self, name: &str) -> Option<Value> {

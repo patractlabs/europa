@@ -18,18 +18,17 @@ pub fn wrap_fn<T>(store: &Store, state: usize, f: usize, sig: FuncType) -> Func 
 		//
 		// # Safety
 		//
-		// Runtime only run for one call.
+		// Work for one call.
 		let state: &mut T = unsafe { mem::transmute(state) };
 		let func: HostFuncType<T> = unsafe { mem::transmute(f) };
 		match func(state, &inner_args) {
 			Ok(ret) => {
 				if let Some(ret) = from_ret_val(ret) {
-					// TODO: check the signature
 					results[0] = ret;
 				}
 				Ok(())
 			}
-			Err(_) => Err(Trap::new("Could not wrap host function")),
+			Err(e) => Err(Trap::new(format!("{:?}", e))),
 		}
 	};
 	Func::new(store, sig, func)

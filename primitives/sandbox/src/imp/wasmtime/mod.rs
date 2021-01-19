@@ -1,6 +1,5 @@
 //! Wasmtime executor
 mod env;
-// mod host;
 mod instance;
 mod memory;
 mod util;

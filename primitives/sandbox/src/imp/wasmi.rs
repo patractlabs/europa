@@ -222,6 +222,7 @@ impl<T> ImportResolver for EnvironmentDefinitionBuilder<T> {
 				module_name, field_name
 			))
 		})?;
+
 		let memory = match *externval {
 			ExternVal::Memory(ref m) => m,
 			_ => {
@@ -333,7 +334,7 @@ impl Into<OutterTrap> for Trap {
 				TrapKind::TableAccessOutOfBounds => TrapCode::TableOutOfBounds,
 				TrapKind::UnexpectedSignature => TrapCode::BadSignature,
 				TrapKind::Unreachable => TrapCode::UnreachableCodeReached,
-				TrapKind::Host(_) => TrapCode::Host("HostError".to_string()),
+				TrapKind::Host(_) => TrapCode::HostError,
 			},
 			reason: "<unknown>".to_string(),
 			trace: {

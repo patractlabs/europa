@@ -88,11 +88,6 @@ impl<T> EnvironmentDefinitionBuilder<T> {
 			}
 		}
 
-		// push memory
-		// if let Some(mem) = &self.memory {
-		// 	imports.push(Extern::Memory(mem.clone().cast()));
-		// }
-
 		Ok(imports)
 	}
 }
