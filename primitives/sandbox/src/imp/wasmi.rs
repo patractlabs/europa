@@ -309,7 +309,10 @@ impl<T> Instance<T> {
 					transmute::<patract_wasmi::RuntimeValue, wasmi::RuntimeValue>(val).into(),
 				))
 			},
-			Err(_) => Err(Error::Execution),
+			Err(e) => Err(match e {
+				patract_wasmi::Error::Trap(t) => Error::Trap(t.into()),
+				_ => Error::Execution,
+			}),
 		}
 	}
 

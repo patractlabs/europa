@@ -5,15 +5,26 @@ use crate::{
 };
 use sp_std::{fmt, mem};
 use wasmtime::{
-	Caller, Config, Engine, Func, FuncType, Store, Trap, TrapCode, Val, WasmBacktraceDetails,
+	Caller,
+	Config,
+	Engine,
+	Func,
+	FuncType,
+	Store,
+	Trap,
+	TrapCode,
+	Val, // WasmBacktraceDetails,
 };
 
 /// Create store with DWARF enabled
+///
+/// NOTE: The Debug info with native trace has some problem in
+/// aarch64-apple-darwin, not enable for default for now.
 pub fn store_with_dwarf() -> Store {
 	Store::new(&Engine::new(
 		&Config::new()
-			.wasm_backtrace_details(WasmBacktraceDetails::Enable)
-			.debug_info(true),
+			// .debug_info(true)
+			// .wasm_backtrace_details(WasmBacktraceDetails::Enable),
 	))
 }
 
