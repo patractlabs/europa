@@ -3,7 +3,7 @@ use crate::{
 	imp::{Trap as OutterTrap, TrapCode as OutterTrapCode},
 	Error, HostFuncType, ReturnValue, Value,
 };
-use sp_std::mem;
+use sp_std::{fmt, mem};
 use wasmtime::{
 	Caller, Config, Engine, Func, FuncType, Store, Trap, TrapCode, Val, WasmBacktraceDetails,
 };
@@ -106,7 +106,20 @@ impl From<Trap> for Error {
 
 		Error::Trap(OutterTrap {
 			code,
-			trace: format!("{}", trap),
+			trace: format!("{}", trap)
+				.split("\n")
+				.map(|s| s.to_string())
+				.collect::<Vec<_>>(),
 		})
+	}
+}
+
+impl fmt::Display for OutterTrap {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+		self.trace
+			.iter()
+			.map(|s| write!(f, "{}", s))
+			.collect::<Result<Vec<_>, fmt::Error>>()?;
+		Ok(())
 	}
 }

@@ -336,25 +336,27 @@ impl Into<OutterTrap> for Trap {
 				TrapKind::Unreachable => TrapCode::UnreachableCodeReached,
 				TrapKind::Host(_) => TrapCode::HostError,
 			},
-			reason: "<unknown>".to_string(),
-			trace: {
-				let trace = self.wasm_trace();
-				if trace.len() == 0 {
-					"[]".to_string()
-				} else {
-					let mut fmt = String::new();
-					for (index, trace) in trace.iter().enumerate() {
-						if index == trace.len() - 1 {
-							fmt.push_str("\n\t╰─>");
-						} else {
-							fmt.push_str("\n\t|  ");
-						}
-						fmt.push_str(trace);
-					}
-
-					fmt
-				}
-			},
+			trace: self.wasm_trace().to_vec(),
 		}
+	}
+}
+
+impl fmt::Display for OutterTrap {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+		let trace = &self.trace;
+		if trace.len() == 0 {
+			write!(f, "[]")?;
+		} else {
+			for (index, trace) in trace.iter().enumerate() {
+				if index == trace.len() - 1 {
+					write!(f, "\n\t╰─>")?;
+				} else {
+					write!(f, "\n\t|  ")?;
+				}
+				write!(f, "{}", trace)?;
+			}
+		}
+
+		Ok(())
 	}
 }

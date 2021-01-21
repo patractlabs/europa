@@ -92,6 +92,10 @@ fn genesis(
 		pallet_contracts: Some(ContractsConfig {
 			current_schedule: pallet_contracts::Schedule {
 				enable_println, // this should only be enabled on development chains
+				limits: pallet_contracts::Limits {
+					code_size: 2048 * 1024,
+					..Default::default()
+				},
 				..Default::default()
 			},
 		}),

@@ -57,6 +57,8 @@ pub enum TrapCode {
 /// Wasm Trap
 #[derive(sp_core::RuntimeDebug)]
 pub struct Trap {
+	/// Trap code
 	pub code: TrapCode,
-	pub trace: String,
+	/// Wasm backtrace (in wasmtime, this includes native backtrace)
+	pub trace: Vec<String>,
 }

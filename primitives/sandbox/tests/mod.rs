@@ -168,5 +168,5 @@ fn cant_return_unmatching_type() {
 	let mut instance = Instance::new(&code, &env_builder, &mut ()).unwrap();
 
 	// But this fails since we imported a function that returns i32 as if it returned i64.
-	assert_matches!(instance.invoke("call", &[], &mut ()), Err(Error::Execution));
+	assert_matches!(instance.invoke("call", &[], &mut ()), Err(Error::Trap(_)));
 }
