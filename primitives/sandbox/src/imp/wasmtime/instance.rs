@@ -1,7 +1,7 @@
 //! Wasmtime Instance
 use super::{util, EnvironmentDefinitionBuilder};
 use crate::{Error, ReturnValue, Value};
-use wasmtime::{Extern, Global, Instance as InstanceRef, Module, Store, Val};
+use wasmtime::{Extern, Global, Instance as InstanceRef, Module, Trap, Val};
 
 fn extern_global(extern_: &Extern) -> Option<&Global> {
 	match extern_ {
@@ -21,7 +21,7 @@ impl<T> Instance<T> {
 		env_def_builder: &EnvironmentDefinitionBuilder<T>,
 		state: &mut T,
 	) -> Result<Instance<T>, Error> {
-		let dummy_store = Store::default();
+		let dummy_store = util::store_with_dwarf();
 		let store = if let Some(store) = env_def_builder.store() {
 			store
 		} else {
@@ -60,7 +60,13 @@ impl<T> Instance<T> {
 				result[0].to_owned()
 			})
 			.ok_or(Error::Execution)?),
-			Err(_) => Err(Error::Execution),
+			Err(e) => {
+				if let Ok(trap) = e.downcast::<Trap>() {
+					Err(trap.into())
+				} else {
+					Err(Error::Execution)
+				}
+			}
 		}
 	}
 

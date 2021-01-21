@@ -13,7 +13,7 @@ pub use self::wasmtime::*;
 /// All trap instructions have an explicit trap code.
 #[non_exhaustive]
 #[derive(Clone, PartialEq, Eq, sp_core::RuntimeDebug)]
-enum TrapCode {
+pub enum TrapCode {
 	/// The current stack space was exhausted.
 	StackOverflow,
 
@@ -49,12 +49,14 @@ enum TrapCode {
 
 	/// HostError
 	HostError,
+
+	// Unknown Error
+	Unknown,
 }
 
 /// Wasm Trap
 #[derive(sp_core::RuntimeDebug)]
 pub struct Trap {
-	code: TrapCode,
-	reason: String,
-	trace: String,
+	pub code: TrapCode,
+	pub trace: String,
 }
