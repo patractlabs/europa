@@ -1257,7 +1257,7 @@ name = "ec-executor"
 version = "0.1.0"
 dependencies = [
  "log",
- "parity-scale-codec 1.3.5",
+ "parity-scale-codec 2.0.1",
  "sc-executor",
  "sc-executor-common",
  "sp-core",
@@ -1296,7 +1296,7 @@ dependencies = [
  "jsonrpc-core",
  "jsonrpc-pubsub",
  "log",
- "parity-scale-codec 1.3.5",
+ "parity-scale-codec 2.0.1",
  "parking_lot 0.10.2",
  "sc-basic-authorship",
  "sc-block-builder",
@@ -1307,6 +1307,7 @@ dependencies = [
  "sc-consensus-manual-seal",
  "sc-informant",
  "sc-keystore",
+ "sc-network",
  "sc-rpc",
  "sc-rpc-server",
  "sc-service",
@@ -1327,6 +1328,7 @@ dependencies = [
  "sp-trie",
  "sp-utils",
  "sp-version",
+ "substrate-prometheus-endpoint",
  "tracing",
 ]
 

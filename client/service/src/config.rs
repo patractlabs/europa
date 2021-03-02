@@ -22,11 +22,16 @@
 
 use std::net::SocketAddr;
 
-pub use sc_client_db::{Database, DatabaseSettingsSrc as DatabaseConfig, PruningMode};
+pub use sc_client_db::{
+	Database, DatabaseSettingsSrc as DatabaseConfig, KeepBlocks, PruningMode,
+	TransactionStorageMode,
+};
 
 use sc_chain_spec::ChainSpec;
 pub use sc_transaction_pool::txpool::Options as TransactionPoolOptions;
 
+use prometheus_endpoint::Registry;
+pub use sc_network::config::Role;
 pub use sc_service::config::{BasePath, KeystoreConfig, RpcMethods, TaskExecutor, TaskType};
 
 /// Service configuration.
@@ -36,6 +41,10 @@ pub struct Configuration {
 	pub impl_name: String,
 	/// Implementation version (see sc-cli to see an example of format)
 	pub impl_version: String,
+	/// Node role.
+	pub role: Role,
+	/// Prometheus endpoint configuration. `None` if disabled.
+	pub prometheus_config: Option<sc_service::config::PrometheusConfig>,
 	/// How to spawn background tasks. Mandatory, otherwise creating a `Service` will error.
 	pub task_executor: TaskExecutor,
 	/// Extrinsic pool configuration.
@@ -48,8 +57,12 @@ pub struct Configuration {
 	pub state_cache_size: usize,
 	/// Size in percent of cache size dedicated to child tries
 	pub state_cache_child_ratio: Option<usize>,
-	/// Pruning settings.
-	pub pruning: PruningMode,
+	/// State pruning settings.
+	pub state_pruning: PruningMode,
+	/// Number of blocks to keep in the db.
+	pub keep_blocks: KeepBlocks,
+	/// Transaction storage scheme.
+	pub transaction_storage: TransactionStorageMode,
 	/// Chain configuration.
 	pub chain_spec: Box<dyn ChainSpec>,
 	/// RPC over HTTP binding address. `None` if disabled.
@@ -84,4 +97,13 @@ pub struct Configuration {
 	pub workspace_list: Vec<String>,
 	/// Configuration of the output format that the informant uses.
 	pub informant_output_format: sc_informant::OutputFormat, // todo may also need in future
+}
+
+impl Configuration {
+	/// Returns the prometheus metrics registry, if available.
+	pub fn prometheus_registry(&self) -> Option<&Registry> {
+		self.prometheus_config
+			.as_ref()
+			.map(|config| &config.registry)
+	}
 }

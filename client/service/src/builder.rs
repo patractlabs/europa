@@ -151,8 +151,10 @@ pub fn database_settings(config: &Configuration) -> sc_client_db::DatabaseSettin
 	sc_client_db::DatabaseSettings {
 		state_cache_size: config.state_cache_size,
 		state_cache_child_ratio: config.state_cache_child_ratio.map(|v| (v, 100)),
-		pruning: config.pruning.clone(), // PruningMode::ArchiveAll,
+		state_pruning: config.state_pruning.clone(),
 		source: config.database.clone(),
+		keep_blocks: config.keep_blocks.clone(),
+		transaction_storage: config.transaction_storage.clone(),
 	}
 }
 
@@ -246,13 +248,12 @@ where
 		+ ExecutorProvider<TBl>
 		+ UsageProvider<TBl>
 		+ StorageProvider<TBl, TBackend>
-		+ CallApiAt<TBl, Error = sp_blockchain::Error>
+		+ CallApiAt<TBl>
 		+ Send
 		+ 'static,
 	<TCl as ProvideRuntimeApi<TBl>>::Api: sp_api::Metadata<TBl>
 		+ sp_transaction_pool::runtime_api::TaggedTransactionQueue<TBl>
 		+ sp_session::SessionKeys<TBl>
-		+ sp_api::ApiErrorExt<Error = sp_blockchain::Error>
 		+ sp_api::ApiExt<TBl, StateBackend = TBackend::State>,
 	TBl: BlockT + for<'de> sp_runtime::Deserialize<'de>,
 	TBackend: 'static + sc_client_api::backend::Backend<TBl> + Send,
@@ -354,7 +355,7 @@ where
 		+ HeaderBackend<TBl>
 		+ HeaderMetadata<TBl, Error = sp_blockchain::Error>
 		+ ExecutorProvider<TBl>
-		+ CallApiAt<TBl, Error = sp_blockchain::Error>
+		+ CallApiAt<TBl>
 		+ ProofProvider<TBl>
 		+ StorageProvider<TBl, TBackend>
 		+ BlockBackend<TBl>
@@ -367,8 +368,7 @@ where
 	TBackend: sc_client_api::backend::Backend<TBl> + 'static,
 	TStateKv: ec_client_api::statekv::StateKv<TBl> + 'static,
 	TRpc: sc_rpc::RpcExtension<sc_rpc::Metadata>,
-	<TCl as ProvideRuntimeApi<TBl>>::Api:
-		sp_session::SessionKeys<TBl> + sp_api::Metadata<TBl, Error = sp_blockchain::Error>,
+	<TCl as ProvideRuntimeApi<TBl>>::Api: sp_session::SessionKeys<TBl> + sp_api::Metadata<TBl>,
 {
 	use sc_rpc::{author, chain, state, system};
 
