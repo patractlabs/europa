@@ -24,6 +24,7 @@ sp-runtime = { version = "3.0.0", git = "https://github.com/paritytech/substrate
 sp-panic-handler = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 
 sc-cli = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-telemetry = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-tracing = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 
 ec-service = { path = "../service" }

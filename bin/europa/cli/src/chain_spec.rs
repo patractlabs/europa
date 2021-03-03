@@ -6,7 +6,13 @@ use sp_runtime::traits::{IdentifyAccount, Verify};
 use ec_service::ChainType;
 
 use europa_runtime::{AccountId, Signature};
-use europa_runtime::{BalancesConfig, ContractsConfig, GenesisConfig, SudoConfig, SystemConfig};
+use europa_runtime::{
+	BalancesConfig,
+	// ContractsConfig,
+	GenesisConfig,
+	SudoConfig,
+	SystemConfig,
+};
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = ec_service::GenericChainSpec<GenesisConfig>;
@@ -73,7 +79,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 fn genesis(
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
-	enable_println: bool,
+	_enable_println: bool,
 ) -> GenesisConfig {
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
@@ -89,12 +95,12 @@ fn genesis(
 				.map(|k| (k, 1 << 60))
 				.collect(),
 		}),
-		pallet_contracts: Some(ContractsConfig {
-			current_schedule: pallet_contracts::Schedule {
-				enable_println, // this should only be enabled on development chains
-				..Default::default()
-			},
-		}),
+		// pallet_contracts: Some(ContractsConfig {
+		// 	current_schedule: pallet_contracts::Schedule {
+		// 		enable_println, // this should only be enabled on development chains
+		// 		..Default::default()
+		// 	},
+		// }),
 		pallet_sudo: Some(SudoConfig {
 			// Assign network admin rights.
 			key: root_key,

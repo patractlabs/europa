@@ -15,7 +15,8 @@ pub use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnb
 
 pub use sc_service::{
 	build_network, error, BasePath, BuildNetworkParams, ChainSpec, ChainType, GenericChainSpec,
-	NoopRpcExtensionBuilder, RpcExtensionBuilder, RpcMethods, TaskType, TransactionPoolOptions,
+	NoopRpcExtensionBuilder, RpcExtensionBuilder, RpcMethods, TaskType, TracingReceiver,
+	TransactionPoolOptions, TransactionStorageMode,
 };
 
 use crate::builder::KeystoreContainer;

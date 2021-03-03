@@ -32,7 +32,9 @@ pub use sc_transaction_pool::txpool::Options as TransactionPoolOptions;
 
 use prometheus_endpoint::Registry;
 pub use sc_network::config::Role;
-pub use sc_service::config::{BasePath, KeystoreConfig, RpcMethods, TaskExecutor, TaskType};
+pub use sc_service::config::{
+	BasePath, ExtTransport, KeystoreConfig, PrometheusConfig, RpcMethods, TaskExecutor, TaskType,
+};
 
 /// Service configuration.
 #[derive(Debug)]

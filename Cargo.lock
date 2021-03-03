@@ -1218,6 +1218,7 @@ dependencies = [
  "log",
  "regex",
  "sc-cli",
+ "sc-telemetry",
  "sc-tracing",
  "serde",
  "serde_json",
@@ -1480,8 +1481,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
- "parity-scale-codec 1.3.5",
- "runtime-log",
+ "parity-scale-codec 2.0.1",
  "serde",
  "smallvec 1.5.1",
  "sp-api",
@@ -3737,49 +3737,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-contracts"
-version = "3.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=master#f5d2faf14b7380fc3629381c994ccf9d107f7c17"
-dependencies = [
- "frame-support",
- "frame-system",
- "log",
- "pallet-contracts-primitives",
- "pallet-contracts-proc-macro",
- "parity-scale-codec 2.0.1",
- "parity-wasm",
- "pwasm-utils",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-sandbox",
- "sp-std",
- "wasmi-validation 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "pallet-contracts-primitives"
-version = "3.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=master#f5d2faf14b7380fc3629381c994ccf9d107f7c17"
-dependencies = [
- "bitflags",
- "parity-scale-codec 2.0.1",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-contracts-proc-macro"
-version = "3.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=master#f5d2faf14b7380fc3629381c994ccf9d107f7c17"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "pallet-randomness-collective-flip"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=master#f5d2faf14b7380fc3629381c994ccf9d107f7c17"
@@ -4436,17 +4393,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pwasm-utils"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c8ac87af529432d3a4f0e2b3bbf08af49f28f09cc73ed7e551161bdaef5f78d"
-dependencies = [
- "byteorder",
- "log",
- "parity-wasm",
-]
-
-[[package]]
 name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4750,17 +4696,6 @@ checksum = "d755237fc0f99d98641540e66abac8bc46a0652f19148ac9e21de2da06b326c9"
 dependencies = [
  "libc",
  "winapi 0.3.9",
-]
-
-[[package]]
-name = "runtime-log"
-version = "0.1.1"
-source = "git+https://github.com/patractlabs/ink-log#9284fe8aaadedd23c6d2a3a171f13597ef4291bd"
-dependencies = [
- "frame-support",
- "funty",
- "pallet-contracts",
- "parity-scale-codec 2.0.1",
 ]
 
 [[package]]
@@ -6479,19 +6414,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "sp-sandbox"
-version = "0.9.0"
-source = "git+https://github.com/paritytech/substrate?branch=master#f5d2faf14b7380fc3629381c994ccf9d107f7c17"
-dependencies = [
- "parity-scale-codec 2.0.1",
- "sp-core",
- "sp-io",
- "sp-std",
- "sp-wasm-interface",
- "wasmi 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

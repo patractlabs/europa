@@ -19,9 +19,27 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 use std::path::PathBuf;
-use structopt::StructOpt;
+use structopt::{clap::arg_enum, StructOpt};
 
 use ec_service::config::BasePath;
+
+arg_enum! {
+	#[allow(missing_docs)]
+	#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+	pub enum TracingReceiver {
+		Log,
+		Telemetry,
+	}
+}
+
+impl Into<sc_tracing::TracingReceiver> for TracingReceiver {
+	fn into(self) -> sc_tracing::TracingReceiver {
+		match self {
+			TracingReceiver::Log => sc_tracing::TracingReceiver::Log,
+			TracingReceiver::Telemetry => sc_tracing::TracingReceiver::Telemetry,
+		}
+	}
+}
 
 /// Shared parameters used by all `CoreParams`.
 #[derive(Debug, StructOpt)]
@@ -29,6 +47,10 @@ pub struct SharedParams {
 	/// Specify the chain specification (one of dev, local, or staging).
 	#[structopt(long, value_name = "CHAIN_SPEC")]
 	pub chain: Option<String>,
+
+	/// Specify the development chain.
+	#[structopt(long, conflicts_with_all = &["chain"])]
+	pub dev: bool,
 
 	/// Specify custom base path.
 	#[structopt(long, short = "d", value_name = "PATH", parse(from_os_str))]
@@ -60,12 +82,27 @@ pub struct SharedParams {
 	/// Sets a custom profiling filter. Syntax is the same as for logging: <target>=<level>
 	#[structopt(long = "tracing-targets", value_name = "TARGETS")]
 	pub tracing_targets: Option<String>,
+
+	/// Receiver to process tracing messages.
+	#[structopt(
+		long = "tracing-receiver",
+		value_name = "RECEIVER",
+		possible_values = &TracingReceiver::variants(),
+		case_insensitive = true,
+		default_value = "Log"
+	)]
+	pub tracing_receiver: TracingReceiver,
 }
 
 impl SharedParams {
 	/// Specify custom base path.
 	pub fn base_path(&self) -> Option<BasePath> {
 		self.base_path.clone().map(Into::into)
+	}
+
+	/// Specify the development chain.
+	pub fn is_dev(&self) -> bool {
+		self.dev
 	}
 
 	/// Get the chain spec for the parameters provided
@@ -94,6 +131,11 @@ impl SharedParams {
 	/// Is log reloading disabled
 	pub fn is_log_filter_reloading_disabled(&self) -> bool {
 		self.disable_log_reloading
+	}
+
+	/// Receiver to process tracing messages.
+	pub fn tracing_receiver(&self) -> ec_service::TracingReceiver {
+		self.tracing_receiver.clone().into()
 	}
 
 	/// Comma separated list of targets for tracing.
