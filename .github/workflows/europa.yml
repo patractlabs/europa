@@ -18,7 +18,7 @@ jobs:
       - name: Set nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2020-10-05
+          toolchain: nightly-2021-02-10
           target: wasm32-unknown-unknown
           override: true
       - name: Cache substrate deps
