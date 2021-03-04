@@ -2,7 +2,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use codec::Encode;
 
-use frame_support::debug::{error, native};
+use frame_support::log::{debug, error, info, trace, warn};
 use pallet_contracts::chain_extension::{
 	ChainExtension, Environment, Ext, InitState, RetVal, SysConfig, UncheckedFrom,
 };
@@ -11,7 +11,7 @@ use sp_runtime::DispatchError;
 /// The chain Extension of Europa
 pub struct EuropaExt;
 
-impl ChainExtension for EuropaExt {
+impl<C: pallet_contracts::Config> ChainExtension<C> for EuropaExt {
 	fn call<E: Ext>(func_id: u32, env: Environment<E, InitState>) -> Result<RetVal, DispatchError>
 	where
 		<E::T as SysConfig>::AccountId: UncheckedFrom<<E::T as SysConfig>::Hash> + AsRef<[u8]>,
@@ -47,7 +47,7 @@ impl ChainExtension for EuropaExt {
 				};
 				env.charge_weight(simple_weight)?;
 
-				native::trace!(
+				trace!(
 					target: "runtime",
 					"[ChainExtension]|call|func_id:{:}|charge-weight:{:}|input:{:}",
 					func_id,

@@ -14,10 +14,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 use sp_std::{collections::btree_map::BTreeMap, fmt, mem::transmute};
 
-use super::{Error, HostError, HostFuncType, ReturnValue, Value};
+use super::{Trap as OutterTrap, TrapCode};
+use crate::{Error, HostError, HostFuncType, ReturnValue, Value};
 use patract_wasmi::{
 	memory_units::Pages, Externals, FuncInstance, FuncRef, GlobalDescriptor, GlobalRef,
 	ImportResolver, MemoryDescriptor, MemoryInstance, MemoryRef, Module, ModuleInstance, ModuleRef,
@@ -36,7 +36,7 @@ impl Memory {
 				Pages(initial as usize),
 				maximum.map(|m| Pages(m as usize)),
 			)
-			.map_err(|e| Error::Module(e))?,
+			.map_err(|_| Error::Module)?,
 		})
 	}
 
@@ -92,7 +92,7 @@ impl fmt::Display for DummyHostError {
 
 impl patract_wasmi::HostError for DummyHostError {}
 
-struct GuestExternals<'a, T: 'a> {
+struct GuestExternals<'a, T> {
 	state: &'a mut T,
 	defined_host_functions: &'a DefinedHostFunctions<T>,
 }
@@ -222,6 +222,7 @@ impl<T> ImportResolver for EnvironmentDefinitionBuilder<T> {
 				module_name, field_name
 			))
 		})?;
+
 		let memory = match *externval {
 			ExternVal::Memory(ref m) => m,
 			_ => {
@@ -249,7 +250,6 @@ impl<T> ImportResolver for EnvironmentDefinitionBuilder<T> {
 pub struct Instance<T> {
 	instance: ModuleRef,
 	defined_host_functions: DefinedHostFunctions<T>,
-	_marker: std::marker::PhantomData<T>,
 }
 
 impl<T> Instance<T> {
@@ -259,10 +259,10 @@ impl<T> Instance<T> {
 		state: &mut T,
 	) -> Result<Instance<T>, Error> {
 		let module = Module::from_buffer(code)
-			.map_err(|e| Error::Module(e))?
+			.map_err(|_| Error::Module)?
 			.try_parse_names();
 		let not_started_instance =
-			ModuleInstance::new(&module, env_def_builder).map_err(|e| Error::Module(e))?;
+			ModuleInstance::new(&module, env_def_builder).map_err(|_| Error::Module)?;
 
 		let defined_host_functions = env_def_builder.defined_host_functions.clone();
 		let instance = {
@@ -279,7 +279,6 @@ impl<T> Instance<T> {
 		Ok(Instance {
 			instance,
 			defined_host_functions,
-			_marker: std::marker::PhantomData::<T>,
 		})
 	}
 
@@ -310,7 +309,10 @@ impl<T> Instance<T> {
 					transmute::<patract_wasmi::RuntimeValue, wasmi::RuntimeValue>(val).into(),
 				))
 			},
-			Err(e) => Err(Error::WasmiExecution(e)),
+			Err(e) => Err(match e {
+				patract_wasmi::Error::Trap(t) => Error::Trap(t.into()),
+				_ => Error::Execution,
+			}),
 		}
 	}
 
@@ -320,5 +322,44 @@ impl<T> Instance<T> {
 		Some(unsafe {
 			transmute::<patract_wasmi::RuntimeValue, wasmi::RuntimeValue>(global).into()
 		})
+	}
+}
+
+impl Into<OutterTrap> for Trap {
+	fn into(self) -> OutterTrap {
+		super::Trap {
+			code: match self.kind() {
+				TrapKind::StackOverflow => TrapCode::StackOverflow,
+				TrapKind::DivisionByZero => TrapCode::IntegerDivisionByZero,
+				TrapKind::ElemUninitialized => TrapCode::BadSignature,
+				TrapKind::InvalidConversionToInt => TrapCode::BadConversionToInteger,
+				TrapKind::MemoryAccessOutOfBounds => TrapCode::MemoryOutOfBounds,
+				TrapKind::TableAccessOutOfBounds => TrapCode::TableOutOfBounds,
+				TrapKind::UnexpectedSignature => TrapCode::BadSignature,
+				TrapKind::Unreachable => TrapCode::UnreachableCodeReached,
+				TrapKind::Host(_) => TrapCode::HostError,
+			},
+			trace: self.wasm_trace().to_vec(),
+		}
+	}
+}
+
+impl fmt::Display for OutterTrap {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+		let trace = &self.trace;
+		if trace.len() == 0 {
+			write!(f, "[]")?;
+		} else {
+			for (index, trace) in trace.iter().enumerate() {
+				if index == trace.len() - 1 {
+					write!(f, "\n\t╰─>")?;
+				} else {
+					write!(f, "\n\t|  ")?;
+				}
+				write!(f, "{}", trace)?;
+			}
+		}
+
+		Ok(())
 	}
 }
