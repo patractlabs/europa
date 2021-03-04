@@ -50,7 +50,8 @@ impl PruningParams {
 		Ok(match &self.pruning {
 			Some(ref s) if s == "archive" => PruningMode::ArchiveAll,
 			None if role.is_authority() => PruningMode::ArchiveAll,
-			None => PruningMode::default(),
+			// None => PruningMode::default(),
+			None => PruningMode::ArchiveAll,
 			Some(s) => {
 				if role.is_authority() && !unsafe_pruning {
 					return Err(Error::Input(
