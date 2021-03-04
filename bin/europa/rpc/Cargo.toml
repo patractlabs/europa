@@ -27,8 +27,7 @@ substrate-frame-rpc-system = { version = "3.0.0", git = "https://github.com/pari
 pallet-transaction-payment-rpc = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 
 # vendor
-# pallet-contracts-rpc = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-# pallet-contracts-rpc = { version = "0.9.0", path = "../../../vendor/substrate/frame/contracts/rpc" }
+pallet-contracts-rpc = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 
 europa-runtime = { path = "../runtime" }
 

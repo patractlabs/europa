@@ -261,7 +261,7 @@ parameter_types! {
 			<Runtime as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(1) -
 			<Runtime as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(0)
 	)) / 5) as u32;
-	pub MaxCodeSize: u32 = 128 * 1024;
+	pub MaxCodeSize: u32 = 1024 * 1024;
 }
 
 impl pallet_contracts::Config for Runtime {

@@ -40,13 +40,7 @@ use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_transaction_pool::TransactionPool;
 
-use europa_runtime::{
-	opaque::Block,
-	AccountId,
-	Balance,
-	// BlockNumber,
-	Index,
-};
+use europa_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Index};
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {
@@ -69,13 +63,13 @@ where
 	C: Send + Sync + 'static,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-	// C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber>,
+	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber>,
 	C::Api: BlockBuilder<Block>,
 	P: TransactionPool + 'static,
 	// B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	// B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
 {
-	// use pallet_contracts_rpc::{Contracts, ContractsApi};
+	use pallet_contracts_rpc::{Contracts, ContractsApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
 
@@ -97,7 +91,7 @@ where
 	// Making synchronous calls in light client freezes the browser currently,
 	// more context: https://github.com/paritytech/substrate/pull/3480
 	// These RPCs should use an asynchronous caller instead.
-	// io.extend_with(ContractsApi::to_delegate(Contracts::new(client.clone())));
+	io.extend_with(ContractsApi::to_delegate(Contracts::new(client.clone())));
 
 	io
 }
