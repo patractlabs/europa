@@ -47,7 +47,6 @@ sc-basic-authorship = { version = "0.9.0", git = "https://github.com/paritytech/
 sc-chain-spec = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-informant = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-keystore = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-prometheus-endpoint = { version = "0.9.0", package = "substrate-prometheus-endpoint", git = "https://github.com/paritytech/substrate", branch = "master" }
 
 ec-executor = { path = "../executor" }
 ec-client-db = { path = "../db" }

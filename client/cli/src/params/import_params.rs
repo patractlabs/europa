@@ -22,26 +22,12 @@ use structopt::StructOpt;
 
 use sc_cli::DatabaseParams;
 
-use crate::params::PruningParams;
-
 /// Parameters for block import.
 #[derive(Debug, StructOpt)]
 pub struct ImportParams {
 	#[allow(missing_docs)]
 	#[structopt(flatten)]
-	pub pruning_params: PruningParams,
-
-	#[allow(missing_docs)]
-	#[structopt(flatten)]
 	pub database_params: DatabaseParams,
-
-	/// Force start with unsafe pruning settings.
-	///
-	/// When running as a validator it is highly recommended to disable state
-	/// pruning (i.e. 'archive') which is the default. The node will refuse to
-	/// start as a validator if pruning is enabled unless this option is set.
-	#[structopt(long = "unsafe-pruning")]
-	pub unsafe_pruning: bool,
 
 	/// Specify the state cache size.
 	#[structopt(

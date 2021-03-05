@@ -33,14 +33,13 @@ pub use sc_cli::{DatabaseParams, KeystoreParams, SubstrateCli};
 
 use ec_service::{
 	config::{
-		BasePath, Configuration, DatabaseConfig, ExtTransport, KeepBlocks, KeystoreConfig,
-		PrometheusConfig, PruningMode, Role, RpcMethods, TaskExecutor, TransactionPoolOptions,
-		TransactionStorageMode,
+		BasePath, Configuration, DatabaseConfig, ExtTransport, KeystoreConfig, Role, RpcMethods,
+		TaskExecutor, TransactionPoolOptions, TransactionStorageMode,
 	},
 	TracingReceiver,
 };
 
-use crate::params::{ImportParams, PruningParams, SharedParams};
+use crate::params::{ImportParams, SharedParams};
 
 /// The recommended open file descriptor limit to be configured for the process.
 const RECOMMENDED_OPEN_FILE_DESCRIPTOR_LIMIT: u64 = 10_000;
@@ -53,11 +52,6 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 	/// Get the ImportParams for this object
 	fn import_params(&self) -> Option<&ImportParams> {
 		None
-	}
-
-	/// Get the PruningParams for this object
-	fn pruning_params(&self) -> Option<&PruningParams> {
-		self.import_params().map(|x| &x.pruning_params)
 	}
 
 	/// Get the KeystoreParams for this object
@@ -181,26 +175,6 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 		Ok(Default::default())
 	}
 
-	/// Get the state pruning mode.
-	///
-	/// By default this is retrieved from `PruningMode` if it is available. Otherwise its
-	/// `PruningMode::default()`.
-	fn state_pruning(&self, unsafe_pruning: bool, role: &Role) -> Result<PruningMode> {
-		self.pruning_params()
-			.map(|x| x.state_pruning(unsafe_pruning, role))
-			.unwrap_or_else(|| Ok(Default::default()))
-	}
-
-	/// Get the block pruning mode.
-	///
-	/// By default this is retrieved from `block_pruning` if it is available. Otherwise its
-	/// `KeepBlocks::All`.
-	fn keep_blocks(&self) -> Result<KeepBlocks> {
-		self.pruning_params()
-			.map(|x| x.keep_blocks())
-			.unwrap_or_else(|| Ok(KeepBlocks::All))
-	}
-
 	/// Get the chain ID (string).
 	///
 	/// By default this is retrieved from `SharedParams`.
@@ -256,13 +230,6 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 	/// By default this is `Some(Vec::new())`.
 	fn rpc_cors(&self) -> Result<Option<Vec<String>>> {
 		Ok(Some(Vec::new()))
-	}
-
-	/// Get the prometheus configuration (`None` if disabled)
-	///
-	/// By default this is `None`.
-	fn prometheus_config(&self, _default_listen_port: u16) -> Result<Option<PrometheusConfig>> {
-		Ok(None)
 	}
 
 	/// Get the TracingReceiver value from the current object
@@ -350,11 +317,6 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 		let database_cache_size = self.database_cache_size()?.unwrap_or(128);
 		let database = self.database()?.unwrap_or(Database::RocksDb);
 
-		let unsafe_pruning = self
-			.import_params()
-			.map(|p| p.unsafe_pruning)
-			.unwrap_or(false);
-
 		Ok(Configuration {
 			impl_name: C::impl_name(),
 			impl_version: C::impl_version(),
@@ -364,10 +326,6 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 			database: self.database_config(&config_dir, database_cache_size, database)?,
 			state_cache_size: self.state_cache_size()?,
 			state_cache_child_ratio: self.state_cache_child_ratio()?,
-			// pruning: self.pruning(unsafe_pruning)?,
-			state_pruning: self.state_pruning(unsafe_pruning, &role)?,
-			keep_blocks: self.keep_blocks()?,
-			prometheus_config: self.prometheus_config(DCV::prometheus_listen_port())?,
 			rpc_http: self.rpc_http(DCV::rpc_http_listen_port())?,
 			rpc_ws: self.rpc_ws(DCV::rpc_ws_listen_port())?,
 			rpc_ipc: self.rpc_ipc()?,

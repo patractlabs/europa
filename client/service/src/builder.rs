@@ -20,7 +20,7 @@ use sc_client_api::{
 	execution_extensions::{ExecutionExtensions, ExecutionStrategies},
 	ExecutionStrategy,
 };
-use sc_client_db::{Backend, DatabaseSettings};
+use sc_client_db::{Backend, DatabaseSettings, KeepBlocks, PruningMode};
 use sc_keystore::LocalKeystore;
 use sc_service::{error::Error, MallocSizeOfWasm, RpcExtensionBuilder};
 
@@ -151,9 +151,9 @@ pub fn database_settings(config: &Configuration) -> sc_client_db::DatabaseSettin
 	sc_client_db::DatabaseSettings {
 		state_cache_size: config.state_cache_size,
 		state_cache_child_ratio: config.state_cache_child_ratio.map(|v| (v, 100)),
-		state_pruning: config.state_pruning.clone(),
+		state_pruning: PruningMode::ArchiveAll,
 		source: config.database.clone(),
-		keep_blocks: config.keep_blocks.clone(),
+		keep_blocks: KeepBlocks::All,
 		transaction_storage: config.transaction_storage.clone(),
 	}
 }

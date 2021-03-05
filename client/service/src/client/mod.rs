@@ -1496,7 +1496,6 @@ where
 				params.function,
 				&params.arguments,
 				params.overlayed_changes,
-				// params.offchain_changes,
 				Some(params.storage_transaction_cache),
 				params.initialize_block,
 				manager,

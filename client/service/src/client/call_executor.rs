@@ -25,10 +25,8 @@ use sc_client_api::{backend, call_executor::CallExecutor};
 
 use sp_api::{InitializeBlock, ProofRecorder, StorageTransactionCache};
 use sp_core::{
-	// offchain::storage::OffchainOverlayedChanges,
 	traits::{CodeExecutor, SpawnNamed},
-	NativeOrEncoded,
-	NeverNativeValue,
+	NativeOrEncoded, NeverNativeValue,
 };
 use sp_externalities::Extensions;
 use sp_runtime::{
@@ -102,7 +100,6 @@ where
 			&state,
 			changes_trie,
 			&mut changes,
-			// &mut OffchainOverlayedChanges::disabled(),
 			&self.executor,
 			method,
 			call_data,
@@ -136,7 +133,6 @@ where
 		method: &str,
 		call_data: &[u8],
 		changes: &RefCell<OverlayedChanges>,
-		// offchain_changes: &RefCell<OffchainOverlayedChanges>,
 		storage_transaction_cache: Option<&RefCell<StorageTransactionCache<Block, B::State>>>,
 		initialize_block: InitializeBlock<'a, Block>,
 		execution_manager: ExecutionManager<EM>,
@@ -168,7 +164,6 @@ where
 		let mut state = self.backend.state_at(*at)?;
 
 		let changes = &mut *changes.borrow_mut();
-		// let offchain_changes = &mut *offchain_changes.borrow_mut();
 
 		match recorder {
 			Some(recorder) => {
@@ -194,7 +189,6 @@ where
 					&backend,
 					changes_trie_state,
 					changes,
-					// offchain_changes,
 					&self.executor,
 					method,
 					call_data,
@@ -218,7 +212,6 @@ where
 					&state,
 					changes_trie_state,
 					changes,
-					// offchain_changes,
 					&self.executor,
 					method,
 					call_data,
@@ -240,19 +233,11 @@ where
 
 	fn runtime_version(&self, id: &BlockId<Block>) -> sp_blockchain::Result<RuntimeVersion> {
 		let mut overlay = OverlayedChanges::default();
-		// let mut offchain_overlay = OffchainOverlayedChanges::default();
 		let changes_trie_state =
 			backend::changes_tries_state_at_block(id, self.backend.changes_trie_storage())?;
 		let state = self.backend.state_at(*id)?;
 		let mut cache = StorageTransactionCache::<Block, B::State>::default();
-		let mut ext = Ext::new(
-			&mut overlay,
-			// &mut offchain_overlay,
-			&mut cache,
-			&state,
-			changes_trie_state,
-			None,
-		);
+		let mut ext = Ext::new(&mut overlay, &mut cache, &state, changes_trie_state, None);
 		let state_runtime_code = sp_state_machine::backend::BackendRuntimeCode::new(&state);
 		self.executor
 			.runtime_version(
