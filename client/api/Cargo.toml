@@ -5,5 +5,5 @@ authors = ["patract labs <https://github.com/patractlabs>"]
 edition = "2018"
 
 [dependencies]
-sp-runtime = { version = "2.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-database = { version = "2.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-runtime = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-database = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }

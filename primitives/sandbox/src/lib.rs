@@ -36,7 +36,6 @@
 //! - executing a wasm substrate runtime inside of a wasm parachain
 #![warn(missing_docs)]
 
-pub use patract_wasmi::Error as WasmiError;
 use sp_std::prelude::*;
 
 pub use sp_core::sandbox::HostError;
@@ -48,7 +47,7 @@ mod imp;
 #[derive(sp_core::RuntimeDebug)]
 pub enum Error {
 	/// Module is not valid, couldn't be instantiated.
-	Module(WasmiError),
+	Module,
 
 	/// Access to a memory or table was made with an address or an index which is out of bounds.
 	///
@@ -58,8 +57,8 @@ pub enum Error {
 	/// Failed to invoke the start function or an exported function for some reason.
 	Execution,
 
-	/// wasmi execution
-	WasmiExecution(WasmiError),
+	/// WASM inner trap
+	Trap(imp::Trap),
 }
 
 impl From<Error> for HostError {

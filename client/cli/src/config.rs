@@ -26,19 +26,20 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use sc_cli::{
-	arg_enums::Database, generate_node_name, init_logger, DefaultConfigurationValues, Error,
-	InitLoggerParams, Result,
-};
+use sc_cli::{arg_enums::Database, generate_node_name, DefaultConfigurationValues, Error, Result};
+use sc_tracing::logging::LoggerBuilder;
 // TODO may use local
 pub use sc_cli::{DatabaseParams, KeystoreParams, SubstrateCli};
 
-use ec_service::config::{
-	BasePath, Configuration, DatabaseConfig, KeystoreConfig, PruningMode, RpcMethods, TaskExecutor,
-	TransactionPoolOptions,
+use ec_service::{
+	config::{
+		BasePath, Configuration, DatabaseConfig, ExtTransport, KeystoreConfig, Role, RpcMethods,
+		TaskExecutor, TransactionPoolOptions, TransactionStorageMode,
+	},
+	TracingReceiver,
 };
 
-use crate::params::{ImportParams, PruningParams, SharedParams};
+use crate::params::{ImportParams, SharedParams};
 
 /// The recommended open file descriptor limit to be configured for the process.
 const RECOMMENDED_OPEN_FILE_DESCRIPTOR_LIMIT: u64 = 10_000;
@@ -51,11 +52,6 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 	/// Get the ImportParams for this object
 	fn import_params(&self) -> Option<&ImportParams> {
 		None
-	}
-
-	/// Get the PruningParams for this object
-	fn pruning_params(&self) -> Option<&PruningParams> {
-		self.import_params().map(|x| &x.pruning_params)
 	}
 
 	/// Get the KeystoreParams for this object
@@ -73,6 +69,20 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 	/// By default this is retrieved from `SharedParams`.
 	fn base_path(&self) -> Result<Option<BasePath>> {
 		Ok(self.shared_params().base_path())
+	}
+
+	/// Returns `true` if the node is for development or not
+	///
+	/// By default this is retrieved from `SharedParams`.
+	fn is_dev(&self) -> Result<bool> {
+		Ok(self.shared_params().is_dev())
+	}
+
+	/// Gets the role
+	///
+	/// By default this is `Role::Full`.
+	fn role(&self, _is_dev: bool) -> Result<Role> {
+		Ok(Role::Full)
 	}
 
 	/// Get the current workspace or
@@ -115,6 +125,14 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 			.unwrap_or_default())
 	}
 
+	/// Get the database transaction storage scheme.
+	fn database_transaction_storage(&self) -> Result<TransactionStorageMode> {
+		Ok(self
+			.database_params()
+			.map(|x| x.transaction_storage())
+			.unwrap_or(TransactionStorageMode::BlockBody))
+	}
+
 	/// Get the database backend variant.
 	///
 	/// By default this is retrieved from `DatabaseParams` if it is available. Otherwise its `None`.
@@ -155,17 +173,6 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 	/// By default this is `None`.
 	fn state_cache_child_ratio(&self) -> Result<Option<usize>> {
 		Ok(Default::default())
-	}
-
-	/// Get the pruning mode.
-	///
-	/// By default this is retrieved from `PruningMode` if it is available. Otherwise its
-	/// `PruningMode::default()`.
-	/// // TODO may remove unsafe_pruning
-	fn pruning(&self, unsafe_pruning: bool) -> Result<PruningMode> {
-		self.pruning_params()
-			.map(|x| x.pruning(unsafe_pruning))
-			.unwrap_or_else(|| Ok(Default::default()))
 	}
 
 	/// Get the chain ID (string).
@@ -225,6 +232,14 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 		Ok(Some(Vec::new()))
 	}
 
+	/// Get the TracingReceiver value from the current object
+	///
+	/// By default this is retrieved from [`SharedParams`] if it is available. Otherwise its
+	/// `TracingReceiver::default()`.
+	fn tracing_receiver(&self) -> Result<TracingReceiver> {
+		Ok(self.shared_params().tracing_receiver())
+	}
+
 	/// Get the tracing targets from the current object (if any)
 	///
 	/// By default this is retrieved from `ImportParams` if it is available. Otherwise its
@@ -246,6 +261,7 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 		cli: &C,
 		task_executor: TaskExecutor,
 	) -> Result<Configuration> {
+		let is_dev = self.is_dev()?;
 		let chain_id = self.chain_id()?;
 		let chain_spec = cli.load_spec(chain_id.as_str())?;
 		let mut base_path = self
@@ -295,15 +311,11 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 			.to_path_buf()
 			.join("chains")
 			.join(chain_spec.id());
+		let role = self.role(is_dev)?;
 		// TODO may need to use this var
 		// let client_id = C::client_id();
 		let database_cache_size = self.database_cache_size()?.unwrap_or(128);
 		let database = self.database()?.unwrap_or(Database::RocksDb);
-
-		let unsafe_pruning = self
-			.import_params()
-			.map(|p| p.unsafe_pruning)
-			.unwrap_or(false);
 
 		Ok(Configuration {
 			impl_name: C::impl_name(),
@@ -314,7 +326,6 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 			database: self.database_config(&config_dir, database_cache_size, database)?,
 			state_cache_size: self.state_cache_size()?,
 			state_cache_child_ratio: self.state_cache_child_ratio()?,
-			pruning: self.pruning(unsafe_pruning)?,
 			rpc_http: self.rpc_http(DCV::rpc_http_listen_port())?,
 			rpc_ws: self.rpc_ws(DCV::rpc_ws_listen_port())?,
 			rpc_ipc: self.rpc_ipc()?,
@@ -322,8 +333,10 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 			rpc_ws_max_connections: self.rpc_ws_max_connections()?,
 			rpc_cors: self.rpc_cors()?,
 			tracing_targets: self.tracing_targets()?,
+			transaction_storage: self.database_transaction_storage()?,
 			chain_spec,
 			announce_block: self.announce_block()?,
+			role,
 			base_path: Some(base_path),
 			workspace,
 			workspace_list,
@@ -351,6 +364,13 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 		Ok(self.shared_params().disable_log_color())
 	}
 
+	/// Get the telemetry external transport
+	///
+	/// By default this is `None`.
+	fn telemetry_external_transport(&self) -> Result<Option<ExtTransport>> {
+		Ok(None)
+	}
+
 	/// Initialize substrate. This must be done only once per process.
 	///
 	/// This method:
@@ -358,21 +378,26 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 	/// 1. Sets the panic handler
 	/// 2. Initializes the logger
 	/// 3. Raises the FD limit
-	fn init<C: SubstrateCli>(&self) -> Result<()> {
-		let logger_pattern = self.log_filters()?;
-		let tracing_targets = self.tracing_targets()?;
-		let disable_log_reloading = self.is_log_filter_reloading_disabled()?;
-		let disable_log_color = self.disable_log_color()?;
-
+	fn init<C: SubstrateCli>(&self) -> Result<sc_telemetry::TelemetryWorker> {
 		sp_panic_handler::set(&C::support_url(), &C::impl_version());
 
-		init_logger(InitLoggerParams {
-			pattern: logger_pattern,
-			tracing_receiver: sc_tracing::TracingReceiver::Log,
-			tracing_targets,
-			disable_log_reloading,
-			disable_log_color,
-		})?;
+		let mut logger = LoggerBuilder::new(self.log_filters()?);
+		logger.with_log_reloading(!self.is_log_filter_reloading_disabled()?);
+
+		if let Some(transport) = self.telemetry_external_transport()? {
+			logger.with_transport(transport);
+		}
+
+		if let Some(tracing_targets) = self.tracing_targets()? {
+			let tracing_receiver = self.tracing_receiver()?;
+			logger.with_profiling(tracing_receiver, tracing_targets);
+		}
+
+		if self.disable_log_color()? {
+			logger.with_colors(false);
+		}
+
+		let telemetry_worker = logger.init()?;
 
 		if let Some(new_limit) = fdlimit::raise_fd_limit() {
 			if new_limit < RECOMMENDED_OPEN_FILE_DESCRIPTOR_LIMIT {
@@ -384,7 +409,7 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 			}
 		}
 
-		Ok(())
+		Ok(telemetry_worker)
 	}
 }
 

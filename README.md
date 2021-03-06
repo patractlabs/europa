@@ -41,7 +41,7 @@ We may keep it in this way until `pallet-contracts` release v3.0.0
     
     More information about this forked substrate refers to [this repo](https://github.com/patractlabs/substrate)
     
-    Currently, the tracked substrate commit is [b27503591d019b94a0eea7510578dadc5ad3196c](https://github.com/paritytech/substrate/commit/b27503591d019b94a0eea7510578dadc5ad3196c)
+    Currently, the tracked substrate commit is [fc2d2d36620140da20ff244219a4259b5e59c83a](https://github.com/paritytech/substrate/commit/fc2d2d36620140da20ff244219a4259b5e59c83a)
     
     For substrate change log:
     - [x] [contracts: Add missing instruction to the `Schedule`](https://github.com/paritytech/substrate/pull/7527)
@@ -57,7 +57,7 @@ We may keep it in this way until `pallet-contracts` release v3.0.0
 
     If you just need v2.0.0 contract test, do not need to clone git submodule in vendor, just switch to this branch.
 
-Europa is tracking [newest substrate (712085)](https://github.com/paritytech/substrate/commit/712085115cdef4a79a66747338c920d6ba4e479f) now. 
+Europa is tracking [newest substrate (79ddc796)](https://github.com/paritytech/substrate/commit/79ddc796ed130810ac9e620493154c3cac9f290a) now. 
 Thus `pallet-contracts` could use newest features.
 
 ## Extending types

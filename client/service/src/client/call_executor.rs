@@ -25,7 +25,6 @@ use sc_client_api::{backend, call_executor::CallExecutor};
 
 use sp_api::{InitializeBlock, ProofRecorder, StorageTransactionCache};
 use sp_core::{
-	offchain::storage::OffchainOverlayedChanges,
 	traits::{CodeExecutor, SpawnNamed},
 	NativeOrEncoded, NeverNativeValue,
 };
@@ -36,10 +35,11 @@ use sp_runtime::{
 };
 use sp_state_machine::{
 	self, backend::Backend as _, DefaultHandler, ExecutionManager, ExecutionStrategy, Ext,
-	OverlayedChanges, StateMachine, StorageProof,
+	OverlayedChanges, StateMachine,
 };
 
 use ec_executor::{NativeVersion, RuntimeInfo, RuntimeVersion};
+use sp_trie::StorageProof;
 
 /// Call executor that executes methods locally, querying all required
 /// data from local backend.
@@ -100,7 +100,6 @@ where
 			&state,
 			changes_trie,
 			&mut changes,
-			&mut OffchainOverlayedChanges::disabled(),
 			&self.executor,
 			method,
 			call_data,
@@ -126,7 +125,7 @@ where
 			Result<NativeOrEncoded<R>, Self::Error>,
 		) -> Result<NativeOrEncoded<R>, Self::Error>,
 		R: Encode + Decode + PartialEq,
-		NC: FnOnce() -> result::Result<R, String> + UnwindSafe,
+		NC: FnOnce() -> result::Result<R, sp_api::ApiError> + UnwindSafe,
 	>(
 		&self,
 		initialize_block_fn: IB,
@@ -134,7 +133,6 @@ where
 		method: &str,
 		call_data: &[u8],
 		changes: &RefCell<OverlayedChanges>,
-		offchain_changes: &RefCell<OffchainOverlayedChanges>,
 		storage_transaction_cache: Option<&RefCell<StorageTransactionCache<Block, B::State>>>,
 		initialize_block: InitializeBlock<'a, Block>,
 		execution_manager: ExecutionManager<EM>,
@@ -166,7 +164,6 @@ where
 		let mut state = self.backend.state_at(*at)?;
 
 		let changes = &mut *changes.borrow_mut();
-		let offchain_changes = &mut *offchain_changes.borrow_mut();
 
 		match recorder {
 			Some(recorder) => {
@@ -192,7 +189,6 @@ where
 					&backend,
 					changes_trie_state,
 					changes,
-					offchain_changes,
 					&self.executor,
 					method,
 					call_data,
@@ -202,8 +198,10 @@ where
 				);
 				// TODO: https://github.com/paritytech/substrate/issues/4455
 				// .with_storage_transaction_cache(storage_transaction_cache.as_mut().map(|c| &mut **c))
-				state_machine
-					.execute_using_consensus_failure_handler(execution_manager, native_call)
+				state_machine.execute_using_consensus_failure_handler(
+					execution_manager,
+					native_call.map(|n| || (n)().map_err(|e| Box::new(e) as Box<_>)),
+				)
 			}
 			None => {
 				let state_runtime_code = sp_state_machine::backend::BackendRuntimeCode::new(&state);
@@ -214,7 +212,6 @@ where
 					&state,
 					changes_trie_state,
 					changes,
-					offchain_changes,
 					&self.executor,
 					method,
 					call_data,
@@ -225,8 +222,10 @@ where
 				.with_storage_transaction_cache(
 					storage_transaction_cache.as_mut().map(|c| &mut **c),
 				);
-				state_machine
-					.execute_using_consensus_failure_handler(execution_manager, native_call)
+				state_machine.execute_using_consensus_failure_handler(
+					execution_manager,
+					native_call.map(|n| || (n)().map_err(|e| Box::new(e) as Box<_>)),
+				)
 			}
 		}
 		.map_err(Into::into)
@@ -234,19 +233,11 @@ where
 
 	fn runtime_version(&self, id: &BlockId<Block>) -> sp_blockchain::Result<RuntimeVersion> {
 		let mut overlay = OverlayedChanges::default();
-		let mut offchain_overlay = OffchainOverlayedChanges::default();
 		let changes_trie_state =
 			backend::changes_tries_state_at_block(id, self.backend.changes_trie_storage())?;
 		let state = self.backend.state_at(*id)?;
 		let mut cache = StorageTransactionCache::<Block, B::State>::default();
-		let mut ext = Ext::new(
-			&mut overlay,
-			&mut offchain_overlay,
-			&mut cache,
-			&state,
-			changes_trie_state,
-			None,
-		);
+		let mut ext = Ext::new(&mut overlay, &mut cache, &state, changes_trie_state, None);
 		let state_runtime_code = sp_state_machine::backend::BackendRuntimeCode::new(&state);
 		self.executor
 			.runtime_version(

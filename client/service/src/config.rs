@@ -22,12 +22,17 @@
 
 use std::net::SocketAddr;
 
-pub use sc_client_db::{Database, DatabaseSettingsSrc as DatabaseConfig, PruningMode};
+pub use sc_client_db::{
+	Database, DatabaseSettingsSrc as DatabaseConfig, KeepBlocks, TransactionStorageMode,
+};
 
 use sc_chain_spec::ChainSpec;
 pub use sc_transaction_pool::txpool::Options as TransactionPoolOptions;
 
-pub use sc_service::config::{BasePath, KeystoreConfig, RpcMethods, TaskExecutor, TaskType};
+pub use sc_network::config::Role;
+pub use sc_service::config::{
+	BasePath, ExtTransport, KeystoreConfig, RpcMethods, TaskExecutor, TaskType,
+};
 
 /// Service configuration.
 #[derive(Debug)]
@@ -36,6 +41,8 @@ pub struct Configuration {
 	pub impl_name: String,
 	/// Implementation version (see sc-cli to see an example of format)
 	pub impl_version: String,
+	/// Node role.
+	pub role: Role,
 	/// How to spawn background tasks. Mandatory, otherwise creating a `Service` will error.
 	pub task_executor: TaskExecutor,
 	/// Extrinsic pool configuration.
@@ -48,8 +55,8 @@ pub struct Configuration {
 	pub state_cache_size: usize,
 	/// Size in percent of cache size dedicated to child tries
 	pub state_cache_child_ratio: Option<usize>,
-	/// Pruning settings.
-	pub pruning: PruningMode,
+	/// Transaction storage scheme.
+	pub transaction_storage: TransactionStorageMode,
 	/// Chain configuration.
 	pub chain_spec: Box<dyn ChainSpec>,
 	/// RPC over HTTP binding address. `None` if disabled.

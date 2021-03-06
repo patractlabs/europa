@@ -5,7 +5,6 @@ use sp_api::{ApiExt, TransactionFor};
 use sp_inherents::InherentDataProviders;
 use sp_runtime::traits::Block as BlockT;
 
-use sc_basic_authorship::ProposerFactory;
 use sc_transaction_pool::FullPool;
 use sp_keystore::SyncCryptoStorePtr;
 
@@ -23,7 +22,7 @@ where
 		+ Send
 		+ Sync
 		+ 'static,
-	sp_api::ApiErrorFor<TFullClient<TBl, TRtApi, TExecDisp>, TBl>: Send + std::fmt::Display,
+	// sp_api::ApiErrorFor<TFullClient<TBl, TRtApi, TExecDisp>, TBl>: Send + std::fmt::Display,
 	<TFullClient<TBl, TRtApi, TExecDisp> as sp_api::ProvideRuntimeApi<TBl>>::Api:
 		sp_transaction_pool::runtime_api::TaggedTransactionQueue<TBl>,
 {
@@ -70,36 +69,33 @@ where
 		sc_client_api::ExecutorProvider<TBl> + Send + Sync + 'static,
 	<TFullClient<TBl, TRtApi, TExecDisp> as sp_api::ProvideRuntimeApi<TBl>>::Api:
 		sp_transaction_pool::runtime_api::TaggedTransactionQueue<TBl>,
-	sp_api::ApiErrorFor<TFullClient<TBl, TRtApi, TExecDisp>, TBl>: Send + std::fmt::Display,
+	// sp_api::ApiErrorFor<TFullClient<TBl, TRtApi, TExecDisp>, TBl>: Send + std::fmt::Display,
 	// for import_queue
 	TFullClient<TBl, TRtApi, TExecDisp>:
 		sp_consensus::BlockImport<TBl, Error = sp_consensus::Error>,
-	<TFullClient<TBl, TRtApi, TExecDisp> as sp_api::ProvideRuntimeApi<TBl>>::Api:
-		sp_api::Core<TBl, Error = sp_blockchain::Error>
-			+ ApiExt<
-				TBl,
-				StateBackend = <TFullBackend<TBl> as sc_client_api::backend::Backend<TBl>>::State,
-			>,
+	<TFullClient<TBl, TRtApi, TExecDisp> as sp_api::ProvideRuntimeApi<TBl>>::Api: sp_api::Core<TBl>
+		+ ApiExt<
+			TBl,
+			StateBackend = <TFullBackend<TBl> as sc_client_api::backend::Backend<TBl>>::State,
+		>,
 	// spawn_tasks
-	TFullClient<TBl, TRtApi, TExecDisp>:
-		sp_blockchain::HeaderMetadata<TBl, Error = sp_blockchain::Error>
-			+ sp_consensus::block_validation::Chain<TBl>
-			+ sp_runtime::traits::BlockIdTo<TBl, Error = sp_blockchain::Error>
-			+ sc_client_api::ProofProvider<TBl>
-			+ sp_blockchain::HeaderBackend<TBl>
-			+ sc_client_api::BlockchainEvents<TBl>
-			+ sc_client_api::UsageProvider<TBl>
-			+ sc_client_api::StorageProvider<TBl, TFullBackend<TBl>>
-			+ sp_api::CallApiAt<TBl, Error = sp_blockchain::Error>
-			+ Send
-			+ 'static,
+	TFullClient<TBl, TRtApi, TExecDisp>: sp_blockchain::HeaderMetadata<TBl, Error = sp_blockchain::Error>
+		+ sp_consensus::block_validation::Chain<TBl>
+		+ sp_runtime::traits::BlockIdTo<TBl, Error = sp_blockchain::Error>
+		+ sc_client_api::ProofProvider<TBl>
+		+ sp_blockchain::HeaderBackend<TBl>
+		+ sc_client_api::BlockchainEvents<TBl>
+		+ sc_client_api::UsageProvider<TBl>
+		+ sc_client_api::StorageProvider<TBl, TFullBackend<TBl>>
+		+ sp_api::CallApiAt<TBl>
+		+ Send
+		+ 'static,
 	<TFullClient<TBl, TRtApi, TExecDisp> as sp_api::ProvideRuntimeApi<TBl>>::Api:
-		sp_api::Metadata<TBl>
-			+ sp_session::SessionKeys<TBl>
-			+ sp_api::ApiErrorExt<Error = sp_blockchain::Error>,
+		sp_api::Metadata<TBl> + sp_session::SessionKeys<TBl>,
+	// + sp_api::ApiErrorExt<Error = sp_blockchain::Error>,
 	// manual_seal
 	<TFullClient<TBl, TRtApi, TExecDisp> as sp_api::ProvideRuntimeApi<TBl>>::Api:
-		sc_block_builder::BlockBuilderApi<TBl, Error = sp_blockchain::Error>,
+		sc_block_builder::BlockBuilderApi<TBl>,
 {
 	let (client, backend, keystore_container, mut task_manager) =
 		new_full_parts::<TBl, TRtApi, TExecDisp>(&config, false)?;
@@ -107,6 +103,7 @@ where
 
 	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
 		config.transaction_pool.clone(),
+		config.role.is_authority().into(),
 		None,
 		task_manager.spawn_handle(),
 		client.clone(),
@@ -114,7 +111,7 @@ where
 
 	let import_queue = sc_consensus_manual_seal::import_queue(
 		Box::new(client.clone()),
-		&task_manager.spawn_handle(),
+		&task_manager.spawn_essential_handle(),
 		None,
 	);
 
@@ -147,13 +144,12 @@ where
 		config,
 	})?;
 
-	let proposer: ProposerFactory<_, TFullBackend<TBl>, _> =
-		sc_basic_authorship::ProposerFactory::new(
-			task_manager.spawn_handle(),
-			client.clone(),
-			transaction_pool.clone(),
-			None,
-		);
+	let proposer = sc_basic_authorship::ProposerFactory::new(
+		task_manager.spawn_handle(),
+		client.clone(),
+		transaction_pool.clone(),
+		None,
+	);
 
 	// manual_seal stream
 	let pool_import_stream = transaction_pool

@@ -35,7 +35,7 @@ use sp_blockchain::{
 };
 use sp_consensus::{
 	BlockCheckParams, BlockImportParams, BlockOrigin, BlockStatus, Error as ConsensusError,
-	ForkChoiceStrategy, ImportResult, RecordProof,
+	ForkChoiceStrategy, ImportResult,
 };
 use sp_core::{
 	convert_hash,
@@ -61,7 +61,7 @@ use sp_tracing::{debug, info, trace, warn};
 use sp_trie::StorageProof;
 use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedSender};
 
-use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider};
+use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider, RecordProof};
 use sc_client_api::{
 	apply_aux, backend, changes_tries_state_at_block, execution_extensions::ExecutionExtensions,
 	BlockBackend, BlockImportNotification, BlockImportOperation, BlockOf, BlockchainEvents,
@@ -349,7 +349,7 @@ where
 	where
 		Self: ProvideRuntimeApi<Block>,
 		<Self as ProvideRuntimeApi<Block>>::Api:
-			CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State>,
+			CoreApi<Block> + ApiExt<Block, StateBackend = B::State>,
 	{
 		let BlockImportParams {
 			origin,
@@ -442,7 +442,7 @@ where
 	where
 		Self: ProvideRuntimeApi<Block>,
 		<Self as ProvideRuntimeApi<Block>>::Api:
-			CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State>,
+			CoreApi<Block> + ApiExt<Block, StateBackend = B::State>,
 	{
 		let parent_hash = import_headers.post().parent_hash().clone();
 		let status = self.backend.blockchain().status(BlockId::Hash(hash))?;
@@ -580,7 +580,7 @@ where
 	where
 		Self: ProvideRuntimeApi<Block>,
 		<Self as ProvideRuntimeApi<Block>>::Api:
-			CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State>,
+			CoreApi<Block> + ApiExt<Block, StateBackend = B::State>,
 	{
 		let parent_hash = import_block.header.parent_hash();
 		let at = BlockId::Hash(*parent_hash);
@@ -1039,8 +1039,7 @@ where
 	Block: BlockT,
 	Self: ChainHeaderBackend<Block> + ProvideRuntimeApi<Block>,
 	<Self as ProvideRuntimeApi<Block>>::Api:
-		ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>>
-			+ BlockBuilderApi<Block, Error = Error>,
+		ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
 {
 	fn new_block_at<R: Into<RecordProof>>(
 		&self,
@@ -1468,18 +1467,17 @@ where
 	E: CallExecutor<Block, Backend = B> + Send + Sync,
 	Block: BlockT,
 {
-	type Error = Error;
 	type StateBackend = B::State;
 
 	fn call_api_at<
 		'a,
 		R: Encode + Decode + PartialEq,
-		NC: FnOnce() -> result::Result<R, String> + UnwindSafe,
-		C: CoreApi<Block, Error = Error>,
+		NC: FnOnce() -> result::Result<R, sp_api::ApiError> + UnwindSafe,
+		C: CoreApi<Block>,
 	>(
 		&self,
 		params: CallApiAtParams<'a, Block, C, NC, B::State>,
-	) -> sp_blockchain::Result<NativeOrEncoded<R>> {
+	) -> Result<NativeOrEncoded<R>, sp_api::ApiError> {
 		let core_api = params.core_api;
 		let at = params.at;
 
@@ -1487,24 +1485,29 @@ where
 			.execution_extensions
 			.manager_and_extensions(at, params.context);
 
-		self.executor.contextual_call::<_, fn(_, _) -> _, _, _>(
-			|| core_api.initialize_block(at, &self.prepare_environment_block(at)?),
-			at,
-			params.function,
-			&params.arguments,
-			params.overlayed_changes,
-			params.offchain_changes,
-			Some(params.storage_transaction_cache),
-			params.initialize_block,
-			manager,
-			params.native_call,
-			params.recorder,
-			Some(extensions),
-		)
+		self.executor
+			.contextual_call::<_, fn(_, _) -> _, _, _>(
+				|| {
+					core_api
+						.initialize_block(at, &self.prepare_environment_block(at)?)
+						.map_err(Error::RuntimeApiError)
+				},
+				at,
+				params.function,
+				&params.arguments,
+				params.overlayed_changes,
+				Some(params.storage_transaction_cache),
+				params.initialize_block,
+				manager,
+				params.native_call,
+				params.recorder,
+				Some(extensions),
+			)
+			.map_err(Into::into)
 	}
 
-	fn runtime_version_at(&self, at: &BlockId<Block>) -> sp_blockchain::Result<RuntimeVersion> {
-		self.runtime_version_at(at)
+	fn runtime_version_at(&self, at: &BlockId<Block>) -> Result<RuntimeVersion, sp_api::ApiError> {
+		self.runtime_version_at(at).map_err(Into::into)
 	}
 }
 
@@ -1519,7 +1522,7 @@ where
 	Block: BlockT,
 	Client<B, S, E, Block, RA>: ProvideRuntimeApi<Block>,
 	<Client<B, S, E, Block, RA> as ProvideRuntimeApi<Block>>::Api:
-		CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State>,
+		CoreApi<Block> + ApiExt<Block, StateBackend = B::State>,
 {
 	type Error = ConsensusError;
 	type Transaction = backend::TransactionFor<B, Block>;
@@ -1605,7 +1608,7 @@ where
 	Block: BlockT,
 	Self: ProvideRuntimeApi<Block>,
 	<Self as ProvideRuntimeApi<Block>>::Api:
-		CoreApi<Block, Error = Error> + ApiExt<Block, StateBackend = B::State>,
+		CoreApi<Block> + ApiExt<Block, StateBackend = B::State>,
 {
 	type Error = ConsensusError;
 	type Transaction = backend::TransactionFor<B, Block>;
@@ -1752,6 +1755,10 @@ where
 	fn block_hash(&self, number: NumberFor<Block>) -> sp_blockchain::Result<Option<Block::Hash>> {
 		self.backend.blockchain().hash(number)
 	}
+
+	fn extrinsic(&self, hash: &Block::Hash) -> sp_blockchain::Result<Option<Block::Extrinsic>> {
+		self.backend.blockchain().extrinsic(hash)
+	}
 }
 
 impl<B, S, E, Block, RA> backend::AuxStore for Client<B, S, E, Block, RA>
@@ -1761,7 +1768,7 @@ where
 	E: CallExecutor<Block>,
 	Block: BlockT,
 	Self: ProvideRuntimeApi<Block>,
-	<Self as ProvideRuntimeApi<Block>>::Api: CoreApi<Block, Error = Error>,
+	<Self as ProvideRuntimeApi<Block>>::Api: CoreApi<Block>,
 {
 	/// Insert auxiliary data into key-value store.
 	fn insert_aux<
@@ -1794,7 +1801,7 @@ where
 	E: CallExecutor<Block>,
 	Block: BlockT,
 	Client<B, S, E, Block, RA>: ProvideRuntimeApi<Block>,
-	<Client<B, S, E, Block, RA> as ProvideRuntimeApi<Block>>::Api: CoreApi<Block, Error = Error>,
+	<Client<B, S, E, Block, RA> as ProvideRuntimeApi<Block>>::Api: CoreApi<Block>,
 {
 	fn insert_aux<
 		'a,
