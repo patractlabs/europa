@@ -44,14 +44,14 @@ In Patract Labs's `cargo-contract`, we will contain the "name section" while com
 currently, only the `cargo-contract` version provided by us (Patract Labs) can be used:
 
 ```bash
-cargo install --git https://github.com/patractlabs/cargo-contract --branch cmd/debug --force
+cargo install --git https://github.com/patractlabs/cargo-contract --branch v0.10.0 --force
 ```
 
 If you do not want this version of `cargo-contract` to override the version released by paritytech, then it is recommended 
 to compile locally and use the compiled `cargo-contract` directly:
 
 ```bash
-git clone https://github.com/patractlabs/cargo-contract --branch cmd/debug
+git clone https://github.com/patractlabs/cargo-contract --branch v0.10.0
 cd cargo-contract
 cargo build --release
 ```
@@ -80,14 +80,13 @@ FLAGS:
 It means that you are using the `cargo-contract` provided by Patract Labs. If you want to see the backtrace of the WASM 
 contract execution crash while using Europa, you need to add the `--debug` command when compiling the contract.
 
-Using the `--debug` command will generate another file besides the normal file in the `target/ink` directory of the 
-originally compiled contract, ending with `*.src.wasm`. This `*.src.wasm` file is the WASM contract file containing the 
-"name section" part.
+Using the `--debug` command will generate file in the `target/ink` directory of the originally compiled contract, 
+ending with `*.wasm`. This `*.wasm` file is the WASM contract file containing the "name section" part.
 
-**If you need to use Europa for testing, the contract deployed to Europa needs to use this `*.src.wasm` file instead of the originally generated `*.wasm` file.**
+**If you need to use Europa for testing, the contract deployed to Europa needs to use this `*.wasm` file instead of the originally generated `*opt.wasm` file.**
 
 > In following doc, about the log part, if the contract do not have "name section" (contracts are not compiled by `--debug`
-> or not submit `*.src.wasm` file), the output may contain a batch of `<unknown>`. If you meet this, please use the contract
+> or not submit `*.wasm` file), the output may contain a batch of `<unknown>`. If you meet this, please use the contract
 > which has "name section".
 > ```bash
 > wasm_error: Error::WasmiExecution(Trap(Trap { kind: Unreachable }))
@@ -159,8 +158,8 @@ in various situations:
     4. Analyze the execution path of the contract and adjust the contract based on the `nest` information and combined with the `seal_call` information.
     5. etc.
 
-The process of recording `pallet-contracts` executing contract to `NestEdRuntime` is relatively fine-grained.
-The process of logging the information of the execution contract of `pallet-contracts` to `NestEdRuntime` is relatively fine-grained. Take `seal_call` in `define_env!` as an example:
+The process of recording `pallet-contracts` executing contract to `NestedRuntime` is relatively fine-grained.
+The process of logging the information of the execution contract of `pallet-contracts` to `NestedRuntime` is relatively fine-grained. Take `seal_call` in `define_env!` as an example:
 
 ```rust
 pub struct SealCall {
@@ -223,13 +222,7 @@ Let's explain the information printed above:
 
     1. After A calls B, it returns to A to continue execution, and then calls contract C
 
-       ```text
-       |A|
-       | |->|B|
-       | |<-
-       | |->|C|
-       | |<-
-       ```
+       ![call_other_1](/Users/jenner/codes/substrate-contracts-book/src/zh_CN/europa/img/call_other_1.png)
 
        Then it will produce a log print similar to the following:
 
@@ -251,13 +244,7 @@ Let's explain the information printed above:
 
     2. After A calls B, B calls contract C again, and finally returns to A
 
-       ```text
-       |A|
-       | |->|B|
-       | |  | |->|C|
-       | |  | |<-
-       | |<-
-       ```
+       ![call_other_2](/Users/jenner/codes/substrate-contracts-book/src/zh_CN/europa/img/call_other_2.png)
 
        Then it will produce a log print similar to the following:
 
@@ -551,50 +538,11 @@ If the chain uses the definition of `Balance=u64`, and the definition of `Balanc
 
 Take the example contract of erc20 as an example, after expanding the macro of the contract, you can see:
 
-* When there is an error in the `dispatch_using_mode` stage of decoding `input`, the contract returns with `::ink_lang::DispatchError::CouldNotReadInput`, but the model design of `Pallet Contracts` believes that the WASM contract execution is not abnormal.
-* In the call of `call`, since `deny_payment` is checked before calling `dispatch_using_mode`, and if an Error is returned when checking `deny_payment`, it will be directly `panic`.
+In the call of `call`, since `deny_payment` is checked before calling `dispatch_using_mode`, and if an Error is returned when checking `deny_payment`, it will be directly `panic`.
 
 Therefore, in this case, the contract for deploying (`Instantiate`) ERC20 will execute normally, and any method of ERC20 such as `transfer` will be called with `ContractTrap`.
 
-Let's look at these two situations separately:
-
-1. `instantiate` stage：
-
-   ```bash
-   1: NestedRuntime {
-   	ext_result: [success] ExecError { error: DispatchError::Module {index:5, error:17, message: Some("ContractTrapped"), orign: ErrorOrigin::Caller }}
-   #...
-       env_trace: [
-           seal_input(Some(0xd183512b008cb6611e0100000000000000000000)),
-           seal_caller(Some(0xd43593c715fdd31c61141abd04a99fd682)),
-           //...
-           seal_set_storage((Some(0x030000000100000...), Some(0x000000000000000...))),
-       ],
-       sandbox_result_ok: RuntimeValue::Value(7),
-       nest: [],
-   }
-   ```
-
-   From the above log, we can see:
-
-    1. The end of `env_trace` does not end with `seal_return`, it means that the contract has not been executed normally. Because it can be seen from the design of `ink!` that if you enter `#[ink(constructor)]` normally or enter `#[ink(message)]`, then must be executed to `::ink_lang::execute_message ` (`::ink_lang::execute_message` will call `seal_return`), and the absence of `seal_return` means that the execution has not reached the stage of `execute`.
-
-    2. `sandbox_result_ok` indicates that the return value of the execution is `7`. By querying `ink!` for the implementation of `DispatchError`, you can see that this error code represents `CouldNotReadInput`
-
-       ```rust
-       DispatchError::CouldNotReadInput => Self(0x07),
-       ```
-
-    3. According to the expanded code of the contract macro, you can see that in the `dispatch_using_mode` function, `::ink_env::decode_input` is called before calling `execute`, and this function has a `return Error` situation. Therefore, it is reasonable to guess that an exception occurred when parsing `input`. The input parameter `args:0x008cb6611e0100000000000000000000` is recorded in the log. Observing this parameter, it can be found that its length is significantly smaller than the `u128` code. Therefore, it can be inferred from `args` and `env_trace` that an error occurred when decoding `input`.
-
-       ```rust
-       // this part code is expanded by erc20 example.
-       ::ink_env::decode_input::<<Erc20 as ::ink_lang::ConstructorDispatcher>::Type>().map_err(|_| ::ink_lang::DispatchError::CouldNotReadInput)?
-       ```
-
-At this point, the contract instantiation is successful, but the constructor to execute the instantiation exists. Therefore, the contract exists on the chain but the process of `#[ink(constructor)]` is not executed normally.
-
-2. The `call` stage, such as calling `transfer`:
+The `call` stage, such as calling `transfer`:
 
    Calling `transfer` to the above successfully instantiated function, `ContractTrap` will appear, Europa's log shows as follows:
 
