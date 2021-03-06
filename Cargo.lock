@@ -4023,8 +4023,8 @@ dependencies = [
  "ep-sandbox",
  "frame-support",
  "frame-system",
- "funty",
  "hex",
+ "log",
  "pallet-contracts-primitives",
  "pallet-contracts-proc-macro 3.0.0",
  "parity-scale-codec 2.0.1",
@@ -4350,7 +4350,8 @@ dependencies = [
 [[package]]
 name = "parity-wasm"
 version = "0.41.0"
-source = "git+https://github.com/patractlabs/parity-wasm?branch=v0.41.0#a5739f6193309957d469a1df96cd0f3504b23728"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ddfc878dac00da22f8f61e7af3157988424567ab01d9920b962ef7dcbd7cd865"
 
 [[package]]
 name = "parity-ws"
