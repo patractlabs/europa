@@ -2,7 +2,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use codec::Encode;
 
-use frame_support::log::{debug, error, info, trace, warn};
+use frame_support::debug::{error, trace};
 use pallet_contracts::chain_extension::{
 	ChainExtension, Environment, Ext, InitState, RetVal, SysConfig, UncheckedFrom,
 };

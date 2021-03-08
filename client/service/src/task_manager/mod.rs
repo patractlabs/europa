@@ -167,15 +167,15 @@ impl SpawnEssentialTaskHandle {
 	}
 }
 
-impl sp_core::traits::SpawnEssentialNamed for SpawnEssentialTaskHandle {
-	fn spawn_essential_blocking(&self, name: &'static str, future: BoxFuture<'static, ()>) {
-		self.spawn_blocking(name, future);
-	}
-
-	fn spawn_essential(&self, name: &'static str, future: BoxFuture<'static, ()>) {
-		self.spawn(name, future);
-	}
-}
+// impl sp_core::traits::SpawnEssentialNamed for SpawnEssentialTaskHandle {
+// 	fn spawn_essential_blocking(&self, name: &'static str, future: BoxFuture<'static, ()>) {
+// 		self.spawn_blocking(name, future);
+// 	}
+//
+// 	fn spawn_essential(&self, name: &'static str, future: BoxFuture<'static, ()>) {
+// 		self.spawn(name, future);
+// 	}
+// }
 
 /// Helper struct to manage background/async tasks in Service.
 pub struct TaskManager {

@@ -22,7 +22,7 @@ where
 		+ Send
 		+ Sync
 		+ 'static,
-	// sp_api::ApiErrorFor<TFullClient<TBl, TRtApi, TExecDisp>, TBl>: Send + std::fmt::Display,
+	sp_api::ApiErrorFor<TFullClient<TBl, TRtApi, TExecDisp>, TBl>: Send + std::fmt::Display,
 	<TFullClient<TBl, TRtApi, TExecDisp> as sp_api::ProvideRuntimeApi<TBl>>::Api:
 		sp_transaction_pool::runtime_api::TaggedTransactionQueue<TBl>,
 {
@@ -69,7 +69,7 @@ where
 		sc_client_api::ExecutorProvider<TBl> + Send + Sync + 'static,
 	<TFullClient<TBl, TRtApi, TExecDisp> as sp_api::ProvideRuntimeApi<TBl>>::Api:
 		sp_transaction_pool::runtime_api::TaggedTransactionQueue<TBl>,
-	// sp_api::ApiErrorFor<TFullClient<TBl, TRtApi, TExecDisp>, TBl>: Send + std::fmt::Display,
+	sp_api::ApiErrorFor<TFullClient<TBl, TRtApi, TExecDisp>, TBl>: Send + std::fmt::Display,
 	// for import_queue
 	TFullClient<TBl, TRtApi, TExecDisp>:
 		sp_consensus::BlockImport<TBl, Error = sp_consensus::Error>,
@@ -87,15 +87,16 @@ where
 		+ sc_client_api::BlockchainEvents<TBl>
 		+ sc_client_api::UsageProvider<TBl>
 		+ sc_client_api::StorageProvider<TBl, TFullBackend<TBl>>
-		+ sp_api::CallApiAt<TBl>
+		+ sp_api::CallApiAt<TBl, Error = sp_blockchain::Error>
 		+ Send
 		+ 'static,
 	<TFullClient<TBl, TRtApi, TExecDisp> as sp_api::ProvideRuntimeApi<TBl>>::Api:
-		sp_api::Metadata<TBl> + sp_session::SessionKeys<TBl>,
-	// + sp_api::ApiErrorExt<Error = sp_blockchain::Error>,
+		sp_api::Metadata<TBl>
+			+ sp_session::SessionKeys<TBl>
+			+ sp_api::ApiErrorExt<Error = sp_blockchain::Error>,
 	// manual_seal
 	<TFullClient<TBl, TRtApi, TExecDisp> as sp_api::ProvideRuntimeApi<TBl>>::Api:
-		sc_block_builder::BlockBuilderApi<TBl>,
+		sc_block_builder::BlockBuilderApi<TBl, Error = sp_blockchain::Error>,
 {
 	let (client, backend, keystore_container, mut task_manager) =
 		new_full_parts::<TBl, TRtApi, TExecDisp>(&config, false)?;
@@ -111,7 +112,7 @@ where
 
 	let import_queue = sc_consensus_manual_seal::import_queue(
 		Box::new(client.clone()),
-		&task_manager.spawn_essential_handle(),
+		&task_manager.spawn_handle(),
 		None,
 	);
 

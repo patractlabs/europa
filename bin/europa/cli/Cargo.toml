@@ -8,17 +8,17 @@ edition = "2018"
 structopt = "0.3.8"
 serde_json = "1.0"
 
-sp-consensus = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-inherents = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-timestamp = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-core = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-runtime = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-consensus = "0.9.0"
+sp-inherents = "3.0.0"
+sp-timestamp = "3.0.0"
+sp-core = "3.0.0"
+sp-runtime = "3.0.0"
 
-sc-cli = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-transaction-pool = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-consensus = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-consensus-manual-seal = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-basic-authorship = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-cli = "0.9.0"
+sc-transaction-pool = "3.0.0"
+sc-consensus = "0.9.0"
+sc-consensus-manual-seal = "0.9.0"
+sc-basic-authorship = "0.9.0"
 
 ec-service = { path = "../../../client/service" }
 ec-cli = { path = "../../../client/cli" }
@@ -31,4 +31,4 @@ europa-executor = { path = "../executor" }
 europa-rpc = { path = "../rpc" }
 
 [build-dependencies]
-substrate-build-script-utils = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+substrate-build-script-utils = "3.0.0"

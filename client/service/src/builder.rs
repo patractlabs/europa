@@ -248,12 +248,13 @@ where
 		+ ExecutorProvider<TBl>
 		+ UsageProvider<TBl>
 		+ StorageProvider<TBl, TBackend>
-		+ CallApiAt<TBl>
+		+ CallApiAt<TBl, Error = sp_blockchain::Error>
 		+ Send
 		+ 'static,
 	<TCl as ProvideRuntimeApi<TBl>>::Api: sp_api::Metadata<TBl>
 		+ sp_transaction_pool::runtime_api::TaggedTransactionQueue<TBl>
 		+ sp_session::SessionKeys<TBl>
+		+ sp_api::ApiErrorExt<Error = sp_blockchain::Error>
 		+ sp_api::ApiExt<TBl, StateBackend = TBackend::State>,
 	TBl: BlockT + for<'de> sp_runtime::Deserialize<'de>,
 	TBackend: 'static + sc_client_api::backend::Backend<TBl> + Send,
@@ -355,7 +356,7 @@ where
 		+ HeaderBackend<TBl>
 		+ HeaderMetadata<TBl, Error = sp_blockchain::Error>
 		+ ExecutorProvider<TBl>
-		+ CallApiAt<TBl>
+		+ CallApiAt<TBl, Error = sp_blockchain::Error>
 		+ ProofProvider<TBl>
 		+ StorageProvider<TBl, TBackend>
 		+ BlockBackend<TBl>
@@ -368,7 +369,8 @@ where
 	TBackend: sc_client_api::backend::Backend<TBl> + 'static,
 	TStateKv: ec_client_api::statekv::StateKv<TBl> + 'static,
 	TRpc: sc_rpc::RpcExtension<sc_rpc::Metadata>,
-	<TCl as ProvideRuntimeApi<TBl>>::Api: sp_session::SessionKeys<TBl> + sp_api::Metadata<TBl>,
+	<TCl as ProvideRuntimeApi<TBl>>::Api:
+		sp_session::SessionKeys<TBl> + sp_api::Metadata<TBl, Error = sp_blockchain::Error>,
 {
 	use sc_rpc::{author, chain, state, system};
 

@@ -14,35 +14,35 @@ serde = { version = "1.0.101", optional = true, features = ["derive"] }
 smallvec = "1.4.1"
 
 # Substrate primitives
-sp-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-block-builder = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-core = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-inherents = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-io = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-runtime = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-std = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-transaction-pool = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-version = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-sp-session = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+sp-api = { version = "3.0.0", default-features = false }
+sp-block-builder = { version = "3.0.0", default-features = false }
+sp-core = { version = "3.0.0", default-features = false }
+sp-inherents = { version = "3.0.0", default-features = false }
+sp-io = { version = "3.0.0", default-features = false }
+sp-runtime = { version = "3.0.0", default-features = false }
+sp-std = { version = "3.0.0", default-features = false }
+sp-transaction-pool = { version = "3.0.0", default-features = false }
+sp-version = { version = "3.0.0", default-features = false }
+sp-session = { version = "3.0.0", default-features = false }
 
 # Substrate pallets
-frame-executive = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-frame-support = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-frame-system = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-frame-system-rpc-runtime-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-balances = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-randomness-collective-flip = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-timestamp = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-transaction-payment = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-transaction-payment-rpc-runtime-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-sudo = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+frame-executive = { version = "3.0.0", default-features = false }
+frame-support = { version = "3.0.0", default-features = false }
+frame-system = { version = "3.0.0", default-features = false }
+frame-system-rpc-runtime-api = { version = "3.0.0", default-features = false }
+pallet-balances = { version = "3.0.0", default-features = false }
+pallet-randomness-collective-flip = { version = "3.0.0", default-features = false }
+pallet-timestamp = { version = "3.0.0", default-features = false }
+pallet-transaction-payment = { version = "3.0.0", default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { version = "3.0.0", default-features = false }
+pallet-sudo = { version = "3.0.0", default-features = false }
 
 # contracts
-pallet-contracts-primitives = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-contracts-rpc-runtime-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+pallet-contracts-primitives = { version = "3.0.0", default-features = false }
+pallet-contracts-rpc-runtime-api = { version = "3.0.0", default-features = false }
 pallet-contracts = { version = "3.0.0", path = "../../../vendor/substrate/frame/contracts" }
 
-runtime-log = { version = "0.1.1", git = "https://github.com/patractlabs/ink-log", default-features = false }
+runtime-log = { version = "0.1.0", git = "https://github.com/patractlabs/ink-log", default-features = false, branch = "v3.0.0" }
 curve = { package = "megaclite-arkworks", git = "https://github.com/patractlabs/megaclite.git", default-features = false }
 
 [features]
