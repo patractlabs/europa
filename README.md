@@ -34,7 +34,7 @@ We provide tow branches now:
 We may keep it in this way until `pallet-contracts` release v3.0.0
 
 * `master` branch is our default branch, which provides our forked `pallet-contracts` crate that tracks the newest substrate `pallet-contracts` module.
-    
+
     In `master` branch, Europa use `vender/substrate`'s `pallet-contracts` as dependency. This forked `pallet-contracts` is from 
     the branch `europa-contracts` in our `vendor/substrate` repo. In this forked `pallet-contracts` Europa provides 
     many self test features.
@@ -70,7 +70,7 @@ Europa **current** "extending types" is (This may be changed for different Europ
   "Address": "MultiAddress"
 }
 ```
-    
+
 ## Features
 In details, current Europa sandbox framework provides:
 1. This framework is another implementation for [substrate client](https://github.com/paritytech/substrate/tree/master/client).
@@ -100,7 +100,8 @@ Europa self modifications:
     - [ ] Using `wasmtime` as WASM JIT-executor and support gdb/lldb debug. (developing)
     - [ ] Using `wasm3` as a more faster WASM interpreter. (not in plan)
 - [x] Supporting `NestedRuntime` event track feature to record all useful thing in `pallet-contracts`.
-    When instantiate or call a contract (This contract needs to be compiled by [PatractLabs's `cargo-contract`](https://github.com/patractlabs/cargo-contract/tree/cmd/debug) now), Europa would print:
+    When instantiate or call a contract (This contract needs to be compiled by [PatractLabs's `cargo-contract`](https://github.com/patractlabs/cargo-contract/) now), Europa would print:
+    
     ```bash
     1: NestedRuntime {
         ext_result: [success] ExecReturnValue { flags: 0, data: 01 },
@@ -130,7 +131,7 @@ ChainExtensions features:
   *Currently we use a simple static way to charge weight for ZKP, we would change this part with benchmarks result in future.*
 
 More information about Europa `pallet-contracts` sandbox detailed features refers to the doc: [europa.md](./doc/europa.md)
-   
+
 ## Build and run
 ### Build
 #### clone this repo
