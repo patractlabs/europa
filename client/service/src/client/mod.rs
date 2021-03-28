@@ -48,7 +48,7 @@ use sp_runtime::{
 		Block as BlockT, DigestFor, HashFor, Header as HeaderT, NumberFor, One,
 		UniqueSaturatedInto, Zero,
 	},
-	BuildStorage, Justification,
+	BuildStorage, Justification, Justifications,
 };
 use sp_state_machine::{
 	key_changes, // key_changes_proof,
@@ -354,7 +354,7 @@ where
 		let BlockImportParams {
 			origin,
 			header,
-			justification,
+			justifications,
 			post_digests,
 			body,
 			storage_changes,
@@ -366,7 +366,7 @@ where
 			..
 		} = import_block;
 
-		assert!(justification.is_some() && finalized || justification.is_none());
+		assert!(justifications.is_some() && finalized || justifications.is_none());
 
 		if !intermediates.is_empty() {
 			return Err(Error::IncompletePipeline);
@@ -394,7 +394,7 @@ where
 			origin,
 			hash,
 			import_headers,
-			justification,
+			justifications,
 			body,
 			storage_changes,
 			new_cache,
@@ -430,7 +430,7 @@ where
 		origin: BlockOrigin,
 		hash: Block::Hash,
 		import_headers: PrePostHeader<Block::Header>,
-		justification: Option<Justification>,
+		justification: Option<Justifications>,
 		body: Option<Vec<Block::Extrinsic>>,
 		storage_changes: Option<sp_api::StorageChanges<backend::StateBackendFor<B, Block>, Block>>,
 		new_cache: HashMap<CacheKeyId, Vec<u8>>,
@@ -492,12 +492,14 @@ where
 
 				operation.op.update_cache(new_cache);
 
-				let (main_sc, child_sc, _, tx, _, changes_trie_tx) = storage_changes.into_inner();
+				let (main_sc, child_sc, _, tx, _, changes_trie_tx, tx_index) =
+					storage_changes.into_inner();
 
 				operation.op.update_db_storage(tx)?;
 				operation
 					.op
 					.update_storage(main_sc.clone(), child_sc.clone())?;
+				operation.op.update_transaction_index(tx_index)?;
 
 				if let Some(changes_trie_transaction) = changes_trie_tx {
 					operation.op.update_changes_trie(changes_trie_transaction)?;
@@ -1710,10 +1712,10 @@ where
 
 	fn block(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<SignedBlock<Block>>> {
 		Ok(
-			match (self.header(id)?, self.body(id)?, self.justification(id)?) {
-				(Some(header), Some(extrinsics), justification) => Some(SignedBlock {
+			match (self.header(id)?, self.body(id)?, self.justifications(id)?) {
+				(Some(header), Some(extrinsics), justifications) => Some(SignedBlock {
 					block: Block::new(header, extrinsics),
-					justification,
+					justifications,
 				}),
 				_ => None,
 			},
@@ -1748,16 +1750,20 @@ where
 		}
 	}
 
-	fn justification(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<Justification>> {
-		self.backend.blockchain().justification(*id)
+	fn justifications(&self, id: &BlockId<Block>) -> sp_blockchain::Result<Option<Justifications>> {
+		self.backend.blockchain().justifications(*id)
 	}
 
 	fn block_hash(&self, number: NumberFor<Block>) -> sp_blockchain::Result<Option<Block::Hash>> {
 		self.backend.blockchain().hash(number)
 	}
 
-	fn extrinsic(&self, hash: &Block::Hash) -> sp_blockchain::Result<Option<Block::Extrinsic>> {
-		self.backend.blockchain().extrinsic(hash)
+	fn indexed_transaction(&self, hash: &Block::Hash) -> sp_blockchain::Result<Option<Vec<u8>>> {
+		self.backend.blockchain().indexed_transaction(hash)
+	}
+
+	fn has_indexed_transaction(&self, hash: &Block::Hash) -> sp_blockchain::Result<bool> {
+		self.backend.blockchain().has_indexed_transaction(hash)
 	}
 }
 

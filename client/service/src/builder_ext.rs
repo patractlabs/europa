@@ -149,6 +149,7 @@ where
 		client.clone(),
 		transaction_pool.clone(),
 		None,
+		None,
 	);
 
 	// manual_seal stream

@@ -33,8 +33,8 @@ pub use sc_cli::{DatabaseParams, KeystoreParams, SubstrateCli};
 
 use ec_service::{
 	config::{
-		BasePath, Configuration, DatabaseConfig, ExtTransport, KeystoreConfig, Role, RpcMethods,
-		TaskExecutor, TransactionPoolOptions, TransactionStorageMode,
+		BasePath, Configuration, DatabaseConfig, KeystoreConfig, Role, RpcMethods, TaskExecutor,
+		TransactionPoolOptions, TransactionStorageMode,
 	},
 	TracingReceiver,
 };
@@ -364,13 +364,6 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 		Ok(self.shared_params().disable_log_color())
 	}
 
-	/// Get the telemetry external transport
-	///
-	/// By default this is `None`.
-	fn telemetry_external_transport(&self) -> Result<Option<ExtTransport>> {
-		Ok(None)
-	}
-
 	/// Initialize substrate. This must be done only once per process.
 	///
 	/// This method:
@@ -378,15 +371,11 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 	/// 1. Sets the panic handler
 	/// 2. Initializes the logger
 	/// 3. Raises the FD limit
-	fn init<C: SubstrateCli>(&self) -> Result<sc_telemetry::TelemetryWorker> {
+	fn init<C: SubstrateCli>(&self) -> Result<()> {
 		sp_panic_handler::set(&C::support_url(), &C::impl_version());
 
 		let mut logger = LoggerBuilder::new(self.log_filters()?);
 		logger.with_log_reloading(!self.is_log_filter_reloading_disabled()?);
-
-		if let Some(transport) = self.telemetry_external_transport()? {
-			logger.with_transport(transport);
-		}
 
 		if let Some(tracing_targets) = self.tracing_targets()? {
 			let tracing_receiver = self.tracing_receiver()?;
@@ -397,7 +386,7 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 			logger.with_colors(false);
 		}
 
-		let telemetry_worker = logger.init()?;
+		logger.init()?;
 
 		if let Some(new_limit) = fdlimit::raise_fd_limit() {
 			if new_limit < RECOMMENDED_OPEN_FILE_DESCRIPTOR_LIMIT {
@@ -409,7 +398,7 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 			}
 		}
 
-		Ok(telemetry_worker)
+		Ok(())
 	}
 }
 
