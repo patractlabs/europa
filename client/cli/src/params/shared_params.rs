@@ -28,7 +28,6 @@ arg_enum! {
 	#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 	pub enum TracingReceiver {
 		Log,
-		Telemetry,
 	}
 }
 
@@ -36,7 +35,6 @@ impl Into<sc_tracing::TracingReceiver> for TracingReceiver {
 	fn into(self) -> sc_tracing::TracingReceiver {
 		match self {
 			TracingReceiver::Log => sc_tracing::TracingReceiver::Log,
-			TracingReceiver::Telemetry => sc_tracing::TracingReceiver::Telemetry,
 		}
 	}
 }

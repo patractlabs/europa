@@ -133,6 +133,7 @@ where
 				other: ExecutionStrategy::NativeElseWasm,
 			},
 			Some(keystore_container.sync_keystore()),
+			None,
 		);
 
 		new_client(
