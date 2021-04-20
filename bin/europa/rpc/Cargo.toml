@@ -1,6 +1,6 @@
 [package]
 name = "europa-rpc"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Jupiter <https://github.com/patractlabs/jupiter>"]
 edition = "2018"
 
