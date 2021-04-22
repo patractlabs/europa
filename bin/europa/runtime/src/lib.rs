@@ -261,7 +261,11 @@ parameter_types! {
 			<Runtime as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(1) -
 			<Runtime as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(0)
 	)) / 5) as u32;
-	pub MaxCodeSize: u32 = 1024 * 1024;
+	// for substrate/client/basic-authorship/src/basic_authorship.rs#55
+	// `DEFAULT_BLOCK_SIZE_LIMIT` is 4 * 1024 * 1024 + 512 in substrate now,
+	// thus the max code size could not more than this limit now.
+	// this limit would be removed when europa use self `basic_authorship`
+	pub MaxCodeSize: u32 = 4 * 1024 * 1024 + 512;
 }
 
 impl pallet_contracts::Config for Runtime {
