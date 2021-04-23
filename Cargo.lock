@@ -4366,7 +4366,7 @@ dependencies = [
 [[package]]
 name = "parity-wasm"
 version = "0.41.0"
-source = "git+https://github.com/patractlabs/parity-wasm?branch=v0.41.0#a5739f6193309957d469a1df96cd0f3504b23728"
+source = "git+https://github.com/patractlabs/parity-wasm?branch=v0.41.0#5ee0f3e434c14a1c5bf60039575bd4d539df84b4"
 
 [[package]]
 name = "parity-ws"
