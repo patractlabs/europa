@@ -48,7 +48,8 @@ pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::Account
 pub type AccountIndex = u32;
 
 /// Balance of an account.
-pub type Balance = u128;
+// pub type Balance = u128;
+pub type Balance = u64; // change this to u64 for test europa v0.2 report 2.2.3 part
 
 /// Index of a transaction in the chain.
 pub type Index = u32;
