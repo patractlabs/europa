@@ -146,6 +146,9 @@ parameter_types! {
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
 	pub const Version: RuntimeVersion = VERSION;
+	pub const SS58Prefix: u8 = 42;
+	pub const TokenDecimals: u8 = 10;
+	pub const TokenSymbol: &'static str = "DOT";
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -196,7 +199,7 @@ impl frame_system::Config for Runtime {
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = ();
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
-	type SS58Prefix = ();
+	type SS58Prefix = SS58Prefix;
 }
 
 parameter_types! {

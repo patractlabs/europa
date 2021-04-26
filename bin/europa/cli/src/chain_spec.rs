@@ -56,9 +56,9 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		// Properties
 		Some(
 			json!({
-				"ss58Format": 42,
-				"tokenDecimals": 10,
-				"tokenSymbol": "DOT"
+				"ss58Format": europa_runtime::SS58Prefix::get(),
+				"tokenDecimals": europa_runtime::TokenDecimals::get(),
+				"tokenSymbol": europa_runtime::TokenSymbol::get(),
 			})
 			.as_object()
 			.expect("network properties generation can not fail; qed")
