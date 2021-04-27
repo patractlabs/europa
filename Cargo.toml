@@ -1,6 +1,9 @@
 [profile.release]
 panic = "unwind"
 
+[patch.crates-io]
+parity-wasm = { git = "https://github.com/patractlabs/parity-wasm", branch = "v0.41.0" }
+
 [workspace]
 members = [
     "bin/europa/",
