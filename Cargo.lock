@@ -4437,8 +4437,7 @@ dependencies = [
 [[package]]
 name = "parity-wasm"
 version = "0.41.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ddfc878dac00da22f8f61e7af3157988424567ab01d9920b962ef7dcbd7cd865"
+source = "git+https://github.com/patractlabs/parity-wasm?branch=v0.41.0#5ee0f3e434c14a1c5bf60039575bd4d539df84b4"
 
 [[package]]
 name = "parity-ws"
