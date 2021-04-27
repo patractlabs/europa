@@ -1,6 +1,6 @@
 [package]
 name = "ec-service"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["patract labs <https://github.com/patractlabs>"]
 edition = "2018"
 
