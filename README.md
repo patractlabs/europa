@@ -67,7 +67,18 @@ Europa **current** "extending types" is (This may be changed for different Europ
 ```json
 {
   "LookupSource": "MultiAddress",
-  "Address": "MultiAddress"
+  "Address": "MultiAddress",
+  "AliveContractInfo": {
+    "trieId": "TrieId",
+    "storageSize": "u32",
+    "pairCount": "u32",
+    "codeHash": "CodeHash",
+    "rentAllowance": "Balance",
+    "rentPayed": "Balance",
+    "deductBlock": "BlockNumber",
+    "lastWrite": "Option<BlockNumber>",
+    "_reserved": "Option<Null>"
+  }
 }
 ```
 
