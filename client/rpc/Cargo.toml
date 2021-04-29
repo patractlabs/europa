@@ -5,9 +5,9 @@ authors = ["patract labs <https://github.com/patractlabs>"]
 edition = "2018"
 
 [dependencies]
-jsonrpc-core = { version = "15.0.0" }
-jsonrpc-core-client = { version = "15.0.0" }
-jsonrpc-derive = "15.0.0"
+jsonrpc-core = { version = "15.1.0" }
+jsonrpc-core-client = { version = "15.1.0" }
+jsonrpc-derive = "15.1.0"
 serde = { version = "1.0.101", features = ["derive"] }
 hex = "0.4"
 
