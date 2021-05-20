@@ -470,6 +470,9 @@ where
 					sc_rpc::system::Request::NetworkRemoveReservedPeer(_peer_id, sender) => {
 						let _ = sender.send(Ok(()));
 					}
+					sc_rpc::system::Request::NetworkReservedPeers(sender) => {
+						let _ = sender.send(vec![]);
+					}
 					sc_rpc::system::Request::NodeRoles(sender) => {
 						let _ = sender.send(vec![]);
 					}

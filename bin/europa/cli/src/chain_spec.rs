@@ -6,7 +6,7 @@ use sp_runtime::traits::{IdentifyAccount, Verify};
 use ec_service::ChainType;
 
 use europa_runtime::{AccountId, Signature};
-use europa_runtime::{BalancesConfig, ContractsConfig, GenesisConfig, SudoConfig, SystemConfig};
+use europa_runtime::{BalancesConfig, GenesisConfig, SudoConfig, SystemConfig};
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = ec_service::GenericChainSpec<GenesisConfig>;
@@ -44,7 +44,6 @@ pub fn development_config() -> Result<ChainSpec, String> {
 					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 				],
-				true,
 			)
 		},
 		// Bootnodes
@@ -70,11 +69,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
 }
 
 /// Configure initial storage state for FRAME modules.
-fn genesis(
-	root_key: AccountId,
-	endowed_accounts: Vec<AccountId>,
-	enable_println: bool,
-) -> GenesisConfig {
+fn genesis(root_key: AccountId, endowed_accounts: Vec<AccountId>) -> GenesisConfig {
 	GenesisConfig {
 		frame_system: SystemConfig {
 			// Add Wasm runtime to storage.
@@ -88,9 +83,6 @@ fn genesis(
 				.cloned()
 				.map(|k| (k, 1 << 60))
 				.collect(),
-		},
-		pallet_contracts: ContractsConfig {
-			current_schedule: pallet_contracts::Schedule::default().enable_println(enable_println),
 		},
 		pallet_sudo: SudoConfig {
 			// Assign network admin rights.
