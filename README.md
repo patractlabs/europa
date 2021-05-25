@@ -41,7 +41,7 @@ We may keep it in this way until `pallet-contracts` release v3.0.0
     
     More information about this forked substrate refers to [this repo](https://github.com/patractlabs/substrate)
     
-    Currently, the tracked substrate commit is [505a8d6ae1e36b81220b7ac6999f99d14d2708af](https://github.com/paritytech/substrate/commit/505a8d6ae1e36b81220b7ac6999f99d14d2708af)
+    Currently, the tracked substrate commit is [90cfb952f2e11bc6d327faf04b30dc5f4cf89df8(polkadot-v0.9.3)](https://github.com/paritytech/substrate/commit/90cfb952f2e11bc6d327faf04b30dc5f4cf89df8)
     
     For substrate change log:
     - [x] [contracts: Add missing instruction to the `Schedule`](https://github.com/paritytech/substrate/pull/7527)
@@ -57,7 +57,7 @@ We may keep it in this way until `pallet-contracts` release v3.0.0
 
     If you just need v2.0.0 contract test, do not need to clone git submodule in vendor, just switch to this branch.
 
-Europa is tracking [newest substrate (505a8d6a)](https://github.com/paritytech/substrate/commit/505a8d6ae1e36b81220b7ac6999f99d14d2708af) now. 
+Europa is tracking [newest substrate (90cfb952)](https://github.com/paritytech/substrate/commit/90cfb952f2e11bc6d327faf04b30dc5f4cf89df8) now. 
 Thus `pallet-contracts` could use newest features.
 
 ## Extending types
@@ -67,18 +67,7 @@ Europa **current** "extending types" is (This may be changed for different Europ
 ```json
 {
   "LookupSource": "MultiAddress",
-  "Address": "MultiAddress",
-  "AliveContractInfo": {
-    "trieId": "TrieId",
-    "storageSize": "u32",
-    "pairCount": "u32",
-    "codeHash": "CodeHash",
-    "rentAllowance": "Balance",
-    "rentPayed": "Balance",
-    "deductBlock": "BlockNumber",
-    "lastWrite": "Option<BlockNumber>",
-    "_reserved": "Option<Null>"
-  }
+  "Address": "MultiAddress"
 }
 ```
 

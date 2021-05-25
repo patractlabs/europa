@@ -20,7 +20,6 @@ use pallet_transaction_payment::CurrencyAdapter;
 
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::Randomness,
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, Weight,
@@ -85,7 +84,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("europa"),
 	impl_name: create_runtime_str!("europa"),
 	authoring_version: 1,
-	spec_version: 1,
+	spec_version: 3,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -200,6 +199,8 @@ impl frame_system::Config for Runtime {
 	type SystemWeightInfo = ();
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
+	/// The set code logic, just the default since we're not a parachain.
+	type OnSetCode = ();
 }
 
 parameter_types! {
@@ -253,7 +254,6 @@ parameter_types! {
 	pub RentFraction: Perbill = Perbill::from_rational(1u32, 30 * DAYS);
 	pub const SurchargeReward: Balance = 150 * MILLICENTS;
 	pub const SignedClaimHandicap: u32 = 2;
-	pub const MaxDepth: u32 = 32;
 	pub const MaxValueSize: u32 = 16 * 1024;
 	// The lazy deletion runs inside on_initialize.
 	pub DeletionWeightLimit: Weight = AVERAGE_ON_INITIALIZE_RATIO *
@@ -268,7 +268,14 @@ parameter_types! {
 	// `DEFAULT_BLOCK_SIZE_LIMIT` is 4 * 1024 * 1024 + 512 in substrate now,
 	// thus the max code size could not more than this limit now.
 	// this limit would be removed when europa use self `basic_authorship`
-	pub MaxCodeSize: u32 = 4 * 1024 * 1024 + 512;
+	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
+	// pub Schedule: pallet_contracts::Schedule<Runtime> = {
+	//     let mut schedule = Default::default();
+	// 	let mut limits = pallet_contracts::Limits::default();
+	// 	limits.code_len = 4 * 1024 * 1024 + 512;
+	// 	schedule.limits = limits;
+	// 	schedule
+	// };
 }
 
 impl pallet_contracts::Config for Runtime {
@@ -284,14 +291,13 @@ impl pallet_contracts::Config for Runtime {
 	type DepositPerStorageItem = DepositPerStorageItem;
 	type RentFraction = RentFraction;
 	type SurchargeReward = SurchargeReward;
-	type MaxCodeSize = MaxCodeSize;
-	type MaxDepth = MaxDepth;
-	type MaxValueSize = MaxValueSize;
+	type CallStack = [pallet_contracts::Frame<Self>; 31];
 	type WeightPrice = pallet_transaction_payment::Module<Self>;
 	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
 	type ChainExtension = EuropaExt;
 	type DeletionQueueDepth = DeletionQueueDepth;
 	type DeletionWeightLimit = DeletionWeightLimit;
+	type Schedule = Schedule;
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -312,7 +318,7 @@ construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 
-		Contracts: pallet_contracts::{Pallet, Call, Config<T>, Storage, Event<T>},
+		Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>},
 
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 	}
@@ -391,10 +397,6 @@ impl_runtime_apis! {
 		) -> sp_inherents::CheckInherentsResult {
 			data.check_extrinsics(&block)
 		}
-
-		fn random_seed() -> <Block as BlockT>::Hash {
-			RandomnessCollectiveFlip::random_seed().0
-		}
 	}
 
 	// impl just for author rpc requirements
@@ -438,7 +440,9 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber>
+	impl pallet_contracts_rpc_runtime_api::ContractsApi<
+		Block, AccountId, Balance, BlockNumber, Hash,
+	>
 		for Runtime
 	{
 		fn call(
@@ -448,7 +452,19 @@ impl_runtime_apis! {
 			gas_limit: u64,
 			input_data: Vec<u8>,
 		) -> pallet_contracts_primitives::ContractExecResult {
-			Contracts::bare_call(origin, dest, value, gas_limit, input_data)
+			Contracts::bare_call(origin, dest, value, gas_limit, input_data, true)
+		}
+
+		fn instantiate(
+			origin: AccountId,
+			endowment: Balance,
+			gas_limit: u64,
+			code: pallet_contracts_primitives::Code<Hash>,
+			data: Vec<u8>,
+			salt: Vec<u8>,
+		) -> pallet_contracts_primitives::ContractInstantiateResult<AccountId, BlockNumber>
+		{
+			Contracts::bare_instantiate(origin, endowment, gas_limit, code, data, salt, true, true)
 		}
 
 		fn get_storage(

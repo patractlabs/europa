@@ -40,7 +40,7 @@ pallet-sudo = { version = "3.0.0", git = "https://github.com/paritytech/substrat
 # contracts
 pallet-contracts-primitives = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 pallet-contracts-rpc-runtime-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
-pallet-contracts = { version = "3.0.0", path = "../../../vendor/substrate/frame/contracts" }
+pallet-contracts = { version = "3.0.0", path = "../../../vendor/substrate/frame/contracts", features = ["unstable-interface"] }
 
 runtime-log = { version = "0.1.1", git = "https://github.com/patractlabs/ink-log", default-features = false }
 curve = { package = "megaclite-arkworks", git = "https://github.com/patractlabs/megaclite.git", default-features = false }

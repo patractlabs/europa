@@ -40,7 +40,7 @@ use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_transaction_pool::TransactionPool;
 
-use europa_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Index};
+use europa_runtime::{opaque::Block, AccountId, Balance, BlockNumber, Hash, Index};
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {
@@ -63,7 +63,7 @@ where
 	C: Send + Sync + 'static,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber>,
+	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
 	C::Api: BlockBuilder<Block>,
 	P: TransactionPool + 'static,
 	// B: sc_client_api::Backend<Block> + Send + Sync + 'static,

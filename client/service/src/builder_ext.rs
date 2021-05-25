@@ -2,7 +2,7 @@ use futures::prelude::*;
 use std::sync::Arc;
 
 use sp_api::{ApiExt, TransactionFor};
-use sp_inherents::InherentDataProviders;
+// use sp_inherents::InherentDataProviders;
 use sp_runtime::traits::Block as BlockT;
 
 use sc_transaction_pool::FullPool;
@@ -41,13 +41,10 @@ where
 	>,
 	/// A shared transaction pool.
 	pub transaction_pool: Arc<FullPool<TBl, TFullClient<TBl, TRtApi, TExecDisp>>>,
-	/// A registry of all providers of `InherentData`.
-	pub inherent_data_providers: sp_inherents::InherentDataProviders,
 }
 
 pub fn new_node<TBl, TRtApi, TExecDisp, F, TRpc>(
 	config: Configuration,
-	inherent_data_providers: InherentDataProviders,
 	rpc_builder: F,
 ) -> Result<TaskManager, error::Error>
 where
@@ -124,7 +121,6 @@ where
 		keystore: keystore_container.sync_keystore(),
 		select_chain: select_chain.clone(),
 		transaction_pool: transaction_pool.clone(),
-		inherent_data_providers: inherent_data_providers.clone(),
 	};
 
 	let rpc_extensions_builder = rpc_builder(components);
@@ -192,7 +188,9 @@ where
 		commands_stream,
 		select_chain,
 		consensus_data_provider: None,
-		inherent_data_providers,
+		create_inherent_data_providers: move |_, ()| async move {
+			Ok(sp_timestamp::InherentDataProvider::from_system_time())
+		},
 	};
 	let authorship_future = sc_consensus_manual_seal::run_manual_seal(params);
 

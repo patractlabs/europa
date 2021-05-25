@@ -6,14 +6,18 @@ edition = "2018"
 
 [dependencies]
 parking_lot = "0.10.0"
-codec = { package = "parity-scale-codec", version = "2.0.0" }
-tracing = "0.1.22"
-exit-future = "0.2.0"
-log = "0.4.8"
+
 futures = { version = "0.3.4", features = ["compat"] }
 futures01 = { package = "futures", version = "0.1.29" }
-jsonrpc-pubsub = "15.0"
-jsonrpc-core = "15.0"
+exit-future = "0.2.0"
+async-trait = "0.1.42"
+
+codec = { package = "parity-scale-codec", version = "2.0.0" }
+tracing = "0.1.22"
+log = "0.4.8"
+
+jsonrpc-pubsub = "15.1.0"
+jsonrpc-core = "15.1.0"
 serde_json = "1.0"
 hex = "0.4.0"
 
@@ -27,7 +31,7 @@ sp-state-machine = { version = "0.9.0", git = "https://github.com/paritytech/sub
 sp-tracing = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sp-externalities = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sp-version = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-inherents = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-timestamp = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sp-transaction-pool = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sp-session = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sp-trie = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }

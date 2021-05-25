@@ -29,7 +29,7 @@ use sc_executor::{
 	with_externalities_safe, NativeExecutionDispatch, RuntimeInfo,
 };
 use sp_core::{
-	traits::{CodeExecutor, Externalities, MissingHostFunctions, RuntimeCode},
+	traits::{CodeExecutor, Externalities, RuntimeCode},
 	NativeOrEncoded,
 };
 use sp_version::{NativeVersion, RuntimeVersion};
@@ -104,20 +104,15 @@ impl<D: NativeExecutionDispatch> Clone for NativeExecutor<D> {
 	}
 }
 
-impl<D: NativeExecutionDispatch> sp_core::traits::CallInWasm for NativeExecutor<D> {
-	fn call_in_wasm(
+impl<D: NativeExecutionDispatch> sp_core::traits::ReadRuntimeVersion for NativeExecutor<D> {
+	fn read_runtime_version(
 		&self,
-		_wasm_blob: &[u8],
-		_code_hash: Option<Vec<u8>>,
-		_method: &str,
-		_call_data: &[u8],
-		_ext: &mut dyn Externalities,
-		_missing_host_functions: MissingHostFunctions,
+		_: &[u8],
+		_: &mut dyn Externalities,
 	) -> std::result::Result<Vec<u8>, String> {
-		unimplemented!("should not impl for wasm")
+		unimplemented!("Not required in Europa.")
 	}
 }
-
 /// Implements a `NativeExecutionDispatch` for provided parameters.
 ///
 /// # Example
