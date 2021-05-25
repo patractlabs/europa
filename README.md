@@ -71,6 +71,26 @@ Europa **current** "extending types" is (This may be changed for different Europ
 }
 ```
 
+> If you are using v0.2.1 or substrate-v3.0.0-1 tag, please choose 
+> 
+> ```json
+> {
+>   "LookupSource": "MultiAddress",
+>   "Address": "MultiAddress",
+>   "AliveContractInfo": {
+>     "trieId": "TrieId",
+>     "storageSize": "u32",
+>     "pairCount": "u32",
+>     "codeHash": "CodeHash",
+>     "rentAllowance": "Balance",
+>     "rentPayed": "Balance",
+>     "deductBlock": "BlockNumber",
+>     "lastWrite": "Option<BlockNumber>",
+>     "_reserved": "Option<Null>"
+>   }
+> }
+> ```
+
 ## Features
 In details, current Europa sandbox framework provides:
 1. This framework is another implementation for [substrate client](https://github.com/paritytech/substrate/tree/master/client).
