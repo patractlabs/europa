@@ -140,13 +140,15 @@ where
 		config,
 	})?;
 
-	let proposer = sc_basic_authorship::ProposerFactory::new(
+	let mut proposer = sc_basic_authorship::ProposerFactory::new(
 		task_manager.spawn_handle(),
 		client.clone(),
 		transaction_pool.clone(),
 		None,
 		None,
 	);
+
+	proposer.set_default_block_size_limit(crate::BLOCK_SIZE_LIMIT);
 
 	// manual_seal stream
 	let pool_import_stream = transaction_pool

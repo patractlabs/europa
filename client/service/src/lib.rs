@@ -29,6 +29,10 @@ pub use crate::task_manager::{SpawnTaskHandle, TaskManager};
 
 use log::warn;
 
+/// A larger block size limit for debug contract
+/// 1024 MB + 512B
+pub const BLOCK_SIZE_LIMIT: usize = 1024 * 1024 * 1024 + 512;
+
 /// An imcomplete set of chain components, but enough to run the chain ops subcommands.
 pub struct PartialComponents<Client, Backend, SelectChain, ImportQueue, TransactionPool, Other> {
 	/// A shared client instance.
