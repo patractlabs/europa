@@ -32,6 +32,8 @@
 
 #![warn(missing_docs)]
 
+mod contracts_ext;
+
 use std::sync::Arc;
 
 pub use sc_rpc_api::DenyUnsafe;
@@ -64,11 +66,14 @@ where
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
+	C::Api:
+		crate::contracts_ext::ContractsExtRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
 	C::Api: BlockBuilder<Block>,
 	P: TransactionPool + 'static,
 	// B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	// B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
 {
+	use contracts_ext::{ContractsExt, ContractsExtApi};
 	use pallet_contracts_rpc::{Contracts, ContractsApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
@@ -92,6 +97,10 @@ where
 	// more context: https://github.com/paritytech/substrate/pull/3480
 	// These RPCs should use an asynchronous caller instead.
 	io.extend_with(ContractsApi::to_delegate(Contracts::new(client.clone())));
+
+	io.extend_with(ContractsExtApi::to_delegate(ContractsExt::new(
+		client.clone(),
+	)));
 
 	io
 }

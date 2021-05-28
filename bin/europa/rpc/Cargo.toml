@@ -9,25 +9,36 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 jsonrpc-core = "15.1.0"
+jsonrpc-core-client = "15"
+jsonrpc-derive = "15"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1.0" }
+
+sp-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-core = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-rpc = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-runtime = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-transaction-pool = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-blockchain = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-block-builder = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-consensus = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 
 sc-client-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-rpc = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-
-sp-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-runtime = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-transaction-pool = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-keystore = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-blockchain = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-rpc-api = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-block-builder = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-consensus = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-consensus-epochs = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-keystore = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+
+frame-system = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 
 substrate-frame-rpc-system = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 pallet-transaction-payment-rpc = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 
-# vendor
+pallet-contracts-primitives = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+pallet-contracts-rpc-runtime-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 pallet-contracts-rpc = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+# vendor
+pallet-contracts = { path = "../../../vendor/substrate/frame/contracts" }
 
 europa-runtime = { path = "../runtime" }
 

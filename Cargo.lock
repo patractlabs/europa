@@ -1581,6 +1581,7 @@ version = "0.2.1"
 dependencies = [
  "assert_matches",
  "parity-scale-codec 2.1.1",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-std",
@@ -1666,18 +1667,28 @@ name = "europa-rpc"
 version = "0.2.1"
 dependencies = [
  "europa-runtime",
+ "frame-system",
  "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "pallet-contracts 3.0.0",
+ "pallet-contracts-primitives",
  "pallet-contracts-rpc",
+ "pallet-contracts-rpc-runtime-api",
  "pallet-transaction-payment-rpc",
  "sc-client-api",
  "sc-consensus-epochs",
  "sc-keystore",
  "sc-rpc",
  "sc-rpc-api",
+ "serde",
+ "serde_json",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
+ "sp-core",
+ "sp-rpc",
  "sp-runtime",
  "sp-transaction-pool",
  "substrate-frame-rpc-system",
@@ -1705,6 +1716,7 @@ dependencies = [
  "parity-scale-codec 2.1.1",
  "runtime-log",
  "serde",
+ "serde_json",
  "smallvec 1.6.1",
  "sp-api",
  "sp-block-builder",
@@ -2413,9 +2425,9 @@ dependencies = [
 
 [[package]]
 name = "hex"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "644f9158b2f133fd50f5fb3242878846d9eb792e445c893805ff0e3824006e35"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hex_fmt"
