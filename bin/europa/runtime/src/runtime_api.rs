@@ -1,8 +1,6 @@
 use codec::Codec;
+use pallet_contracts_primitives::{Code, ContractExecResult, ContractInstantiateResult};
 use sp_std::vec::Vec;
-use pallet_contracts_primitives::{
-    ContractExecResult, Code, ContractInstantiateResult,
-};
 
 sp_api::decl_runtime_apis! {
 	pub trait ContractsExtApi<AccountId, Balance, BlockNumber, Hash> where
@@ -11,7 +9,7 @@ sp_api::decl_runtime_apis! {
 		BlockNumber: Codec,
 		Hash: Codec,
 	{
-        /// Perform a call from a specified account to a given contract.
+		/// Perform a call from a specified account to a given contract.
 		///
 		/// See [`pallet_contracts::Pallet::call`].
 		fn call(
@@ -33,5 +31,5 @@ sp_api::decl_runtime_apis! {
 			data: Vec<u8>,
 			salt: Vec<u8>,
 		) -> (ContractInstantiateResult<AccountId, BlockNumber>, String);
-    }
+	}
 }

@@ -34,7 +34,7 @@ pub mod runtime_api;
 
 use crate::chain_extensions::EuropaExt;
 use crate::constants::{currency::*, fee::WeightToFee};
-use frame_support::serde::{Serializer, Deserializer};
+use frame_support::serde::{Deserializer, Serializer};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -522,14 +522,18 @@ impl_runtime_apis! {
 }
 
 impl serde::Serialize for Runtime {
-	fn serialize<S>(&self, _: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
-		S: Serializer {
+	fn serialize<S>(&self, _: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+	where
+		S: Serializer,
+	{
 		todo!()
 	}
 }
 impl<'de> serde::Deserialize<'de> for Runtime {
-	fn deserialize<D>(_: D) -> Result<Self, <D as Deserializer<'de>>::Error> where
-		D: Deserializer<'de> {
+	fn deserialize<D>(_: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+	where
+		D: Deserializer<'de>,
+	{
 		todo!()
 	}
 }
