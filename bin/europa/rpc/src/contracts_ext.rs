@@ -150,8 +150,8 @@ where
 			.call(&at, origin, dest, value, gas_limit, input_data.to_vec())
 			.map_err(runtime_error_into_rpc_err)?;
 
-		let t: NestedRuntime<Runtime> = serde_json::from_str(&trace).unwrap();
-		let t = trim_gas_trace(t);
+		let mut t: NestedRuntime<Runtime> = serde_json::from_str(&trace).unwrap();
+		trim_gas_trace(&mut t);
 		Ok(json!({
 			"result": exec_result,
 			"trace": t,
@@ -193,8 +193,8 @@ where
 			)
 			.map_err(runtime_error_into_rpc_err)?;
 
-		let t: NestedRuntime<Runtime> = serde_json::from_str(&trace).unwrap();
-		let t = trim_gas_trace(t);
+		let mut t: NestedRuntime<Runtime> = serde_json::from_str(&trace).unwrap();
+		trim_gas_trace(&mut t);
 		Ok(json!({
 			"result": exec_result,
 			"trace": t,
@@ -202,8 +202,7 @@ where
 	}
 }
 
-fn trim_gas_trace(trace: NestedRuntime<Runtime>) -> NestedRuntime<Runtime> {
-	let mut trace = trace;
+fn trim_gas_trace(trace: &mut NestedRuntime<Runtime>) {
 	let env_trace = trace.modify_env_trace();
 	env_trace.0.retain(|item| {
 		if let pallet_contracts::env_trace::EnvTrace::Gas(_) = item {
@@ -212,7 +211,9 @@ fn trim_gas_trace(trace: NestedRuntime<Runtime>) -> NestedRuntime<Runtime> {
 			true
 		}
 	});
-	trace
+	for sub_item in trace.nests_mut().iter_mut() {
+		trim_gas_trace(sub_item);
+	}
 }
 
 /// Converts a runtime trap into an RPC error.
