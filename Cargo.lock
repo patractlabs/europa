@@ -1425,6 +1425,7 @@ name = "ec-client-db"
 version = "0.2.1"
 dependencies = [
  "ec-client-api",
+ "ep-extensions",
  "kvdb",
  "kvdb-rocksdb",
  "log",
@@ -1473,6 +1474,7 @@ dependencies = [
  "ec-client-db",
  "ec-executor",
  "ec-rpc",
+ "ep-extensions",
  "exit-future",
  "futures 0.1.30",
  "futures 0.3.13",
@@ -1576,6 +1578,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68b91989ae21441195d7d9b9993a2f9295c7e1a8c96255d8b729accddc124797"
 
 [[package]]
+name = "ep-extensions"
+version = "0.1.0"
+dependencies = [
+ "sp-externalities",
+]
+
+[[package]]
+name = "ep-io"
+version = "0.1.0"
+dependencies = [
+ "ep-extensions",
+ "sp-externalities",
+ "sp-runtime-interface",
+ "sp-std",
+]
+
+[[package]]
 name = "ep-sandbox"
 version = "0.2.1"
 dependencies = [
@@ -1666,6 +1685,7 @@ dependencies = [
 name = "europa-rpc"
 version = "0.2.1"
 dependencies = [
+ "ec-client-api",
  "europa-runtime",
  "frame-system",
  "jsonrpc-core",
@@ -4129,6 +4149,7 @@ dependencies = [
  "add_getters_setters",
  "derivative",
  "environmental",
+ "ep-io",
  "ep-sandbox",
  "frame-support",
  "frame-system",
@@ -4140,6 +4161,7 @@ dependencies = [
  "parity-wasm 0.42.2",
  "pwasm-utils 0.17.0 (git+https://github.com/patractlabs/wasm-utils?branch=v0.17.0)",
  "serde",
+ "serde_json",
  "smallvec 1.6.1",
  "sp-core",
  "sp-io",

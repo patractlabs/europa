@@ -40,5 +40,5 @@ pallet-contracts-rpc = { version = "3.0.0", git = "https://github.com/paritytech
 # vendor
 pallet-contracts = { path = "../../../vendor/substrate/frame/contracts" }
 
+ec-client-api = { path = "../../../client/api" }
 europa-runtime = { path = "../runtime" }
-

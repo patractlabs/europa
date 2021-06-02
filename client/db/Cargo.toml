@@ -17,5 +17,7 @@ sp-blockchain = { version = "3.0.0", git = "https://github.com/paritytech/substr
 
 sc-client-db = { version = "0.9.0", features = [ "with-kvdb-rocksdb", "with-parity-db" ], git = "https://github.com/paritytech/substrate", branch = "master" }
 
+ep-extensions = { path = "../../primitives/extensions" }
+
 ec-client-api = { path = "../api" }
 

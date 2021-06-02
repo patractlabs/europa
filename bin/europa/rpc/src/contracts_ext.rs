@@ -21,6 +21,7 @@ pub use pallet_contracts_rpc_runtime_api::ContractsApi as ContractsRuntimeApi;
 use pallet_contracts::NestedRuntime;
 use pallet_contracts_rpc::Weight;
 
+use ec_client_api::statekv::StateKv;
 pub use europa_runtime::runtime_api::ContractsExtApi as ContractsExtRuntimeApi;
 use europa_runtime::{AccountId, Balance, Runtime};
 
@@ -93,14 +94,17 @@ pub trait ContractsExtApi<BlockHash, BlockNumber> {
 		instantiate_request: InstantiateRequest<AccountId, BlockHash>,
 		at: Option<BlockHash>,
 	) -> Result<serde_json::Value>;
+
+	#[rpc(name = "contractsExt_tracing")]
+	fn tracing(&self, number: BlockNumber, index: u32) -> Result<serde_json::Value>;
 }
 
 /// An implementation of contract specific RPC methods.
-pub struct ContractsExt<C, B> {
+pub struct ContractsExt<C, B, S> {
 	client: Arc<C>,
-	_marker: std::marker::PhantomData<B>,
+	_marker: std::marker::PhantomData<(B, S)>,
 }
-impl<C, B> ContractsExt<C, B> {
+impl<C, B, S> ContractsExt<C, B, S> {
 	/// Create new `Contracts` with the given reference to the client.
 	pub fn new(client: Arc<C>) -> Self {
 		ContractsExt {
@@ -110,24 +114,25 @@ impl<C, B> ContractsExt<C, B> {
 	}
 }
 
-impl<C, Block>
-	ContractsExtApi<<Block as BlockT>::Hash, <<Block as BlockT>::Header as HeaderT>::Number>
-	for ContractsExt<C, Block>
+impl<C, B, S> ContractsExtApi<<B as BlockT>::Hash, <<B as BlockT>::Header as HeaderT>::Number>
+	for ContractsExt<C, B, S>
 where
-	Block: BlockT,
-	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
+	B: BlockT,
+	C: Send + Sync + 'static + ProvideRuntimeApi<B> + HeaderBackend<B>,
+	C: ec_client_api::statekv::ClientStateKv<B, S>,
 	C::Api: ContractsExtRuntimeApi<
-		Block,
+		B,
 		AccountId,
 		Balance,
-		<<Block as BlockT>::Header as HeaderT>::Number,
-		<Block as BlockT>::Hash,
+		<<B as BlockT>::Header as HeaderT>::Number,
+		<B as BlockT>::Hash,
 	>,
+	S: ec_client_api::statekv::StateKv<B> + 'static,
 {
 	fn call(
 		&self,
 		call_request: CallRequest<AccountId>,
-		at: Option<<Block as BlockT>::Hash>,
+		at: Option<<B as BlockT>::Hash>,
 	) -> Result<serde_json::Value> {
 		let api = self.client.runtime_api();
 		let at = BlockId::hash(at.unwrap_or_else(||
@@ -150,7 +155,8 @@ where
 			.call(&at, origin, dest, value, gas_limit, input_data.to_vec())
 			.map_err(runtime_error_into_rpc_err)?;
 
-		let mut t: NestedRuntime<Runtime> = serde_json::from_str(&trace).unwrap();
+		let mut t: NestedRuntime<Runtime> =
+			serde_json::from_str(&trace).expect("trace string must be a valid json");
 		trim_gas_trace(&mut t);
 		Ok(json!({
 			"result": exec_result,
@@ -160,8 +166,8 @@ where
 
 	fn instantiate(
 		&self,
-		instantiate_request: InstantiateRequest<AccountId, <Block as BlockT>::Hash>,
-		at: Option<<Block as BlockT>::Hash>,
+		instantiate_request: InstantiateRequest<AccountId, <B as BlockT>::Hash>,
+		at: Option<<B as BlockT>::Hash>,
 	) -> Result<serde_json::Value> {
 		let api = self.client.runtime_api();
 		let at = BlockId::hash(at.unwrap_or_else(||
@@ -193,10 +199,28 @@ where
 			)
 			.map_err(runtime_error_into_rpc_err)?;
 
-		let mut t: NestedRuntime<Runtime> = serde_json::from_str(&trace).unwrap();
+		let mut t: NestedRuntime<Runtime> =
+			serde_json::from_str(&trace).expect("trace string must be a valid json");
 		trim_gas_trace(&mut t);
 		Ok(json!({
 			"result": exec_result,
+			"trace": t,
+		}))
+	}
+
+	fn tracing(
+		&self,
+		number: <<B as BlockT>::Header as HeaderT>::Number,
+		index: u32,
+	) -> Result<serde_json::Value> {
+		let state_kv = self.client.state_kv();
+		let trace = state_kv
+			.get_contract_tracing(number, index)
+			.ok_or(ContractExtError::<B>::NoTracing(number, index))?;
+		let mut t: NestedRuntime<Runtime> =
+			serde_json::from_str(&trace).expect("trace string must be a valid json");
+		trim_gas_trace(&mut t);
+		Ok(json!({
 			"trace": t,
 		}))
 	}
@@ -245,5 +269,26 @@ fn limit_gas(gas_limit: Weight) -> Result<()> {
 		})
 	} else {
 		Ok(())
+	}
+}
+
+#[derive(Debug)]
+pub enum ContractExtError<B: BlockT> {
+	NoTracing(<<B as BlockT>::Header as HeaderT>::Number, u32),
+}
+
+impl<B: BlockT> From<ContractExtError<B>> for jsonrpc_core::Error {
+	fn from(e: ContractExtError<B>) -> Self {
+		match e {
+			ContractExtError::<B>::NoTracing(number, index) => jsonrpc_core::Error {
+				code: jsonrpc_core::ErrorCode::InvalidParams,
+				message: format!(
+					"No contract tracing for this extrinsic index: number:{:}|index:{:}",
+					number, index,
+				)
+				.into(),
+				data: None,
+			},
+		}
 	}
 }
