@@ -1425,6 +1425,7 @@ name = "ec-client-db"
 version = "0.2.1"
 dependencies = [
  "ec-client-api",
+ "ep-extensions",
  "kvdb",
  "kvdb-rocksdb",
  "log",
@@ -1473,6 +1474,7 @@ dependencies = [
  "ec-client-db",
  "ec-executor",
  "ec-rpc",
+ "ep-extensions",
  "exit-future",
  "futures 0.1.30",
  "futures 0.3.13",
@@ -1576,11 +1578,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68b91989ae21441195d7d9b9993a2f9295c7e1a8c96255d8b729accddc124797"
 
 [[package]]
+name = "ep-extensions"
+version = "0.1.0"
+dependencies = [
+ "sp-externalities",
+]
+
+[[package]]
+name = "ep-io"
+version = "0.1.0"
+dependencies = [
+ "ep-extensions",
+ "sp-externalities",
+ "sp-runtime-interface",
+ "sp-std",
+]
+
+[[package]]
 name = "ep-sandbox"
 version = "0.2.1"
 dependencies = [
  "assert_matches",
  "parity-scale-codec 2.1.1",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-std",
@@ -1665,19 +1685,30 @@ dependencies = [
 name = "europa-rpc"
 version = "0.2.1"
 dependencies = [
+ "ec-client-api",
  "europa-runtime",
+ "frame-system",
  "jsonrpc-core",
+ "jsonrpc-core-client",
+ "jsonrpc-derive",
+ "pallet-contracts 3.0.0",
+ "pallet-contracts-primitives",
  "pallet-contracts-rpc",
+ "pallet-contracts-rpc-runtime-api",
  "pallet-transaction-payment-rpc",
  "sc-client-api",
  "sc-consensus-epochs",
  "sc-keystore",
  "sc-rpc",
  "sc-rpc-api",
+ "serde",
+ "serde_json",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
+ "sp-core",
+ "sp-rpc",
  "sp-runtime",
  "sp-transaction-pool",
  "substrate-frame-rpc-system",
@@ -1705,6 +1736,7 @@ dependencies = [
  "parity-scale-codec 2.1.1",
  "runtime-log",
  "serde",
+ "serde_json",
  "smallvec 1.6.1",
  "sp-api",
  "sp-block-builder",
@@ -2413,9 +2445,9 @@ dependencies = [
 
 [[package]]
 name = "hex"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "644f9158b2f133fd50f5fb3242878846d9eb792e445c893805ff0e3824006e35"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hex_fmt"
@@ -4117,6 +4149,7 @@ dependencies = [
  "add_getters_setters",
  "derivative",
  "environmental",
+ "ep-io",
  "ep-sandbox",
  "frame-support",
  "frame-system",
@@ -4128,6 +4161,7 @@ dependencies = [
  "parity-wasm 0.42.2",
  "pwasm-utils 0.17.0 (git+https://github.com/patractlabs/wasm-utils?branch=v0.17.0)",
  "serde",
+ "serde_json",
  "smallvec 1.6.1",
  "sp-core",
  "sp-io",

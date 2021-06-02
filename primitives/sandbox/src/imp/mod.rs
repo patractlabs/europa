@@ -12,7 +12,16 @@ pub use self::wasmtime::*;
 ///
 /// All trap instructions have an explicit trap code.
 #[non_exhaustive]
-#[derive(Clone, PartialEq, Eq, sp_core::RuntimeDebug)]
+#[derive(
+	Clone,
+	PartialEq,
+	Eq,
+	sp_core::RuntimeDebug,
+	codec::Encode,
+	codec::Decode,
+	serde::Serialize,
+	serde::Deserialize,
+)]
 pub enum TrapCode {
 	/// The current stack space was exhausted.
 	StackOverflow,
@@ -55,7 +64,9 @@ pub enum TrapCode {
 }
 
 /// Wasm Trap
-#[derive(sp_core::RuntimeDebug)]
+#[derive(
+	sp_core::RuntimeDebug, codec::Encode, codec::Decode, serde::Serialize, serde::Deserialize,
+)]
 pub struct Trap {
 	/// Trap code
 	pub code: TrapCode,

@@ -29,8 +29,12 @@ use frame_system::limits::{BlockLength, BlockWeights};
 
 mod chain_extensions;
 mod constants;
+
+pub mod runtime_api;
+
 use crate::chain_extensions::EuropaExt;
 use crate::constants::{currency::*, fee::WeightToFee};
+use frame_support::serde::{Deserializer, Serializer};
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -452,7 +456,7 @@ impl_runtime_apis! {
 			gas_limit: u64,
 			input_data: Vec<u8>,
 		) -> pallet_contracts_primitives::ContractExecResult {
-			Contracts::bare_call(origin, dest, value, gas_limit, input_data, true)
+			Contracts::bare_call(origin, dest, value, gas_limit, input_data, true).0
 		}
 
 		fn instantiate(
@@ -464,7 +468,7 @@ impl_runtime_apis! {
 			salt: Vec<u8>,
 		) -> pallet_contracts_primitives::ContractInstantiateResult<AccountId, BlockNumber>
 		{
-			Contracts::bare_instantiate(origin, endowment, gas_limit, code, data, salt, true, true)
+			Contracts::bare_instantiate(origin, endowment, gas_limit, code, data, salt, true, true).0
 		}
 
 		fn get_storage(
@@ -479,5 +483,57 @@ impl_runtime_apis! {
 		) -> pallet_contracts_primitives::RentProjectionResult<BlockNumber> {
 			Contracts::rent_projection(address)
 		}
+	}
+
+	impl runtime_api::ContractsExtApi<
+		Block, AccountId, Balance, BlockNumber, Hash,
+	>
+		for Runtime
+	{
+		fn call(
+			origin: AccountId,
+			dest: AccountId,
+			value: Balance,
+			gas_limit: u64,
+			input_data: Vec<u8>,
+		) -> (
+			pallet_contracts_primitives::ContractExecResult,
+			String,
+		) {
+			let (r, trace) = Contracts::bare_call(origin, dest, value, gas_limit, input_data, true);
+			(r, serde_json::to_string(&trace).unwrap())
+		}
+
+		fn instantiate(
+			origin: AccountId,
+			endowment: Balance,
+			gas_limit: u64,
+			code: pallet_contracts_primitives::Code<Hash>,
+			data: Vec<u8>,
+			salt: Vec<u8>,
+		) -> (
+			pallet_contracts_primitives::ContractInstantiateResult<AccountId, BlockNumber>,
+			String,
+		) {
+			let (r, trace) = Contracts::bare_instantiate(origin, endowment, gas_limit, code, data, salt, true, true);
+			(r, serde_json::to_string(&trace).unwrap())
+		}
+	}
+}
+
+impl serde::Serialize for Runtime {
+	fn serialize<S>(&self, _: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+	where
+		S: Serializer,
+	{
+		todo!()
+	}
+}
+impl<'de> serde::Deserialize<'de> for Runtime {
+	fn deserialize<D>(_: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		todo!()
 	}
 }

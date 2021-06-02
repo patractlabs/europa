@@ -13,7 +13,7 @@ use sc_client_db::{DatabaseSettings, DatabaseSettingsSrc};
 const SEPARATOR: u8 = b'|';
 const DELETE_HOLDER: &'static [u8] = b":DELETE:";
 
-pub const NUM_COLUMNS: u32 = 7;
+pub const NUM_COLUMNS: u32 = 8;
 /// Meta column. The set of keys in the column is shared by full storages.
 pub const COLUMN_META: u32 = 0;
 
@@ -28,6 +28,7 @@ pub mod columns {
 	pub const STATE_CHILD_KV_INDEX: u32 = 4;
 	pub const HASH_TO_NUMBER: u32 = 5;
 	pub const NUMBER_TO_HASH: u32 = 6;
+	pub const TRACING: u32 = 7;
 }
 
 const DB_PATH_NAME: &'static str = "state_kv";
@@ -219,6 +220,28 @@ impl StateKv {
 			Some(r)
 		}
 	}
+
+	fn set_contract_tracing(&self, number: u64, index: u32, tracing: String) -> error::Result<()> {
+		let key = tracing_key(number, index);
+		self.set_kv_impl(columns::TRACING, key.as_ref(), Some(tracing.as_bytes()))
+	}
+	fn get_contract_tracing(&self, number: u64, index: u32) -> Option<String> {
+		let key = tracing_key(number, index);
+		let v = handle_err(self.state_kv_db.get(columns::TRACING, &key))?;
+		Some(String::from_utf8_lossy(&v).to_string())
+	}
+	fn remove_contract_tracing<B: BlockT, F: FnMut(&mut DBTransaction)>(
+		&self,
+		mut f: F,
+	) -> error::Result<()> {
+		let mut t = DBTransaction::with_capacity(1);
+
+		f(&mut t);
+
+		self.state_kv_db
+			.write(t)
+			.map_err(|e| error::DatabaseError(Box::new(e)))
+	}
 }
 impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 	type Transaction = StateKvTransaction<B>;
@@ -254,6 +277,7 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		let real_key = real_key::<B>(hash, key);
 		handle_err(self.state_kv_db.get(columns::STATE_KV, &real_key))
 	}
+
 	fn get_child(&self, hash: B::Hash, child: &[u8], key: &[u8]) -> Option<Vec<u8>> {
 		let real_key = real_child_key::<B>(hash, child, key);
 		handle_err(self.state_kv_db.get(columns::STATE_CHILD_KV, &real_key))
@@ -337,5 +361,75 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 			hash.as_mut().copy_from_slice(v.as_slice());
 			hash
 		})
+	}
+	// tracing
+	fn set_contract_tracing(
+		&self,
+		number: NumberFor<B>,
+		index: u32,
+		tracing: String,
+	) -> error::Result<()> {
+		let number: u64 = number.saturated_into::<u64>();
+		self.set_contract_tracing(number, index, tracing)
+	}
+
+	fn get_contract_tracing(&self, number: NumberFor<B>, index: u32) -> Option<String> {
+		let number: u64 = number.saturated_into::<u64>();
+		self.get_contract_tracing(number, index)
+	}
+
+	fn remove_contract_tracing(&self, number: NumberFor<B>, index: u32) -> error::Result<()> {
+		let number: u64 = number.saturated_into::<u64>();
+		self.remove_contract_tracing::<B, _>(|t| {
+			let key = tracing_key(number, index);
+			t.delete(columns::TRACING, &key);
+		})
+	}
+
+	fn remove_contract_tracings_by_number(&self, number: NumberFor<B>) -> error::Result<()> {
+		let number: u64 = number.saturated_into::<u64>();
+		self.remove_contract_tracing::<B, _>(|t| {
+			let prefix = &number.to_le_bytes()[..];
+			t.delete_prefix(columns::TRACING, prefix);
+		})
+	}
+}
+
+fn tracing_key(number: u64, index: u32) -> Vec<u8> {
+	let prefix = &number.to_le_bytes()[..];
+	let second = &index.to_le_bytes()[..];
+
+	let hash_len = prefix.len();
+	let mut lookup_key = Vec::with_capacity(hash_len + 1 + second.len());
+	lookup_key.extend(prefix);
+	lookup_key.push(SEPARATOR);
+	lookup_key.extend(second);
+	lookup_key
+}
+
+#[derive(Clone)]
+pub struct DbRef<Block, Db> {
+	persistent: Db,
+	_phantom: std::marker::PhantomData<Block>,
+}
+
+impl<Block: BlockT, Db: ec_client_api::statekv::StateKv<Block> + 'static> DbRef<Block, Db> {
+	/// Create new instance of Offchain DB.
+	pub fn new(persistent: Db) -> Self {
+		Self {
+			persistent,
+			_phantom: Default::default(),
+		}
+	}
+}
+
+impl<Block: BlockT, Db: ec_client_api::statekv::StateKv<Block>> ep_extensions::ContractTracingDb
+	for DbRef<Block, Db>
+{
+	fn set_tracing(&mut self, number: u32, index: u32, tracing: String) {
+		let number: u64 = number as u64;
+		self.persistent
+			.set_contract_tracing(number.saturated_into(), index, tracing)
+			.expect("")
 	}
 }

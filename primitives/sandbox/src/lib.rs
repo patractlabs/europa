@@ -43,8 +43,75 @@ pub use sp_wasm_interface::{ReturnValue, Value};
 
 mod imp;
 
+/// add serde function for sp_wasm_interface::ReturnValue & Value;
+/// notice it's a hack operation, if ReturnValue, Value are changed, this part should also need change.
+pub mod serde_opt_wasm_returnvalue {
+	use super::*;
+	use serde::{de, ser, Deserialize, Serialize};
+
+	#[derive(Clone, Copy, Serialize, Deserialize)]
+	/// A hack struct for `Value`
+	pub enum SerdeValue {
+		/// A 32-bit integer.
+		I32(i32),
+		/// A 64-bit integer.
+		I64(i64),
+		/// A 32-bit floating-point number stored as raw bit pattern.
+		///
+		/// You can materialize this value using `f32::from_bits`.
+		F32(u32),
+		/// A 64-bit floating-point number stored as raw bit pattern.
+		///
+		/// You can materialize this value using `f64::from_bits`.
+		F64(u64),
+	}
+	/// A hack struct for `ReturnValue`
+	#[derive(Clone, Copy, Serialize, Deserialize)]
+	pub enum SerdeReturnValue {
+		/// For returning nothing.
+		Unit,
+		/// For returning some concrete value.
+		Value(SerdeValue),
+	}
+	impl From<ReturnValue> for SerdeReturnValue {
+		fn from(v: ReturnValue) -> Self {
+			unsafe { std::mem::transmute::<ReturnValue, SerdeReturnValue>(v) }
+		}
+	}
+	impl Into<ReturnValue> for SerdeReturnValue {
+		fn into(self) -> ReturnValue {
+			unsafe { std::mem::transmute::<SerdeReturnValue, ReturnValue>(self) }
+		}
+	}
+
+	/// A serializer that encodes the number as a string
+	pub fn serialize<S>(value: &Option<ReturnValue>, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: ser::Serializer,
+	{
+		match value {
+			Some(ref value) => {
+				let v: SerdeReturnValue = (*value).into();
+				v.serialize(serializer)
+			}
+			None => serializer.serialize_none(),
+		}
+	}
+
+	/// A deserializer that decodes a string to the number.
+	pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<ReturnValue>, D::Error>
+	where
+		D: de::Deserializer<'de>,
+	{
+		let data: Option<SerdeReturnValue> = Deserialize::deserialize(deserializer)?;
+		Ok(data.map(Into::into))
+	}
+}
+
 /// Error that can occur while using this crate.
-#[derive(sp_core::RuntimeDebug)]
+#[derive(
+	sp_core::RuntimeDebug, codec::Encode, codec::Decode, serde::Serialize, serde::Deserialize,
+)]
 pub enum Error {
 	/// Module is not valid, couldn't be instantiated.
 	Module,

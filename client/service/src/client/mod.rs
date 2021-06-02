@@ -834,6 +834,8 @@ where
 	/// that were successfully reverted.
 	pub fn revert(&self, n: NumberFor<Block>) -> sp_blockchain::Result<NumberFor<Block>> {
 		let (number, _) = self.backend.revert(n, false)?;
+		// TODO revert state as well.
+
 		Ok(number)
 	}
 
@@ -1450,7 +1452,7 @@ where
 impl<B, S, E, Block, RA> ProvideRuntimeApi<Block> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
-	S: statekv::StateKv<Block>,
+	S: statekv::StateKv<Block> + 'static,
 	E: CallExecutor<Block, Backend = B> + Send + Sync,
 	Block: BlockT,
 	RA: ConstructRuntimeApi<Block, Self>,
@@ -1465,7 +1467,7 @@ where
 impl<B, S, E, Block, RA> CallApiAt<Block> for Client<B, S, E, Block, RA>
 where
 	B: backend::Backend<Block>,
-	S: statekv::StateKv<Block>,
+	S: statekv::StateKv<Block> + 'static,
 	E: CallExecutor<Block, Backend = B> + Send + Sync,
 	Block: BlockT,
 {
@@ -1483,9 +1485,13 @@ where
 		let core_api = params.core_api;
 		let at = params.at;
 
-		let (manager, extensions) = self
+		let (manager, mut extensions) = self
 			.execution_extensions
 			.manager_and_extensions(at, params.context);
+
+		extensions.register(ep_extensions::ContractTracingDbExt::new(
+			ec_client_db::DbRef::new(self.state_kv.clone()),
+		));
 
 		self.executor
 			.contextual_call::<_, fn(_, _) -> _, _, _>(
