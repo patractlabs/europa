@@ -135,6 +135,44 @@ pub fn handle_dispatch(dispatch: Dispatch) {
 	let block_subscriber = dispatch.downcast_ref::<BlockSubscriber>().expect("fxck");
 	let spans: Vec<_> = block_subscriber.spans.lock().drain().collect();
 	let events: Vec<_> = block_subscriber.events.lock().drain(..).collect();
+
+	use std::collections::BTreeMap;
+	// events into map
+	let mut map: BTreeMap<u16, Vec<Event>> = Default::default();
+
 	println!("{:?}", spans);
 	println!("{:?}", events);
+}
+
+pub struct Put {
+	key: Vec<u8>,
+	value: Option<Vec<u8>>,
+}
+pub struct PutChild {
+	child_id: Vec<u8>,
+	key: Vec<u8>,
+	value: Option<Vec<u8>>,
+}
+pub struct KillChild {
+	child_id: Vec<u8>,
+	key: Vec<u8>,
+}
+pub struct ClearPrefix {
+	prefix: Vec<u8>
+}
+pub struct ClearChildPrefix {
+	child_id: Vec<u8>,
+	prefix: Vec<u8>
+}
+pub struct Append {
+	key: Vec<u8>,
+	append: Vec<u8>,
+}
+pub enum Event {
+	Put(Put),
+	PutChild(PutChild),
+	KillChild(KillChild),
+	ClearPrefix(ClearPrefix),
+	ClearChildPrefix(ClearChildPrefix),
+	Append(Append),
 }
