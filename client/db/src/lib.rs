@@ -50,6 +50,8 @@ pub fn open_state_key_database(
 			path,
 			cache_size: _,
 		} => {
+			// TODO add upgrade function | last columns is 7
+
 			// and now open database assuming that it has the latest version
 			let mut db_config = kvdb_rocksdb::DatabaseConfig::with_columns(NUM_COLUMNS);
 

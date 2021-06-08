@@ -18,7 +18,6 @@ sc-cli = { version = "0.9.0", git = "https://github.com/paritytech/substrate", b
 sc-transaction-pool = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-consensus = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-consensus-manual-seal = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-basic-authorship = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 
 ec-service = { path = "../../../client/service" }
 ec-cli = { path = "../../../client/cli" }
