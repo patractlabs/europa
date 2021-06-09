@@ -246,5 +246,30 @@ mod tests {
             key: b"0003".to_vec(),
             value: Some(b"0004".to_vec()),
         }) }));
+
+        let parsed = parse_message("0001: KillChild(0002)");
+        assert_eq!(parsed, Some(Message { id: "0001".to_owned(), event: Event::KillChild(KillChild {
+            child_id: b"0002".to_vec(),
+        }) }));
+
+        let parsed = parse_message("0001: ClearPrefix 0002");
+        assert_eq!(parsed, Some(Message { id: "0001".to_owned(), event: Event::ClearPrefix(ClearPrefix {
+            prefix: b"0002".to_vec(),
+        }) }));
+
+        let parsed = parse_message("0001: ClearChildPrefix(0002) 0003");
+        assert_eq!(parsed, Some(Message { id: "0001".to_owned(), event: Event::ClearChildPrefix(ClearChildPrefix {
+            child_id: b"0002".to_vec(),
+            prefix: b"0003".to_vec(),
+        }) }));
+
+        let parsed = parse_message("0001: Append 0002=0003");
+        assert_eq!(parsed, Some(Message { id: "0001".to_owned(), event: Event::Append(Append {
+            key: b"0002".to_vec(),
+            append: b"0003".to_vec(),
+        }) }));
+
+        let parsed = parse_message("0001: Append 0002 0003");
+        assert_eq!(parsed, Some(Message { id: "0001".to_owned(), event: Event::NotConcerned }));
     }
 }
