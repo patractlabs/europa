@@ -148,26 +148,32 @@ pub struct Put {
 	key: Vec<u8>,
 	value: Option<Vec<u8>>,
 }
+
 pub struct PutChild {
 	child_id: Vec<u8>,
 	key: Vec<u8>,
 	value: Option<Vec<u8>>,
 }
+
 pub struct KillChild {
 	child_id: Vec<u8>,
 	key: Vec<u8>,
 }
+
 pub struct ClearPrefix {
 	prefix: Vec<u8>
 }
+
 pub struct ClearChildPrefix {
 	child_id: Vec<u8>,
 	prefix: Vec<u8>
 }
+
 pub struct Append {
 	key: Vec<u8>,
 	append: Vec<u8>,
 }
+
 pub enum Event {
 	Put(Put),
 	PutChild(PutChild),
@@ -175,4 +181,28 @@ pub enum Event {
 	ClearPrefix(ClearPrefix),
 	ClearChildPrefix(ClearChildPrefix),
 	Append(Append),
+}
+
+impl From<TraceEvent> for Event {
+    fn from(event: TraceEvent) -> Self {
+        todo!()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use tracing::Level;
+    use sc_tracing::{TraceEvent, Values};
+
+    fn test_event_from_trace_event() {
+        let event = TraceEvent {
+            name: "event /path/to/source:loc".to_owned(),
+            target: "<target>".to_owned(),
+            level: Level::INFO,
+            values: Values::new(),
+            parent_id: None,
+        };
+
+        todo!()
+    }
 }
