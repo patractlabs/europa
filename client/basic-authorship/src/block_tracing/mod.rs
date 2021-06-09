@@ -162,7 +162,6 @@ pub struct PutChild {
 #[derive(Debug,PartialEq)]
 pub struct KillChild {
 	child_id: Vec<u8>,
-	key: Vec<u8>,
 }
 
 #[derive(Debug,PartialEq)]

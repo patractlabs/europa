@@ -52,6 +52,7 @@ fn parse_event(input: &str) -> IResult<&str, Event> {
     ))(input)
 }
 
+/// event parse for `Event::PutChild`
 fn parse_put_child(input: &str) -> IResult<&str, Event> {
     let arg = preceded(
         tag("PutChild"),
@@ -62,29 +63,76 @@ fn parse_put_child(input: &str) -> IResult<&str, Event> {
         )
     );
 
-    tuple((arg, parse_k_equ_v))(input).map(|(left, (arg, (k, v)))| {
+    tuple(
+        (arg, character::complete::multispace1, parse_k_equ_opt_v)
+    )(input).map(|(left, (arg, _, (key, value)))| {
         (left, Event::PutChild(PutChild {
             child_id: arg.as_bytes().to_vec(),
-            key: k.as_bytes().to_vec(),
-            value: None,
+            key: key.as_bytes().to_vec(),
+            value: value.0,
         }))
     })
 }
 
+/// event parse for `Event::KillChild`
 fn parse_kill_child(input: &str) -> IResult<&str, Event> {
-    todo!()
+    preceded(
+        tag("KillChild"),
+        delimited(
+            char('('),
+            bytes::complete::is_not(")"),
+            char(')'),
+        )
+    )(input).map(|(left, arg)| {
+        (left, Event::KillChild(KillChild {
+            child_id: arg.as_bytes().to_vec(),
+        }))
+    })
 }
 
+/// event parse for `Event::ClearPrefix`
 fn parse_clear_prefix(input: &str) -> IResult<&str, Event> {
-    todo!()
+    tuple(
+        (tag("ClearPrefix"), bytes::complete::take_till(|c: char| !c.is_whitespace()))
+    )(input).map(|(left, (_, value))| {
+        (left, Event::ClearPrefix(ClearPrefix {
+            prefix: value.as_bytes().to_vec(),
+        }))
+    })
 }
 
+/// event parse for `Event::ClearChildPrefix`
 fn parse_clear_child_prefix(input: &str) -> IResult<&str, Event> {
-    todo!()
+    let arg = preceded(
+        tag("ClearChildPrefix"),
+        delimited(
+            char('('),
+            bytes::complete::is_not(")"),
+            char(')'),
+        )
+    );
+
+    let value = bytes::complete::take_till(|c: char| !c.is_whitespace());
+
+    tuple((arg, value))(input).map(|(left, (arg, value))| {
+        (left, Event::ClearChildPrefix(ClearChildPrefix {
+            child_id: arg.as_bytes().to_vec(),
+            prefix: value.as_bytes().to_vec(),
+        }))
+    })
 }
 
+/// event parse for `Event::Append`
 fn parse_append(input: &str) -> IResult<&str, Event> {
-    todo!()
+    tuple(
+        (tag("Append"), map(bytes::complete::take_till(|c: char| !c.is_whitespace()), parse_k_equ_v))
+    )(input).map(|(_, (left, kv))| {
+        let (_, (key, value)) = kv.unwrap_or_default();
+        (left, Event::Append(Append {
+            key: key.as_bytes().to_vec(),
+            append: value.as_bytes().to_vec(),
+        }))
+    })
 }
 
 /// event parse fallback to `Event::NotConcerned`
@@ -92,9 +140,22 @@ fn parse_not_concerned(input: &str) -> IResult<&str, Event> {
     Ok((input, Event::NotConcerned))
 }
 
+/// k-v parser, eg. 0000=1111
 fn parse_k_equ_v(input: &str) -> IResult<&str, (&str, &str)> {
-    // TODO: to implement
-    Ok(("", ("key", "value")))
+    let (value, (key, _)) = tuple(
+        (bytes::complete::take_while1(|c: char| c != '='), tag("="))
+    )(input)?;
+
+    Ok((value, (key, value)))
+}
+
+/// k-opt-v parser, eg. 0000=Some(1111)
+fn parse_k_equ_opt_v(input: &str) -> IResult<&str, (&str, OptVal)> {
+    let (value, (key, _, opt)) = tuple(
+        (bytes::complete::take_while1(|c: char| c != '='), tag("="), alt((parse_none, parse_some)))
+    )(input)?;
+
+    Ok((value, (key, opt)))
 }
 
 fn parse_opt_val(value: impl AsRef<str>) -> Option<Vec<u8>> {
@@ -106,7 +167,7 @@ fn parse_opt_val(value: impl AsRef<str>) -> Option<Vec<u8>> {
 
 /// eg. None
 fn parse_none(input: &str) -> IResult<&str, OptVal> {
-    map(tag("None"), |m: &str| OptVal(None))(input)
+    map(tag("None"), |_: &str| OptVal(None))(input)
 }
 
 /// eg. Some(00000bbbbb)
