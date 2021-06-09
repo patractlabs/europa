@@ -235,16 +235,16 @@ mod tests {
         let parsed = parse_opt_val("Some()");
         assert_eq!(parsed, None);
         let parsed = parse_opt_val("Some(0000abcd)");
-        assert_eq!(parsed, Some(vec![b'0', b'0', b'0', b'0', b'a', b'b', b'c', b'd']));
+        assert_eq!(parsed, Some(b"0000abcd".to_vec()));
     }
 
     #[test]
     fn test_message_parser() {
-        let parsed = parse_message("0001: PutChild(0002) K=V");
+        let parsed = parse_message("0001: PutChild(0002) 0003=Some(0004)");
         assert_eq!(parsed, Some(Message { id: "0001".to_owned(), event: Event::PutChild(PutChild {
-            child_id: vec![b'0', b'0', b'0', b'2'],
-            key: vec![b'k', b'e', b'y'],
-            value: None,
+            child_id: b"0002".to_vec(),
+            key: b"0003".to_vec(),
+            value: Some(b"0004".to_vec()),
         }) }));
     }
 }
