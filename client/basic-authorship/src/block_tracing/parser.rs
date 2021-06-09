@@ -14,7 +14,7 @@ struct OptVal(Option<Vec<u8>>);
 
 #[derive(Debug,PartialEq)]
 struct Message {
-    id: String,
+    id: u16,
     event: Event,
 }
 
@@ -34,7 +34,7 @@ fn parse_message(message: impl AsRef<str>) -> Option<Message> {
     parsed.map(|(_, (id, event))| {
         event.map(|(_, event)| {
             Message {
-                id: id.to_owned(),
+                id: id.parse::<u16>().unwrap(),
                 event,
             }
         }).ok()
@@ -241,35 +241,35 @@ mod tests {
     #[test]
     fn test_message_parser() {
         let parsed = parse_message("0001: PutChild(0002) 0003=Some(0004)");
-        assert_eq!(parsed, Some(Message { id: "0001".to_owned(), event: Event::PutChild(PutChild {
+        assert_eq!(parsed, Some(Message { id: 1, event: Event::PutChild(PutChild {
             child_id: b"0002".to_vec(),
             key: b"0003".to_vec(),
             value: Some(b"0004".to_vec()),
         }) }));
 
         let parsed = parse_message("0001: KillChild(0002)");
-        assert_eq!(parsed, Some(Message { id: "0001".to_owned(), event: Event::KillChild(KillChild {
+        assert_eq!(parsed, Some(Message { id: 1, event: Event::KillChild(KillChild {
             child_id: b"0002".to_vec(),
         }) }));
 
         let parsed = parse_message("0001: ClearPrefix 0002");
-        assert_eq!(parsed, Some(Message { id: "0001".to_owned(), event: Event::ClearPrefix(ClearPrefix {
+        assert_eq!(parsed, Some(Message { id: 1, event: Event::ClearPrefix(ClearPrefix {
             prefix: b"0002".to_vec(),
         }) }));
 
         let parsed = parse_message("0001: ClearChildPrefix(0002) 0003");
-        assert_eq!(parsed, Some(Message { id: "0001".to_owned(), event: Event::ClearChildPrefix(ClearChildPrefix {
+        assert_eq!(parsed, Some(Message { id: 1, event: Event::ClearChildPrefix(ClearChildPrefix {
             child_id: b"0002".to_vec(),
             prefix: b"0003".to_vec(),
         }) }));
 
         let parsed = parse_message("0001: Append 0002=0003");
-        assert_eq!(parsed, Some(Message { id: "0001".to_owned(), event: Event::Append(Append {
+        assert_eq!(parsed, Some(Message { id: 1, event: Event::Append(Append {
             key: b"0002".to_vec(),
             append: b"0003".to_vec(),
         }) }));
 
         let parsed = parse_message("0001: Append 0002 0003");
-        assert_eq!(parsed, Some(Message { id: "0001".to_owned(), event: Event::NotConcerned }));
+        assert_eq!(parsed, Some(Message { id: 1, event: Event::NotConcerned }));
     }
 }
