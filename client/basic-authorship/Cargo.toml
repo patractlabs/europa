@@ -37,6 +37,7 @@ sc-proposer-metrics = { version = "0.9.0", git = "https://github.com/paritytech/
 
 sp-tracing = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-tracing = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+nom = "6.1.2"
 
 [dev-dependencies]
 sc-transaction-pool = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
