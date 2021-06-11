@@ -6,6 +6,7 @@ use nom::{
 	bytes::{self, complete::tag},
 	character::{self, complete::char},
 	combinator::map,
+	multi::many1,
 	sequence::{delimited, preceded, tuple},
 	IResult,
 };
@@ -105,9 +106,10 @@ fn parse_kill_child(input: &str) -> IResult<&str, Event> {
 fn parse_clear_prefix(input: &str) -> IResult<&str, Event> {
 	tuple((
 		tag("ClearPrefix"),
-		bytes::complete::take_till(|c: char| !c.is_whitespace()),
+		character::complete::multispace1,
+		character::complete::hex_digit1,
 	))(input)
-	.map(|(left, (_, value))| {
+	.map(|(left, (_, _, value))| {
 		(
 			left,
 			Event::ClearPrefix(ClearPrefix {
@@ -124,9 +126,12 @@ fn parse_clear_child_prefix(input: &str) -> IResult<&str, Event> {
 		delimited(char('('), bytes::complete::is_not(")"), char(')')),
 	);
 
-	let value = bytes::complete::take_till(|c: char| !c.is_whitespace());
-
-	tuple((arg, value))(input).map(|(left, (arg, value))| {
+	tuple((
+		arg,
+		character::complete::multispace1,
+		character::complete::hex_digit1,
+	))(input)
+	.map(|(left, (arg, _, value))| {
 		(
 			left,
 			Event::ClearChildPrefix(ClearChildPrefix {
@@ -141,20 +146,23 @@ fn parse_clear_child_prefix(input: &str) -> IResult<&str, Event> {
 fn parse_append(input: &str) -> IResult<&str, Event> {
 	tuple((
 		tag("Append"),
+		character::complete::multispace1,
 		map(
-			bytes::complete::take_till(|c: char| !c.is_whitespace()),
+			// parse all bytes left to k-v
+			bytes::complete::take_while(|_| true),
 			parse_k_equ_v,
 		),
 	))(input)
-	.map(|(_, (left, kv))| {
-		let (_, (key, value)) = kv.unwrap_or_default();
-		(
+	.map(|(_, (left, _, kv))| match kv {
+		Ok((_, (key, value))) => (
 			left,
 			Event::Append(Append {
 				key: key.as_bytes().to_vec(),
 				append: value.as_bytes().to_vec(),
 			}),
-		)
+		),
+
+		Err(_) => (left, Event::NotConcerned),
 	})
 }
 
