@@ -13,9 +13,19 @@ use nom::{
 struct OptVal(Option<Vec<u8>>);
 
 #[derive(Debug, PartialEq)]
-struct Message {
-	id: u16,
-	event: Event,
+pub struct Message {
+	pub id: u16,
+	pub event: Event,
+}
+
+/// default `Message` if parse failed.
+impl Default for Message {
+	fn default() -> Self {
+		Message {
+			id: 0,
+			event: Event::NotConcerned,
+		}
+	}
 }
 
 fn parse_message(message: impl AsRef<str>) -> Option<Message> {
@@ -34,7 +44,7 @@ fn parse_message(message: impl AsRef<str>) -> Option<Message> {
 		.map(|(_, (id, event))| {
 			event
 				.map(|(_, event)| Message {
-					id: id.parse::<u16>().unwrap(),
+					id: u16::from_str_radix(id, 16).unwrap_or_default(),
 					event,
 				})
 				.ok()
@@ -197,37 +207,40 @@ fn parse_some(input: &str) -> IResult<&str, OptVal> {
 	)(input)
 }
 
-impl From<TraceEvent> for Event {
+impl From<TraceEvent> for Message {
 	fn from(event: TraceEvent) -> Self {
 		use parser::*;
-		let values = event.values.string_values;
+		let string_values = event.values.string_values;
+		let u64_values = event.values.u64_values;
+
 		// Get & Put
-		match values.get("method") {
+		match string_values.get("method") {
 			Some(value) => {
 				match &value[..] {
 					"Put" => {
-						let key = values.get("key").unwrap();
-						let value = values.get("value").unwrap();
+						let key = string_values.get("key").unwrap();
+						let value = string_values.get("value").unwrap();
+						let id = u64_values.get("ext_id").cloned().unwrap_or_default();
 
-						Self::Put(Put {
-							key: key.as_bytes().to_vec(),
-							value: parse_opt_val(value),
-						})
+						Message {
+							id: id as u16,
+							event: Event::Put(Put {
+								key: key.as_bytes().to_vec(),
+								value: parse_opt_val(value),
+							}),
+						}
 					}
 
 					// NB: ignore other methods
-					_ => Self::NotConcerned,
+					_ => Self::default(),
 				}
 			}
 
 			None => {
 				// Other Event
-				match values.get("message") {
-					Some(value) => parse_message(value)
-						.map(|message| message.event)
-						.unwrap_or(Self::NotConcerned),
-
-					None => Self::NotConcerned,
+				match string_values.get("message") {
+					Some(value) => parse_message(value).unwrap_or_default(),
+					None => Self::default(),
 				}
 			}
 		}
@@ -298,11 +311,11 @@ mod tests {
 			})
 		);
 
-		let parsed = parse_message("0001: Append 0002=0003");
+		let parsed = parse_message("533a: Append 0002=0003");
 		assert_eq!(
 			parsed,
 			Some(Message {
-				id: 1,
+				id: 21306,
 				event: Event::Append(Append {
 					key: b"0002".to_vec(),
 					append: b"0003".to_vec(),
