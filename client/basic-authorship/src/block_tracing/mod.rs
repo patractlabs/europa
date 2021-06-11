@@ -18,6 +18,8 @@ use tracing_subscriber::CurrentSpan;
 use sc_tracing::{SpanDatum, TraceEvent, Values};
 use sp_tracing::WASM_TRACE_IDENTIFIER;
 
+mod parser;
+
 pub struct BlockSubscriber {
 	pub targets: Vec<(String, Level)>,
 	pub next_id: AtomicU64,
@@ -144,30 +146,42 @@ pub fn handle_dispatch(dispatch: Dispatch) {
 	println!("{:?}", events);
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Put {
 	key: Vec<u8>,
 	value: Option<Vec<u8>>,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct PutChild {
 	child_id: Vec<u8>,
 	key: Vec<u8>,
 	value: Option<Vec<u8>>,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct KillChild {
 	child_id: Vec<u8>,
-	key: Vec<u8>,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct ClearPrefix {
-	prefix: Vec<u8>
+	prefix: Vec<u8>,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct ClearChildPrefix {
 	child_id: Vec<u8>,
-	prefix: Vec<u8>
+	prefix: Vec<u8>,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct Append {
 	key: Vec<u8>,
 	append: Vec<u8>,
 }
+
+#[derive(Debug, PartialEq)]
 pub enum Event {
 	Put(Put),
 	PutChild(PutChild),
@@ -175,4 +189,5 @@ pub enum Event {
 	ClearPrefix(ClearPrefix),
 	ClearChildPrefix(ClearChildPrefix),
 	Append(Append),
+	NotConcerned,
 }

@@ -22,7 +22,7 @@ use sc_client_api::{
 };
 use sc_client_db::{Backend, DatabaseSettings, KeepBlocks, PruningMode};
 use sc_keystore::LocalKeystore;
-use sc_service::{error::Error, MallocSizeOfWasm, RpcExtensionBuilder, new_db_backend};
+use sc_service::{error::Error, new_db_backend, MallocSizeOfWasm, RpcExtensionBuilder};
 
 use ec_client_db::StateKv;
 use ec_executor::{NativeExecutionDispatch, NativeExecutor, RuntimeInfo};
