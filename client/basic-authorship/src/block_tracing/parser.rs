@@ -6,7 +6,6 @@ use nom::{
 	bytes::{self, complete::tag},
 	character::{self, complete::char},
 	combinator::map,
-	multi::many1,
 	sequence::{delimited, preceded, tuple},
 	IResult,
 };
@@ -259,6 +258,7 @@ impl From<TraceEvent> for Message {
 mod tests {
 	use super::super::*;
 	use super::*;
+	use tracing::dispatcher;
 
 	#[test]
 	fn test_opt_val_parser() {
@@ -339,5 +339,171 @@ mod tests {
 				event: Event::NotConcerned
 			})
 		);
+	}
+
+	#[test]
+	fn workflow() {
+		use codec::Encode;
+		use sp_core::hexdisplay::HexDisplay;
+		use tracing::trace;
+		/// Implement `Encode` by forwarding the stored raw vec.
+		struct EncodeOpaqueValue(Vec<u8>);
+
+		impl Encode for EncodeOpaqueValue {
+			fn using_encoded<R, F: FnOnce(&[u8]) -> R>(&self, f: F) -> R {
+				f(&self.0)
+			}
+		}
+
+		let dispatch = Dispatch::new(BlockSubscriber::new("state"));
+		dispatcher::with_default(&dispatch, || -> Result<(), sp_blockchain::Error> {
+			let span = tracing::info_span!(
+				target: "block_trace",
+				"trace_block",
+			);
+			let _enter = span.enter();
+			// trace log
+			let id = 1_u16;
+			let key = hex::decode("3a65787472696e7369635f696e646578").expect("nothing");
+			let value1 = Some(hex::decode("00000000").expect("nothing"));
+			let value2: Option<Vec<u8>> = None;
+			let value_raw = hex::decode("00010000000500d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d59d9a5dadd47ebda356fb2d0eabfefeee3e2b7aab4dbb6546606ef563f5eb47f00").expect("nothing");
+			let value_hash = Some([0_u8; 32]);
+			let value_bool = true;
+
+			trace!(
+				target: "state",
+				method = "Get",
+				ext_id = id,
+				key = %HexDisplay::from(&key),
+				result = ?value1.as_ref().map(HexDisplay::from),
+				result_encoded = ?value1.as_ref().map(HexDisplay::from),
+			);
+			trace!(target: "state", "{:04x}: Hash {}={:?}",
+				   id,
+				   HexDisplay::from(&key),
+				   value_hash,
+			);
+			trace!(target: "state", "{:04x}: GetChild({}) {}={:?}",
+				   id,
+				   HexDisplay::from(&key),
+				   HexDisplay::from(&key),
+				   value2.as_ref().map(HexDisplay::from)
+			);
+			trace!(target: "state", "{:04x}: ChildHash({}) {}={:?}",
+				   id,
+				   HexDisplay::from(&key),
+				   HexDisplay::from(&key),
+				   value_hash,
+			);
+			trace!(target: "state", "{:04x}: Exists {}={:?}",
+				   id,
+				   HexDisplay::from(&key),
+				   value_bool,
+			);
+			trace!(target: "state", "{:04x}: ChildExists({}) {}={:?}",
+				   id,
+				   HexDisplay::from(&key),
+				   HexDisplay::from(&key),
+				   value_bool,
+			);
+			trace!(
+				target: "state",
+				method = "Put",
+				ext_id = id,
+				key = %HexDisplay::from(&key),
+				value = ?value1.as_ref().map(HexDisplay::from),
+				value_encoded = %HexDisplay::from(
+					&value1
+						.as_ref()
+						.map(|v| EncodeOpaqueValue(v.clone()))
+						.encode()
+				),
+			);
+			trace!(target: "state", "{:04x}: PutChild({}) {}={:?}",
+				   id,
+				   HexDisplay::from(&key),
+				   HexDisplay::from(&key),
+				   value2.as_ref().map(HexDisplay::from)
+			);
+			trace!(target: "state", "{:04x}: KillChild({})",
+				   id,
+				   HexDisplay::from(&key),
+			);
+			trace!(target: "state", "{:04x}: ClearPrefix {}",
+				   id,
+				   HexDisplay::from(&key),
+			);
+			trace!(target: "state", "{:04x}: ClearChildPrefix({}) {}",
+				   id,
+				   HexDisplay::from(&key),
+				   HexDisplay::from(&key),
+			);
+			trace!(target: "state", "{:04x}: Append {}={}",
+				   id,
+				   HexDisplay::from(&key),
+				   HexDisplay::from(&value_raw),
+			);
+			trace!(target: "state", "{:04x}: Root(cached) {}",
+				   id,
+				   HexDisplay::from(&key),
+			);
+			trace!(target: "state", "{:04x}: Root {}", id, HexDisplay::from(&key));
+			trace!(target: "state", "{:04x}: ChildRoot({}) {}",
+				   id,
+				   HexDisplay::from(&key),
+				   HexDisplay::from(&key),
+			);
+			trace!(target: "state", "{:04x}: ChildRoot({}) {}",
+				   id,
+				   HexDisplay::from(&key),
+				   HexDisplay::from(&key),
+			);
+			trace!(target: "state", "{:04x}: ChildRoot({})(no_change) {}",
+				   id,
+				   HexDisplay::from(&key),
+				   HexDisplay::from(&key),
+			);
+			let index = 555_u32;
+			let size = 99_u32;
+			trace!(
+				target: "state",
+				"{:04x}: IndexTransaction ({}): {}, {} bytes",
+				id,
+				index,
+				HexDisplay::from(&key),
+				size,
+			);
+			trace!(
+				target: "state",
+				"{:04x}: RenewTransactionIndex ({}): {}",
+				id,
+				index,
+				HexDisplay::from(&key),
+			);
+			trace!(
+				target: "state",
+				"{:04x}: ChangesRoot({})(cached) {:?}",
+				id,
+				HexDisplay::from(&key),
+				value_hash,
+			);
+			trace!(
+				target: "state",
+				"Failed to decode changes root parent hash: {}",
+				"fxck",
+			);
+			trace!(
+				target: "state",
+				"{:04x}: ChangesRoot({}) {:?}",
+				id,
+				HexDisplay::from(&key),
+				value_hash,
+			);
+			Ok(())
+		}).expect("");
+		let v = handle_dispatch(dispatch);
+		// must meet Put|PutChild|KillChild|ClearPrefix|ClearChildPrefix|Append
+		assert_eq!(v.len(), 6);
 	}
 }

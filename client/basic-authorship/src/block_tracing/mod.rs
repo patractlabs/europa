@@ -1,20 +1,17 @@
 use std::{
 	collections::HashMap,
-	sync::{
-		atomic::{AtomicU64, Ordering},
-		Arc,
-	},
+	sync::atomic::{AtomicU64, Ordering},
 	time::Instant,
 };
 
 use parking_lot::Mutex;
 use tracing::{
-	dispatcher,
 	span::{Attributes, Id, Record},
-	Dispatch, Level, Subscriber,
+	warn, Dispatch, Level, Subscriber,
 };
 use tracing_subscriber::CurrentSpan;
 
+use crate::block_tracing::parser::Message;
 use sc_tracing::{SpanDatum, TraceEvent, Values};
 use sp_tracing::WASM_TRACE_IDENTIFIER;
 
@@ -61,9 +58,6 @@ impl BlockSubscriber {
 		}
 	}
 }
-
-// The name of a field required for all events.
-const REQUIRED_EVENT_FIELD: &str = "method";
 
 impl Subscriber for BlockSubscriber {
 	fn enabled(&self, metadata: &tracing::Metadata<'_>) -> bool {
@@ -133,17 +127,43 @@ impl Subscriber for BlockSubscriber {
 	}
 }
 
-pub fn handle_dispatch(dispatch: Dispatch) {
+pub fn handle_dispatch(dispatch: Dispatch) -> Vec<Event> {
 	let block_subscriber = dispatch.downcast_ref::<BlockSubscriber>().expect("fxck");
-	let spans: Vec<_> = block_subscriber.spans.lock().drain().collect();
 	let events: Vec<_> = block_subscriber.events.lock().drain(..).collect();
 
 	use std::collections::BTreeMap;
 	// events into map
-	let mut map: BTreeMap<u16, Vec<Event>> = Default::default();
-
-	println!("{:?}", spans);
-	println!("{:?}", events);
+	let r = events
+		.into_iter()
+		.flat_map(|e| {
+			let msg: Message = e.into();
+			// ignore all unrecognized event
+			if let Event::NotConcerned = msg.event {
+				None
+			} else {
+				Some(msg)
+			}
+		})
+		.fold(
+			BTreeMap::<u16, Vec<Event>>::new(),
+			|mut map, msg: Message| {
+				let entry = map.entry(msg.id);
+				let v = entry.or_insert(Default::default());
+				v.push(msg.event);
+				map
+			},
+		);
+	if r.len() != 1 {
+		warn!("parse trace meet different Ext instance. Need to modify this part to decide real sequence.");
+	}
+	// just pick the largest group, if the above warn is printed, need to modify this part.
+	r.into_iter().fold(Vec::<Event>::new(), |v, item| {
+		if item.1.len() > v.len() {
+			item.1
+		} else {
+			v
+		}
+	})
 }
 
 #[derive(Debug, PartialEq)]

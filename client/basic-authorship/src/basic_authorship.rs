@@ -55,7 +55,6 @@ use prometheus_endpoint::Registry as PrometheusRegistry;
 use sc_proposer_metrics::MetricsLink as PrometheusMetrics;
 
 use crate::block_tracing::{handle_dispatch, BlockSubscriber};
-use sc_tracing::SpanDatum;
 
 /// Default block size limit in bytes used by [`Proposer`].
 ///

@@ -1444,6 +1444,7 @@ version = "0.9.0"
 dependencies = [
  "futures 0.3.13",
  "futures-timer 3.0.2",
+ "hex",
  "log",
  "nom 6.1.2",
  "parity-scale-codec 2.1.1",
