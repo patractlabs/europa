@@ -55,6 +55,8 @@ use prometheus_endpoint::Registry as PrometheusRegistry;
 use sc_proposer_metrics::MetricsLink as PrometheusMetrics;
 
 use crate::block_tracing::{handle_dispatch, BlockSubscriber};
+use ec_client_api::statekv::{ClientStateKv, StateKv};
+use sc_tracing::SpanDatum;
 
 /// Default block size limit in bytes used by [`Proposer`].
 ///
@@ -66,7 +68,7 @@ use crate::block_tracing::{handle_dispatch, BlockSubscriber};
 pub const DEFAULT_BLOCK_SIZE_LIMIT: usize = 4 * 1024 * 1024 + 512;
 
 /// [`Proposer`] factory.
-pub struct ProposerFactory<A, B, C, PR> {
+pub struct ProposerFactory<A, B, C, S, PR> {
 	spawn_handle: Box<dyn SpawnNamed>,
 	/// The client instance.
 	client: Arc<C>,
@@ -83,10 +85,10 @@ pub struct ProposerFactory<A, B, C, PR> {
 	/// When estimating the block size, should the proof be included?
 	include_proof_in_block_size_estimation: bool,
 	/// phantom member to pin the `Backend`/`ProofRecording` type.
-	_phantom: PhantomData<(B, PR)>,
+	_phantom: PhantomData<(B, S, PR)>,
 }
 
-impl<A, B, C> ProposerFactory<A, B, C, DisableProofRecording> {
+impl<A, B, C, S> ProposerFactory<A, B, C, S, DisableProofRecording> {
 	/// Create a new proposer factory.
 	///
 	/// Proof recording will be disabled when using proposers built by this instance to build blocks.
@@ -110,7 +112,7 @@ impl<A, B, C> ProposerFactory<A, B, C, DisableProofRecording> {
 	}
 }
 
-impl<A, B, C> ProposerFactory<A, B, C, EnableProofRecording> {
+impl<A, B, C, S> ProposerFactory<A, B, C, S, EnableProofRecording> {
 	/// Create a new proposer factory with proof recording enabled.
 	///
 	/// Each proposer created by this instance will record a proof while building a block.
@@ -142,7 +144,7 @@ impl<A, B, C> ProposerFactory<A, B, C, EnableProofRecording> {
 	}
 }
 
-impl<A, B, C, PR> ProposerFactory<A, B, C, PR> {
+impl<A, B, C, S, PR> ProposerFactory<A, B, C, S, PR> {
 	/// Set the default block size limit in bytes.
 	///
 	/// The default value for the block size limit is:
@@ -154,7 +156,7 @@ impl<A, B, C, PR> ProposerFactory<A, B, C, PR> {
 	}
 }
 
-impl<B, Block, C, A, PR> ProposerFactory<A, B, C, PR>
+impl<B, Block, C, S, A, PR> ProposerFactory<A, B, C, S, PR>
 where
 	A: TransactionPool<Block = Block> + 'static,
 	B: backend::Backend<Block> + Send + Sync + 'static,
@@ -165,6 +167,7 @@ where
 		+ Send
 		+ Sync
 		+ 'static,
+	S: StateKv<Block>,
 	C::Api:
 		ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
 {
@@ -172,7 +175,7 @@ where
 		&mut self,
 		parent_header: &<Block as BlockT>::Header,
 		now: Box<dyn Fn() -> time::Instant + Send + Sync>,
-	) -> Proposer<B, Block, C, A, PR> {
+	) -> Proposer<B, Block, C, S, A, PR> {
 		let parent_hash = parent_header.hash();
 
 		let id = BlockId::hash(parent_hash);
@@ -182,7 +185,7 @@ where
 			parent_hash
 		);
 
-		let proposer = Proposer::<_, _, _, _, PR> {
+		let proposer = Proposer::<_, _, _, _, _, PR> {
 			spawn_handle: self.spawn_handle.clone(),
 			client: self.client.clone(),
 			parent_hash,
@@ -201,7 +204,7 @@ where
 	}
 }
 
-impl<A, B, Block, C, PR> sp_consensus::Environment<Block> for ProposerFactory<A, B, C, PR>
+impl<A, B, Block, C, S, PR> sp_consensus::Environment<Block> for ProposerFactory<A, B, C, S, PR>
 where
 	A: TransactionPool<Block = Block> + 'static,
 	B: backend::Backend<Block> + Send + Sync + 'static,
@@ -212,13 +215,14 @@ where
 		+ Send
 		+ Sync
 		+ 'static,
-	C: BlockIdTo<Block, Error = sp_blockchain::Error>,
+	C: BlockIdTo<Block, Error = sp_blockchain::Error> + ClientStateKv<Block, S>,
+	S: StateKv<Block> + 'static,
 	C::Api:
 		ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
 	PR: ProofRecording,
 {
 	type CreateProposer = future::Ready<Result<Self::Proposer, Self::Error>>;
-	type Proposer = Proposer<B, Block, C, A, PR>;
+	type Proposer = Proposer<B, Block, C, S, A, PR>;
 	type Error = sp_blockchain::Error;
 
 	fn init(&mut self, parent_header: &<Block as BlockT>::Header) -> Self::CreateProposer {
@@ -229,7 +233,7 @@ where
 }
 
 /// The proposer logic.
-pub struct Proposer<B, Block: BlockT, C, A: TransactionPool, PR> {
+pub struct Proposer<B, Block: BlockT, C, S: StateKv<Block>, A: TransactionPool, PR> {
 	spawn_handle: Box<dyn SpawnNamed>,
 	client: Arc<C>,
 	parent_hash: <Block as BlockT>::Hash,
@@ -241,10 +245,10 @@ pub struct Proposer<B, Block: BlockT, C, A: TransactionPool, PR> {
 	default_block_size_limit: usize,
 	include_proof_in_block_size_estimation: bool,
 	telemetry: Option<TelemetryHandle>,
-	_phantom: PhantomData<(B, PR)>,
+	_phantom: PhantomData<(B, S, PR)>,
 }
 
-impl<A, B, Block, C, PR> sp_consensus::Proposer<Block> for Proposer<B, Block, C, A, PR>
+impl<A, B, Block, C, S, PR> sp_consensus::Proposer<Block> for Proposer<B, Block, C, S, A, PR>
 where
 	A: TransactionPool<Block = Block> + 'static,
 	B: backend::Backend<Block> + Send + Sync + 'static,
@@ -255,7 +259,8 @@ where
 		+ Send
 		+ Sync
 		+ 'static,
-	C: BlockIdTo<Block, Error = sp_blockchain::Error>,
+	C: BlockIdTo<Block, Error = sp_blockchain::Error> + ClientStateKv<Block, S>,
+	S: StateKv<Block> + 'static,
 	C::Api:
 		ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
 	PR: ProofRecording,
@@ -299,7 +304,7 @@ where
 	}
 }
 
-impl<A, B, Block, C, PR> Proposer<B, Block, C, A, PR>
+impl<A, B, Block, C, S, PR> Proposer<B, Block, C, S, A, PR>
 where
 	A: TransactionPool<Block = Block>,
 	B: backend::Backend<Block> + Send + Sync + 'static,
@@ -310,7 +315,8 @@ where
 		+ Send
 		+ Sync
 		+ 'static,
-	C: BlockIdTo<Block, Error = sp_blockchain::Error>,
+	C: BlockIdTo<Block, Error = sp_blockchain::Error> + ClientStateKv<Block, S>,
+	S: StateKv<Block>,
 	C::Api:
 		ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
 	PR: ProofRecording,
@@ -339,6 +345,7 @@ where
 			.saturated_into::<u64>()
 			+ 1;
 		let mut extrinsic_count = 0_u32;
+		let state_kv = self.client.state_kv();
 
 		let targets = "state";
 		for inherent in block_builder.create_inherents(inherent_data)? {

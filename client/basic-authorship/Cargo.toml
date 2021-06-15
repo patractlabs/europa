@@ -39,6 +39,8 @@ sp-tracing = { version = "3.0.0", git = "https://github.com/paritytech/substrate
 sc-tracing = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 nom = "6.1.2"
 
+ec-client-api = { path = "../api" }
+
 [dev-dependencies]
 sc-transaction-pool = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 substrate-test-runtime-client = { version = "2.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }

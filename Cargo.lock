@@ -1442,6 +1442,7 @@ checksum = "d55796afa1b20c2945ca8eabfc421839f2b766619209f1ede813cf2484f31804"
 name = "ec-basic-authorship"
 version = "0.9.0"
 dependencies = [
+ "ec-client-api",
  "futures 0.3.13",
  "futures-timer 3.0.2",
  "hex",

@@ -20,7 +20,7 @@ use sc_client_api::{
 	execution_extensions::{ExecutionExtensions, ExecutionStrategies},
 	ExecutionStrategy,
 };
-use sc_client_db::{Backend, DatabaseSettings, KeepBlocks, PruningMode};
+use sc_client_db::{Backend, KeepBlocks, PruningMode};
 use sc_keystore::LocalKeystore;
 use sc_service::{error::Error, new_db_backend, MallocSizeOfWasm, RpcExtensionBuilder};
 
