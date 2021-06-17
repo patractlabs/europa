@@ -1,6 +1,6 @@
 [package]
 name = "europa-cli"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["patract labs <https://github.com/patractlabs>"]
 edition = "2018"
 
