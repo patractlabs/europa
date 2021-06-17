@@ -5,22 +5,25 @@ use std::{
 };
 
 use parking_lot::Mutex;
+use serde::{Deserialize, Serialize};
 use tracing::{
 	span::{Attributes, Id, Record},
 	warn, Dispatch, Level, Subscriber,
 };
-use tracing_subscriber::CurrentSpan;
+
+use sc_tracing::{SpanDatum, TraceEvent, Values};
+use sp_runtime::{traits::Block as BlockT, SaturatedConversion};
+use sp_tracing::WASM_TRACE_IDENTIFIER;
 
 use crate::block_tracing::parser::Message;
-use sc_tracing::{SpanDatum, TraceEvent, Values};
-use sp_tracing::WASM_TRACE_IDENTIFIER;
+use ec_client_api::statekv::StateKv;
+use std::sync::Arc;
 
 mod parser;
 
 pub struct BlockSubscriber {
 	pub targets: Vec<(String, Level)>,
 	pub next_id: AtomicU64,
-	pub current_span: CurrentSpan,
 	pub spans: Mutex<HashMap<Id, SpanDatum>>,
 	pub events: Mutex<Vec<TraceEvent>>,
 }
@@ -52,7 +55,6 @@ impl BlockSubscriber {
 		BlockSubscriber {
 			targets,
 			next_id,
-			current_span: CurrentSpan::default(),
 			spans: Mutex::new(HashMap::new()),
 			events: Mutex::new(Vec::new()),
 		}
@@ -73,7 +75,7 @@ impl Subscriber for BlockSubscriber {
 		let id = Id::from_u64(self.next_id.fetch_add(1, Ordering::Relaxed));
 		let mut values = Values::default();
 		attrs.record(&mut values);
-		let parent_id = attrs.parent().cloned().or_else(|| self.current_span.id());
+		let parent_id = attrs.parent().cloned();
 		let span = SpanDatum {
 			id: id.clone(),
 			parent_id,
@@ -105,7 +107,7 @@ impl Subscriber for BlockSubscriber {
 	fn event(&self, event: &tracing::Event<'_>) {
 		let mut values = Values::default();
 		event.record(&mut values);
-		let parent_id = event.parent().cloned().or_else(|| self.current_span.id());
+		let parent_id = event.parent().cloned();
 		let trace_event = TraceEvent {
 			name: event.metadata().name().to_owned(),
 			target: event.metadata().target().to_owned(),
@@ -116,18 +118,12 @@ impl Subscriber for BlockSubscriber {
 		self.events.lock().push(trace_event);
 	}
 
-	fn enter(&self, id: &Id) {
-		self.current_span.enter(id.clone());
-	}
+	fn enter(&self, _id: &Id) {}
 
-	fn exit(&self, span: &Id) {
-		if self.spans.lock().contains_key(span) {
-			self.current_span.exit();
-		}
-	}
+	fn exit(&self, _span: &Id) {}
 }
 
-pub fn handle_dispatch(dispatch: Dispatch) -> Vec<Event> {
+pub fn parse(dispatch: Dispatch) -> Vec<Event> {
 	let block_subscriber = dispatch.downcast_ref::<BlockSubscriber>().expect("fxck");
 	let events: Vec<_> = block_subscriber.events.lock().drain(..).collect();
 
@@ -166,42 +162,75 @@ pub fn handle_dispatch(dispatch: Dispatch) -> Vec<Event> {
 	})
 }
 
-#[derive(Debug, PartialEq)]
+fn store_result<Block: BlockT, S: StateKv<Block>>(
+	events: Vec<Event>,
+	number: u64,
+	index: u32,
+	s: Arc<S>,
+) {
+	let json = serde_json::to_string(&events).expect("should not failed");
+	s.set_extrinsic_changes(number.saturated_into(), index, json)
+		.expect("database should not return error.")
+}
+
+pub fn handle_dispatch<Block: BlockT, S: StateKv<Block>>(
+	dispatch: Dispatch,
+	number: u64,
+	index: u32,
+	s: Arc<S>,
+) {
+	let events = parse(dispatch);
+	store_result::<Block, S>(events, number.saturated_into::<u64>(), index, s)
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Put {
+	#[serde(with = "sp_core::bytes")]
 	key: Vec<u8>,
+	#[serde(with = "serde_helper")]
 	value: Option<Vec<u8>>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct PutChild {
+	#[serde(with = "sp_core::bytes")]
 	child_id: Vec<u8>,
+	#[serde(with = "sp_core::bytes")]
 	key: Vec<u8>,
+	#[serde(with = "serde_helper")]
 	value: Option<Vec<u8>>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct KillChild {
+	#[serde(with = "sp_core::bytes")]
 	child_id: Vec<u8>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ClearPrefix {
+	#[serde(with = "sp_core::bytes")]
 	prefix: Vec<u8>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ClearChildPrefix {
+	#[serde(with = "sp_core::bytes")]
 	child_id: Vec<u8>,
+	#[serde(with = "sp_core::bytes")]
 	prefix: Vec<u8>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Append {
+	#[serde(with = "sp_core::bytes")]
 	key: Vec<u8>,
+	#[serde(with = "sp_core::bytes")]
 	append: Vec<u8>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type", content = "data")]
 pub enum Event {
 	Put(Put),
 	PutChild(PutChild),
@@ -210,4 +239,26 @@ pub enum Event {
 	ClearChildPrefix(ClearChildPrefix),
 	Append(Append),
 	NotConcerned,
+}
+
+mod serde_helper {
+	use serde::{de, ser};
+	pub fn serialize<S>(value: &Option<Vec<u8>>, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: ser::Serializer,
+	{
+		match value {
+			Some(v) => sp_core::bytes::serialize(v.as_slice(), serializer),
+			None => serializer.serialize_none(),
+		}
+	}
+
+	/// A deserializer that decodes a string to the number.
+	pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Vec<u8>>, D::Error>
+	where
+		D: de::Deserializer<'de>,
+	{
+		let option: Option<sp_core::Bytes> = serde::Deserialize::deserialize(deserializer)?;
+		Ok(option.map(|v| v.0))
+	}
 }

@@ -77,6 +77,14 @@ where
 		number_or_hash: NumberOrHash<B>,
 		child: Option<Bytes>,
 	) -> Result<HashMap<Bytes, Option<Bytes>>>;
+
+	/// The rpc can get the changed state for pointed extrinsic. Notice the changed state is only for this extrinsic, may be different with the block modified state kvs, because the changed state may be modified by following extrinsics.
+	#[rpc(name = "europa_extrinsicStateChanges")]
+	fn extrinsic_changes(
+		&self,
+		number_or_hash: NumberOrHash<B>,
+		index: u32,
+	) -> Result<serde_json::Value>;
 }
 
 type NumberOf<B> = <<B as BlockT>::Header as Header>::Number;
@@ -123,13 +131,14 @@ where
 		number_or_hash: NumberOrHash<B>,
 		child: Option<Bytes>,
 	) -> Result<HashMap<Bytes, Option<Bytes>>> {
-		let hash = match number_or_hash {
+		let id = number_or_hash.clone();
+		let hash = match id {
 			NumberOrHash::Hash(hash) => hash,
 			NumberOrHash::Number(num) => self
 				.client
 				.to_hash(&BlockId::Number(num))
 				.map_err(error::client_err::<B>)?
-				.ok_or(EuropaRpcError::<B>::InvalidBlockNumber(num))?,
+				.ok_or(EuropaRpcError::<B>::InvalidBlockId(number_or_hash.clone()))?,
 		};
 
 		let state_kv = self.client.state_kv();
@@ -149,5 +158,28 @@ where
 			.collect();
 
 		Ok(kvs)
+	}
+	fn extrinsic_changes(
+		&self,
+		number_or_hash: NumberOrHash<B>,
+		index: u32,
+	) -> Result<serde_json::Value> {
+		use ec_basic_authorship::Event;
+		let id = number_or_hash.clone();
+		let number = match id {
+			NumberOrHash::Hash(hash) => self
+				.client
+				.to_number(&BlockId::Hash(hash))
+				.map_err(error::client_err::<B>)?
+				.ok_or(EuropaRpcError::<B>::InvalidBlockId(number_or_hash.clone()))?,
+			NumberOrHash::Number(num) => num,
+		};
+		let json = self
+			.client
+			.state_kv()
+			.get_extrinsic_changes(number, index)
+			.ok_or(EuropaRpcError::<B>::NoExtrinsic(number_or_hash, index))?;
+		let r: Vec<Event> = serde_json::from_str(&json).expect("should not fail.");
+		Ok(serde_json::json!(r))
 	}
 }

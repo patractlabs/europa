@@ -13,7 +13,7 @@ use sc_client_db::{DatabaseSettings, DatabaseSettingsSrc};
 const SEPARATOR: u8 = b'|';
 const DELETE_HOLDER: &'static [u8] = b":DELETE:";
 
-pub const NUM_COLUMNS: u32 = 8;
+pub const NUM_COLUMNS: u32 = 9;
 /// Meta column. The set of keys in the column is shared by full storages.
 pub const COLUMN_META: u32 = 0;
 
@@ -29,6 +29,7 @@ pub mod columns {
 	pub const HASH_TO_NUMBER: u32 = 5;
 	pub const NUMBER_TO_HASH: u32 = 6;
 	pub const TRACING: u32 = 7;
+	pub const EXTRINSIC_CHANGES: u32 = 8;
 }
 
 const DB_PATH_NAME: &'static str = "state_kv";
@@ -333,6 +334,36 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 
 		let mut t = DBTransaction::with_capacity(1);
 		t.delete_prefix(columns::STATE_CHILD_KV, &lookup_key);
+		self.state_kv_db
+			.write(t)
+			.map_err(|e| error::DatabaseError(Box::new(e)))
+	}
+
+	fn set_extrinsic_changes(
+		&self,
+		number: NumberFor<B>,
+		index: u32,
+		json: String,
+	) -> error::Result<()> {
+		let number: u64 = number.saturated_into::<u64>();
+		let key = tracing_key(number, index);
+		self.set_kv_impl(
+			columns::EXTRINSIC_CHANGES,
+			key.as_ref(),
+			Some(json.as_bytes()),
+		)
+	}
+	fn get_extrinsic_changes(&self, number: NumberFor<B>, index: u32) -> Option<String> {
+		let number: u64 = number.saturated_into::<u64>();
+		let key = tracing_key(number, index);
+		let v = handle_err(self.state_kv_db.get(columns::EXTRINSIC_CHANGES, &key))?;
+		Some(String::from_utf8_lossy(&v).to_string())
+	}
+	fn delete_extrinsic_changes(&self, number: NumberFor<B>, index: u32) -> error::Result<()> {
+		let number: u64 = number.saturated_into::<u64>();
+		let key = tracing_key(number, index);
+		let mut t = DBTransaction::with_capacity(1);
+		t.delete(columns::EXTRINSIC_CHANGES, &key);
 		self.state_kv_db
 			.write(t)
 			.map_err(|e| error::DatabaseError(Box::new(e)))

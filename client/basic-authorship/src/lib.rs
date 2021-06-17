@@ -20,7 +20,7 @@
 //!
 //! # Example
 //!
-//! ```
+//! ```ignore
 //! # use sc_basic_authorship::ProposerFactory;
 //! # use sp_consensus::{Environment, Proposer};
 //! # use sp_runtime::generic::BlockId;
@@ -75,3 +75,4 @@ mod basic_authorship;
 mod block_tracing;
 
 pub use crate::basic_authorship::{Proposer, ProposerFactory, DEFAULT_BLOCK_SIZE_LIMIT};
+pub use block_tracing::*;

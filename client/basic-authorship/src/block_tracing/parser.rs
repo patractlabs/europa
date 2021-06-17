@@ -256,8 +256,10 @@ impl From<TraceEvent> for Message {
 
 #[cfg(test)]
 mod tests {
-	use super::super::*;
-	use super::*;
+	// use super::super::*;
+	// use super::*;
+	use crate::block_tracing::parser::{parse_message, parse_opt_val, Message};
+	use crate::block_tracing::*;
 	use tracing::dispatcher;
 
 	#[test]
@@ -502,8 +504,10 @@ mod tests {
 			);
 			Ok(())
 		}).expect("");
-		let v = handle_dispatch(dispatch);
+		let v = parse(dispatch);
 		// must meet Put|PutChild|KillChild|ClearPrefix|ClearChildPrefix|Append
 		assert_eq!(v.len(), 6);
+		let s = serde_json::to_string_pretty(&v).expect("no expect");
+		println!("{:}", s);
 	}
 }

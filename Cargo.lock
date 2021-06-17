@@ -1450,13 +1450,14 @@ dependencies = [
  "nom 6.1.2",
  "parity-scale-codec 2.1.1",
  "parking_lot 0.10.2",
- "parking_lot 0.11.1",
  "sc-block-builder",
  "sc-client-api",
  "sc-proposer-metrics",
  "sc-telemetry",
  "sc-tracing",
  "sc-transaction-pool",
+ "serde",
+ "serde_json",
  "sp-api",
  "sp-blockchain",
  "sp-consensus",
@@ -1538,6 +1539,7 @@ dependencies = [
 name = "ec-rpc"
 version = "0.2.1"
 dependencies = [
+ "ec-basic-authorship",
  "ec-client-api",
  "hex",
  "jsonrpc-core",
@@ -1545,6 +1547,7 @@ dependencies = [
  "jsonrpc-derive",
  "sc-client-api",
  "serde",
+ "serde_json",
  "sp-blockchain",
  "sp-core",
  "sp-runtime",
@@ -8328,9 +8331,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-log"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e0f8c7178e13481ff6765bd169b33e8d554c5d2bbede5e32c356194be02b9b9"
+checksum = "a6923477a48e41c1951f1999ef8bb5a3023eb723ceadafe78ffb65dc366761e3"
 dependencies = [
  "lazy_static",
  "log",
@@ -8349,9 +8352,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-subscriber"
-version = "0.2.15"
+version = "0.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1fa8f0c8f4c594e4fc9debc1990deab13238077271ba84dd853d54902ee3401"
+checksum = "aa5553bf0883ba7c9cbe493b085c29926bd41b66afc31ff72cf17ff4fb60dcd5"
 dependencies = [
  "ansi_term 0.12.1",
  "chrono",
