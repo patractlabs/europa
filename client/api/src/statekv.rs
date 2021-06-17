@@ -27,6 +27,14 @@ pub trait StateKv<Block: BlockT>: Send + Sync {
 	) -> Option<Vec<(Vec<u8>, Option<Vec<u8>>)>>;
 	fn delete_kvs_by_hash(&self, hash: Block::Hash) -> error::Result<()>;
 	fn delete_child_kvs_by_hash(&self, hash: Block::Hash, child: &[u8]) -> error::Result<()>;
+	fn set_extrinsic_changes(
+		&self,
+		number: NumberFor<Block>,
+		index: u32,
+		json: String,
+	) -> error::Result<()>;
+	fn get_extrinsic_changes(&self, number: NumberFor<Block>, index: u32) -> Option<String>;
+	fn delete_extrinsic_changes(&self, number: NumberFor<Block>, index: u32) -> error::Result<()>;
 
 	// hash&number
 	fn set_hash_and_number(&self, hash: Block::Hash, number: NumberFor<Block>)
@@ -108,6 +116,21 @@ impl<Block: BlockT, T: StateKv<Block>> StateKv<Block> for Arc<T> {
 
 	fn delete_child_kvs_by_hash(&self, hash: Block::Hash, child: &[u8]) -> error::Result<()> {
 		(&**self).delete_child_kvs_by_hash(hash, child)
+	}
+
+	fn set_extrinsic_changes(
+		&self,
+		number: NumberFor<Block>,
+		index: u32,
+		json: String,
+	) -> error::Result<()> {
+		(&**self).set_extrinsic_changes(number, index, json)
+	}
+	fn get_extrinsic_changes(&self, number: NumberFor<Block>, index: u32) -> Option<String> {
+		(&**self).get_extrinsic_changes(number, index)
+	}
+	fn delete_extrinsic_changes(&self, number: NumberFor<Block>, index: u32) -> error::Result<()> {
+		(&**self).delete_extrinsic_changes(number, index)
 	}
 
 	fn set_hash_and_number(

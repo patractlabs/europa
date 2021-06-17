@@ -140,7 +140,7 @@ where
 		config,
 	})?;
 
-	let mut proposer = sc_basic_authorship::ProposerFactory::new(
+	let mut proposer = ec_basic_authorship::ProposerFactory::new(
 		task_manager.spawn_handle(),
 		client.clone(),
 		transaction_pool.clone(),

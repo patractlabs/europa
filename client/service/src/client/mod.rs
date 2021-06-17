@@ -404,23 +404,6 @@ where
 			import_existing,
 		);
 
-		// if let Ok(ImportResult::Imported(ref aux)) = result {
-		//     if aux.is_new_best {
-		//         // don't send telemetry block import events during initial sync for every
-		//         // block to avoid spamming the telemetry server, these events will be randomly
-		//         // sent at a rate of 1/10.
-		//         if origin != BlockOrigin::NetworkInitialSync ||
-		//             rand::thread_rng().gen_bool(0.1)
-		//         {
-		//             telemetry!(SUBSTRATE_INFO; "block.import";
-		// 				"height" => height,
-		// 				"best" => ?hash,
-		// 				"origin" => ?origin
-		// 			);
-		//         }
-		//     }
-		// }
-
 		result
 	}
 
@@ -593,6 +576,64 @@ where
 			BlockStatus::InChainPruned => return Ok(Some(ImportResult::MissingState)),
 			BlockStatus::KnownBad => return Ok(Some(ImportResult::KnownBad)),
 		};
+		//
+		// let runtime_api = self.runtime_api();
+		// let execution_context = if import_block.origin == BlockOrigin::NetworkInitialSync {
+		// 	ExecutionContext::Syncing
+		// } else {
+		// 	ExecutionContext::Importing
+		// };
+		// let header = import_block.header.clone();
+		// let exec_func = |body: &Vec<Block::Extrinsic>| {
+		// 	// TODO exec ?
+		// 	let targets = "pallet,frame,state";
+		// 	let block_subscriber = BlockSubscriber::new(targets);
+		// 	let dispatch = Dispatch::new(block_subscriber);
+		// 	{
+		// 		let dispatcher_span = tracing::debug_span!(
+		// 				target: "state_tracing",
+		// 				"execute_block",
+		// 				extrinsics_len = body.len(),
+		// 			);
+		// 		let _guard = dispatcher_span.enter();
+		// 		if let Err(e) = dispatcher::with_default(&dispatch, || {
+		// 			let span = tracing::info_span!(
+		// 					target: "block_trace",
+		// 					"trace_block",
+		// 				);
+		// 			let _enter = span.enter();
+		// 			runtime_api.execute_block_with_context(
+		// 				&at,
+		// 				execution_context,
+		// 				Block::new(header, body.clone()),
+		// 			)
+		// 		}) {
+		// 			println!("fxck!!!!");
+		// 		}
+		// 	}
+		// 	let block_subscriber = dispatch.downcast_ref::<BlockSubscriber>()
+		// 		.expect("");
+		// 	// .ok_or(Error::Dispatch(
+		// 	// 	"Cannot downcast Dispatch to BlockSubscriber after tracing block".to_string()
+		// 	// ))?;
+		// 	let spans: Vec<_> = block_subscriber.spans
+		// 		.lock()
+		// 		.drain()
+		// 		// Patch wasm identifiers
+		// 		// .filter_map(|(_, s)| patch_and_filter(SpanDatum::from(s), targets))
+		// 		.collect();
+		// 	let events: Vec<_> = block_subscriber.events
+		// 		.lock()
+		// 		.drain(..)
+		// 		// .filter(|e| self.storage_keys
+		// 		// 	.as_ref()
+		// 		// 	.map(|keys| event_key_filter(e, keys))
+		// 		// 	.unwrap_or(false)
+		// 		// )
+		// 		// .map(|s| s.into())
+		// 		.collect();
+		// 	info!(target: "state_tracing", "Captured {} spans and {} events", spans.len(), events.len());
+		// };
 
 		match (
 			enact_state,
@@ -729,21 +770,6 @@ where
 
 			return Ok(());
 		}
-
-		// We assume the list is sorted and only want to inform the
-		// telemetry once about the finalized block.
-		// if let Some(last) = notify_finalized.last() {
-		// let header = self.header(&BlockId::Hash(*last))?
-		//     .expect(
-		//         "Header already known to exist in DB because it is \
-		// 		 indicated in the tree route; qed"
-		//     );
-
-		// telemetry!(SUBSTRATE_INFO; "notify.finalized";
-		// 	"height" => format!("{}", header.number()),
-		// 	"best" => ?last,
-		// );
-		// }
 
 		for finalized_hash in notify_finalized {
 			let header = self.header(&BlockId::Hash(finalized_hash))?.expect(

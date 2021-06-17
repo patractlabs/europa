@@ -20,9 +20,9 @@ use sc_client_api::{
 	execution_extensions::{ExecutionExtensions, ExecutionStrategies},
 	ExecutionStrategy,
 };
-use sc_client_db::{Backend, DatabaseSettings, KeepBlocks, PruningMode};
+use sc_client_db::{Backend, KeepBlocks, PruningMode};
 use sc_keystore::LocalKeystore;
-use sc_service::{error::Error, MallocSizeOfWasm, RpcExtensionBuilder};
+use sc_service::{error::Error, new_db_backend, MallocSizeOfWasm, RpcExtensionBuilder};
 
 use ec_client_db::StateKv;
 use ec_executor::{NativeExecutionDispatch, NativeExecutor, RuntimeInfo};
@@ -124,6 +124,9 @@ where
 	let (client, backend) = {
 		let db_config = database_settings(&config);
 
+		let state_kv = new_state_kv(&db_config, read_only)?;
+		let backend = new_db_backend(db_config)?;
+
 		let extensions = sc_client_api::execution_extensions::ExecutionExtensions::new(
 			ExecutionStrategies {
 				syncing: ExecutionStrategy::NativeElseWasm,
@@ -137,8 +140,8 @@ where
 		);
 
 		new_client(
-			db_config,
-			read_only,
+			backend,
+			state_kv,
 			executor,
 			chain_spec.as_storage_builder(),
 			extensions,
@@ -169,8 +172,8 @@ pub fn new_state_kv(
 
 /// Create an instance of db-backed client.
 pub fn new_client<E, Block, RA>(
-	settings: DatabaseSettings,
-	read_only: bool,
+	backend: Arc<Backend<Block>>,
+	state_kv: Arc<StateKv>,
 	executor: E,
 	genesis_storage: &dyn BuildStorage,
 	execution_extensions: ExecutionExtensions<Block>,
@@ -192,10 +195,6 @@ where
 	Block: BlockT,
 	E: CodeExecutor + RuntimeInfo,
 {
-	const CANONICALIZATION_DELAY: u64 = 4096;
-
-	let state_kv = new_state_kv(&settings, read_only)?;
-	let backend = Arc::new(Backend::new(settings, CANONICALIZATION_DELAY)?);
 	let executor = crate::client::LocalCallExecutor::new(backend.clone(), executor, spawn_handle);
 	Ok((
 		crate::client::Client::new(

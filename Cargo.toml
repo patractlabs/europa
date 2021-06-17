@@ -6,13 +6,14 @@ parity-wasm = { git = "https://github.com/patractlabs/parity-wasm", branch = "v0
 
 [workspace]
 members = [
-    "bin/europa/",
+    "bin/europa",
     "bin/europa/cli",
     "bin/europa/rpc",
     "bin/europa/executor",
     "bin/europa/runtime",
 
     "client/api",
+    "client/basic-authorship",
     "client/cli",
     "client/db",
     "client/executor",
