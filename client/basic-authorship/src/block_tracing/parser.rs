@@ -360,7 +360,8 @@ mod tests {
 			}
 		}
 
-		let dispatch = Dispatch::new(BlockSubscriber::new("state"));
+		let global = hack_global_subscriber();
+		let dispatch = Dispatch::new(ExtrinsicSubscriber::new("state", global));
 		dispatcher::with_default(&dispatch, || -> Result<(), sp_blockchain::Error> {
 			let span = tracing::info_span!(
 				target: "block_trace",
