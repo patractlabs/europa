@@ -73,7 +73,7 @@ pub struct InstantiateRequest<AccountId, Hash> {
 /// ContractsExt RPC methods.
 #[rpc]
 pub trait ContractsExtApi<BlockHash, BlockNumber> {
-	/// Executes a call to a contract.
+	/// Executes a call to a contract, and return the result and the contract tracing information.
 	///
 	/// This call is performed locally without submitting any transactions. Thus executing this
 	/// won't change any state. Nonetheless, the calling state-changing contracts is still possible.
@@ -86,7 +86,7 @@ pub trait ContractsExtApi<BlockHash, BlockNumber> {
 		at: Option<BlockHash>,
 	) -> Result<serde_json::Value>;
 
-	/// Instantiate a new contract.
+	/// Instantiate a new contract, and return the result and the contract tracing information.
 	///
 	/// This call is performed locally without submitting any transactions. Thus the contract
 	/// is not actually created.
@@ -99,6 +99,7 @@ pub trait ContractsExtApi<BlockHash, BlockNumber> {
 		at: Option<BlockHash>,
 	) -> Result<serde_json::Value>;
 
+	/// Return the contract tracing information by blocknumber and extrinsic index.
 	#[rpc(name = "contractsExt_tracing")]
 	fn tracing(&self, number: BlockNumber, index: u32) -> Result<serde_json::Value>;
 }
