@@ -1,3 +1,7 @@
+// This file is part of europa
+
+// Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
+
 use serde_json::json;
 
 use sp_core::{sr25519, Pair, Public};

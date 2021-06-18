@@ -1,3 +1,7 @@
+// This file is part of europa
+
+// Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
+
 pub trait ContractTracingDb: Send + Sync {
 	fn set_tracing(&mut self, number: u32, index: u32, tracing: String);
 }
