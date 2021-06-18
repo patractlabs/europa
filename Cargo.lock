@@ -1488,7 +1488,7 @@ dependencies = [
 
 [[package]]
 name = "ec-cli"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "ansi_term 0.12.1",
  "bytes 0.5.6",
@@ -1515,7 +1515,7 @@ dependencies = [
 
 [[package]]
 name = "ec-client-api"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "sp-database",
  "sp-runtime",
@@ -1523,7 +1523,7 @@ dependencies = [
 
 [[package]]
 name = "ec-client-db"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "ec-client-api",
  "ep-extensions",
@@ -1539,7 +1539,7 @@ dependencies = [
 
 [[package]]
 name = "ec-executor"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -1551,7 +1551,7 @@ dependencies = [
 
 [[package]]
 name = "ec-rpc"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "ec-basic-authorship",
  "ec-client-api",
@@ -1570,7 +1570,7 @@ dependencies = [
 
 [[package]]
 name = "ec-service"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "ec-basic-authorship",
@@ -1684,14 +1684,14 @@ checksum = "68b91989ae21441195d7d9b9993a2f9295c7e1a8c96255d8b729accddc124797"
 
 [[package]]
 name = "ep-extensions"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "sp-externalities",
 ]
 
 [[package]]
 name = "ep-io"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "ep-extensions",
  "sp-externalities",
@@ -1701,7 +1701,7 @@ dependencies = [
 
 [[package]]
 name = "ep-sandbox"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "assert_matches",
  "parity-scale-codec",
@@ -1748,14 +1748,14 @@ dependencies = [
 
 [[package]]
 name = "europa"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "europa-cli",
 ]
 
 [[package]]
 name = "europa-cli"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "ec-cli",
  "ec-service",
@@ -1779,7 +1779,7 @@ dependencies = [
 
 [[package]]
 name = "europa-executor"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "ec-executor",
  "europa-runtime",
@@ -1787,7 +1787,7 @@ dependencies = [
 
 [[package]]
 name = "europa-rpc"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "ec-client-api",
  "europa-runtime",
@@ -1820,7 +1820,7 @@ dependencies = [
 
 [[package]]
 name = "europa-runtime"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "frame-executive",
  "frame-support",
