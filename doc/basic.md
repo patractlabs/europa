@@ -55,16 +55,51 @@ In details, current Europa sandbox framework provides:
 
       The rpc could print the modified state kvs for a specified block height or hash. This rpc is same to the feature 4, just using rpc to return the information.
 
-        ```json
-        {
-            "jsonrpc": "2.0",
-            "result": {
-                "0x26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac": null,
-                "0x26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850": "0x05000000",
-                // ...
-            }
-        }
-        ```
+      ```json
+      {
+         "jsonrpc": "2.0",
+         "result": {
+             "0x26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac": null,
+             "0x26aa394eea5630e07c48ae0c9558cef70a98fdbe9ce6c55837576c60c7af3850": "0x05000000",
+             // ...
+         }
+      }
+      ```
+
+   * `europa_extrinsicStateChanges` (params: \[`number_or_hash: NumberOrHash<B>`, `index: u32` \])
+   
+      The rpc can return the changed state for an extrinsic. The return type shows by "Action" and "Value".
+   
+      All is in 6 type now:
+   
+      ```rust
+      pub enum Event {
+         Put(Put),  // modify or delete a value.
+         PutChild(PutChild), // modify or delete a child value.
+         KillChild(KillChild), // remove all storage for a child.
+         ClearPrefix(ClearPrefix), // remove all matched value for a prefix.
+         ClearChildPrefix(ClearChildPrefix), // remove all matched value for a prefix in a child storage.
+         Append(Append), // appended value for a key (e.g. for System::Events)
+      }
+      ```
+   
+      The `Put`, `PutChild` and others are "Action". Different Actions contain different type value. 
+      The definitions for the Value type can be found in `client/basic-authorship/src/block_tracing/mod.rs`
+     
+      The return example is following. The value part is "data", and the action part is "type":
+     
+      ```json
+      [
+         {
+            "data": {
+               "key": "0x32366161333934656561353633306530376334386165306339353538636566376138366461356139333236383466313939353339383336666362386338383666",
+               "value": "0x3635643432623030"
+            },
+            "type": "Put"
+         },
+        // ...
+      ] 
+      ```
 
 6. Use workspace to isolate different node environment.
 
