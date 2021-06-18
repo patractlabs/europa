@@ -23,7 +23,7 @@ ec-service = { path = "../../../client/service" }
 ec-cli = { path = "../../../client/cli" }
 
 # vendor
-pallet-contracts = { version = "3.0.0", path = "../../../vendor/substrate/frame/contracts", features = ["unstable-interface"] }
+pallet-contracts = { version = "3.0.0", path = "../../../vendor/substrate/frame/contracts", features = ["unstable-interface", "europa-io"] }
 
 europa-runtime = { path = "../runtime" }
 europa-executor = { path = "../executor" }

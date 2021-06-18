@@ -2,7 +2,7 @@
 panic = "unwind"
 
 [patch.crates-io]
-parity-wasm = { git = "https://github.com/patractlabs/parity-wasm", branch = "v0.42.0" }
+parity-wasm = { git = "https://github.com/patractlabs/parity-wasm", branch = "v0.42.2" }
 
 [workspace]
 members = [

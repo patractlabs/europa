@@ -27,7 +27,8 @@ impl Memory {
 	pub fn new(initial: u32, maximum: Option<u32>) -> Result<Memory, Error> {
 		let store = util::store_with_dwarf();
 		Ok(Memory {
-			inner: MemoryRef::new(&store, MemoryType::new(Limits::new(initial, maximum))),
+			inner: MemoryRef::new(&store, MemoryType::new(Limits::new(initial, maximum)))
+				.expect("init memory fail"),
 			store,
 		})
 	}
