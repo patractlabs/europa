@@ -1,3 +1,7 @@
+// This file is part of europa
+
+// Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
+
 use sp_database::error;
 use sp_runtime::traits::{Block as BlockT, NumberFor};
 use std::sync::Arc;

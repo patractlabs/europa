@@ -1,7 +1,7 @@
 [package]
 name = "ep-extensions"
 version = "0.1.0"
-authors = ["Aten <jincxmain@gmail.com>"]
+authors = ["patract labs <https://github.com/patractlabs>"]
 edition = "2018"
 
 [dependencies]

@@ -1,3 +1,7 @@
+// This file is part of europa
+
+// Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
+
 //! Europa Chain Extension
 #![cfg_attr(not(feature = "std"), no_std)]
 use codec::Encode;

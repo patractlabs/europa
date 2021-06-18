@@ -1,3 +1,7 @@
+// This file is part of europa
+
+// Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
+
 use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
 
 use crate::cli::{Cli, Subcommand};

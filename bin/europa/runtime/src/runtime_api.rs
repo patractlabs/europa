@@ -1,3 +1,7 @@
+// This file is part of europa
+
+// Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
+
 use codec::Codec;
 use pallet_contracts_primitives::{Code, ContractExecResult, ContractInstantiateResult};
 use sp_std::vec::Vec;
