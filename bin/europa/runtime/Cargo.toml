@@ -44,7 +44,7 @@ pallet-contracts-rpc-runtime-api = { version = "3.0.0", git = "https://github.co
 pallet-contracts = { version = "3.0.0", path = "../../../vendor/substrate/frame/contracts", features = ["unstable-interface", "europa-io"] }
 
 runtime-log = { version = "0.1.1", git = "https://github.com/patractlabs/ink-log", default-features = false }
-curve = { package = "megaclite-arkworks", git = "https://github.com/patractlabs/megaclite.git", default-features = false }
+curve = { package = "zkmega-arkworks", git = "https://github.com/patractlabs/zkmega", default-features = false }
 
 [features]
 default = ["std"]
