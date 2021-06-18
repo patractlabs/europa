@@ -2,20 +2,17 @@
 
 // Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
 
-use std::{
-	collections::HashMap,
-	sync::atomic::{AtomicU64, Ordering},
-	time::Instant,
-};
+use std::sync::atomic::AtomicU64;
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use tracing::{
+	dispatcher,
 	span::{Attributes, Id, Record},
 	warn, Dispatch, Level, Subscriber,
 };
 
-use sc_tracing::{SpanDatum, TraceEvent, Values};
+use sc_tracing::{TraceEvent, Values};
 use sp_runtime::{traits::Block as BlockT, SaturatedConversion};
 use sp_tracing::WASM_TRACE_IDENTIFIER;
 
@@ -25,10 +22,10 @@ use std::sync::Arc;
 
 mod parser;
 
-pub struct BlockSubscriber {
+pub struct ExtrinsicSubscriber {
+	pub global: Arc<dyn Subscriber + Send + Sync>,
 	pub targets: Vec<(String, Level)>,
 	pub next_id: AtomicU64,
-	pub spans: Mutex<HashMap<Id, SpanDatum>>,
 	pub events: Mutex<Vec<TraceEvent>>,
 }
 
@@ -49,24 +46,24 @@ fn parse_target(s: &str) -> (String, Level) {
 	}
 }
 
-impl BlockSubscriber {
-	pub fn new(targets: &str) -> Self {
+impl ExtrinsicSubscriber {
+	pub fn new(targets: &str, global: Arc<dyn Subscriber + Send + Sync>) -> Self {
 		let next_id = AtomicU64::new(1);
 		let mut targets: Vec<_> = targets.split(',').map(parse_target).collect();
 		// Ensure that WASM traces are always enabled
 		// Filtering happens when decoding the actual target / level
 		targets.push((WASM_TRACE_IDENTIFIER.to_owned(), Level::TRACE));
-		BlockSubscriber {
+		ExtrinsicSubscriber {
+			global,
 			targets,
 			next_id,
-			spans: Mutex::new(HashMap::new()),
 			events: Mutex::new(Vec::new()),
 		}
 	}
 }
 
-impl Subscriber for BlockSubscriber {
-	fn enabled(&self, metadata: &tracing::Metadata<'_>) -> bool {
+impl ExtrinsicSubscriber {
+	fn self_enabled(&self, metadata: &tracing::Metadata<'_>) -> bool {
 		for (target, level) in &self.targets {
 			if metadata.level() <= level && metadata.target().starts_with(target) {
 				return true;
@@ -74,61 +71,68 @@ impl Subscriber for BlockSubscriber {
 		}
 		false
 	}
+}
+
+impl Subscriber for ExtrinsicSubscriber {
+	fn enabled(&self, metadata: &tracing::Metadata<'_>) -> bool {
+		self.global.enabled(metadata) | self.self_enabled(metadata)
+	}
 
 	fn new_span(&self, attrs: &Attributes<'_>) -> Id {
-		let id = Id::from_u64(self.next_id.fetch_add(1, Ordering::Relaxed));
-		let mut values = Values::default();
-		attrs.record(&mut values);
-		let parent_id = attrs.parent().cloned();
-		let span = SpanDatum {
-			id: id.clone(),
-			parent_id,
-			name: attrs.metadata().name().to_owned(),
-			target: attrs.metadata().target().to_owned(),
-			level: *attrs.metadata().level(),
-			line: attrs.metadata().line().unwrap_or(0),
-			start_time: Instant::now(),
-			values,
-			overall_time: Default::default(),
-		};
-
-		self.spans.lock().insert(id.clone(), span);
-		id
+		self.global.new_span(attrs)
 	}
 
 	fn record(&self, span: &Id, values: &Record<'_>) {
-		let mut span_data = self.spans.lock();
-		if let Some(s) = span_data.get_mut(span) {
-			values.record(&mut s.values);
-		}
+		self.global.record(span, values)
 	}
 
-	fn record_follows_from(&self, _span: &Id, _follows: &Id) {
-		// Not currently used
-		unimplemented!("record_follows_from is not implemented");
+	fn record_follows_from(&self, span: &Id, follows: &Id) {
+		self.global.record_follows_from(span, follows)
 	}
 
 	fn event(&self, event: &tracing::Event<'_>) {
-		let mut values = Values::default();
-		event.record(&mut values);
-		let parent_id = event.parent().cloned();
-		let trace_event = TraceEvent {
-			name: event.metadata().name().to_owned(),
-			target: event.metadata().target().to_owned(),
-			level: *event.metadata().level(),
-			values,
-			parent_id,
-		};
-		self.events.lock().push(trace_event);
+		if self.self_enabled(event.metadata()) {
+			let mut values = Values::default();
+			event.record(&mut values);
+			let parent_id = event.parent().cloned();
+			let trace_event = TraceEvent {
+				name: event.metadata().name().to_owned(),
+				target: event.metadata().target().to_owned(),
+				level: *event.metadata().level(),
+				values,
+				parent_id,
+			};
+			self.events.lock().push(trace_event);
+		}
+		if self.global.enabled(event.metadata()) {
+			self.global.event(event)
+		}
 	}
 
-	fn enter(&self, _id: &Id) {}
+	fn enter(&self, id: &Id) {
+		self.global.enter(id)
+	}
 
-	fn exit(&self, _span: &Id) {}
+	fn exit(&self, _span: &Id) {
+		self.global.exit(_span)
+	}
+}
+
+pub fn hack_global_subscriber() -> Arc<dyn Subscriber + Send + Sync> {
+	dispatcher::get_default(|d| {
+		// a hack way to get private subscriber in Dispatch to public field.
+		pub struct PublicDispatch {
+			pub subscriber: Arc<dyn Subscriber + Send + Sync>,
+		}
+		let pub_dispatch: PublicDispatch = unsafe { std::mem::transmute(d.clone()) };
+		pub_dispatch.subscriber
+	})
 }
 
 pub fn parse(dispatch: Dispatch) -> Vec<Event> {
-	let block_subscriber = dispatch.downcast_ref::<BlockSubscriber>().expect("fxck");
+	let block_subscriber = dispatch
+		.downcast_ref::<ExtrinsicSubscriber>()
+		.expect("must be same subscriber");
 	let events: Vec<_> = block_subscriber.events.lock().drain(..).collect();
 
 	use std::collections::BTreeMap;

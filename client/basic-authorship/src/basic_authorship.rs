@@ -56,7 +56,7 @@ use std::marker::PhantomData;
 use prometheus_endpoint::Registry as PrometheusRegistry;
 use sc_proposer_metrics::MetricsLink as PrometheusMetrics;
 
-use crate::block_tracing::{handle_dispatch, BlockSubscriber};
+use crate::block_tracing::{hack_global_subscriber, handle_dispatch, ExtrinsicSubscriber};
 use ec_client_api::statekv::{ClientStateKv, StateKv};
 
 /// Default block size limit in bytes used by [`Proposer`].
@@ -348,17 +348,15 @@ where
 		let mut extrinsic_count = 0_u32;
 		let state_kv = self.client.state_kv();
 
+		let global_subscriber = hack_global_subscriber();
 		let targets = "state";
+
 		for inherent in block_builder.create_inherents(inherent_data)? {
 			let r = {
-				let dispatch = Dispatch::new(BlockSubscriber::new(targets));
+				let dispatch =
+					Dispatch::new(ExtrinsicSubscriber::new(targets, global_subscriber.clone()));
 				let r =
 					dispatcher::with_default(&dispatch, || -> Result<(), sp_blockchain::Error> {
-						let span = tracing::info_span!(
-							target: "block_trace",
-							"trace_block",
-						);
-						let _enter = span.enter();
 						// push and execute inherent
 						block_builder.push(inherent)
 					});
@@ -456,7 +454,8 @@ where
 			trace!("[{:?}] Pushing to the block.", pending_tx_hash);
 
 			let r = {
-				let dispatch = Dispatch::new(BlockSubscriber::new(targets));
+				let dispatch =
+					Dispatch::new(ExtrinsicSubscriber::new(targets, global_subscriber.clone()));
 				let r =
 					dispatcher::with_default(&dispatch, || -> Result<(), sp_blockchain::Error> {
 						let span = tracing::info_span!(
