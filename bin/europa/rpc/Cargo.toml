@@ -38,7 +38,7 @@ pallet-contracts-primitives = { version = "3.0.0", git = "https://github.com/par
 pallet-contracts-rpc-runtime-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 pallet-contracts-rpc = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 # vendor
-pallet-contracts = { path = "../../../vendor/substrate/frame/contracts" }
+pallet-contracts = { path = "../../../vendor/substrate/frame/contracts", features = ["unstable-interface", "europa-io"]  }
 
 ec-client-api = { path = "../../../client/api" }
 europa-runtime = { path = "../runtime" }

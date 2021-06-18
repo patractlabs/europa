@@ -71,12 +71,12 @@ pub fn development_config() -> Result<ChainSpec, String> {
 /// Configure initial storage state for FRAME modules.
 fn genesis(root_key: AccountId, endowed_accounts: Vec<AccountId>) -> GenesisConfig {
 	GenesisConfig {
-		frame_system: SystemConfig {
+		system: SystemConfig {
 			// Add Wasm runtime to storage.
 			code: b"".to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		pallet_balances: BalancesConfig {
+		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
 			balances: endowed_accounts
 				.iter()
@@ -84,7 +84,7 @@ fn genesis(root_key: AccountId, endowed_accounts: Vec<AccountId>) -> GenesisConf
 				.map(|k| (k, 1 << 60))
 				.collect(),
 		},
-		pallet_sudo: SudoConfig {
+		sudo: SudoConfig {
 			// Assign network admin rights.
 			key: root_key,
 		},

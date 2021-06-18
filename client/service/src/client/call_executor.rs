@@ -173,7 +173,7 @@ where
 				})?;
 
 				let state_runtime_code =
-					sp_state_machine::backend::BackendRuntimeCode::new(&trie_state);
+					sp_state_machine::backend::BackendRuntimeCode::new(trie_state);
 				// It is important to extract the runtime code here before we create the proof
 				// recorder.
 				let runtime_code = state_runtime_code

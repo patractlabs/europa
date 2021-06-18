@@ -219,13 +219,18 @@ impl pallet_timestamp::Config for Runtime {
 	type WeightInfo = ();
 }
 
+impl pallet_randomness_collective_flip::Config for Runtime {}
+
 parameter_types! {
 	pub const ExistentialDeposit: Balance = 100 * CENTS;
 	pub const MaxLocks: u32 = 50;
+	pub const MaxReserves: u32 = 50;
 }
 
 impl pallet_balances::Config for Runtime {
 	type MaxLocks = MaxLocks;
+	type MaxReserves = MaxReserves;
+	type ReserveIdentifier = [u8; 8];
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// The ubiquitous event type.
@@ -268,18 +273,7 @@ parameter_types! {
 			<Runtime as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(1) -
 			<Runtime as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(0)
 	)) / 5) as u32;
-	// for substrate/client/basic-authorship/src/basic_authorship.rs#55
-	// `DEFAULT_BLOCK_SIZE_LIMIT` is 4 * 1024 * 1024 + 512 in substrate now,
-	// thus the max code size could not more than this limit now.
-	// this limit would be removed when europa use self `basic_authorship`
 	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
-	// pub Schedule: pallet_contracts::Schedule<Runtime> = {
-	//     let mut schedule = Default::default();
-	// 	let mut limits = pallet_contracts::Limits::default();
-	// 	limits.code_len = 4 * 1024 * 1024 + 512;
-	// 	schedule.limits = limits;
-	// 	schedule
-	// };
 }
 
 impl pallet_contracts::Config for Runtime {
@@ -317,7 +311,7 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},

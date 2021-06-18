@@ -196,6 +196,7 @@ fn start_rpc_servers<
 		maybe_start_server(config.rpc_http, |address| {
 			sc_rpc_server::start_http(
 				address,
+				None,
 				config.rpc_cors.as_ref(),
 				gen_handler(
 					deny_unsafe(&address, &config.rpc_methods),

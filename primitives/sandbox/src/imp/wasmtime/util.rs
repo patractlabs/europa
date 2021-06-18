@@ -21,11 +21,10 @@ use wasmtime::{
 /// NOTE: The Debug info with native trace has some problem in
 /// aarch64-apple-darwin, not enable for default for now.
 pub fn store_with_dwarf() -> Store {
-	Store::new(&Engine::new(
-		&Config::new()
-			// .debug_info(true)
-			// .wasm_backtrace_details(WasmBacktraceDetails::Enable),
-	))
+	let config = Config::new();
+	// .debug_info(true)
+	// .wasm_backtrace_details(WasmBacktraceDetails::Enable),
+	Store::new(&Engine::new(&config).expect("init wasmtime engine fail"))
 }
 
 /// Wrap host function into `Func`
