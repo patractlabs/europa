@@ -14,24 +14,25 @@ runtime pallets and test smart contract (like [ink!](https://github.com/parityte
 * **As the sandbox for `FRAME Contracts pallet` module for debugging and testing contracts**
 
     When regarding this project as an executable file which is used for running contracts, Europa provides more detail and richer
-    information and wasm panic backtrace for executing contracts. Those information is very useful to help developers 
+    information and wasm panic backtrace for executing contracts. This information is very useful to help developers 
     to locate the bugs and errors in contracts, especially for the cases which multiple contracts call each other in a
     complex way, like defi or else.
-    And in future, We may build it as an electron app to allow developers to download and run directly.
+    And in the future, We may build it as an electron app to allow developers to download and run directly.
 
-Riot Group for disscusion: https://app.element.io/#/room/#PatractLabsDev:matrix.org
+Riot Group for discussion: https://app.element.io/#/room/#PatractLabsDev:matrix.org
 
 **Note: Currently, `FRAME Contracts pallet(pallet-contract)` is under developing, which may contain some breaking changes. 
 Thus we use different branch to distinguish different `FRAME Contracts pallet` version.**
 
 *Note: We name `FRAME Contracts pallet` as `pallet-contract` in following doc.*
 
-We provide tow branches now:
+We provide three main branches now:
 
-* `master`: run newest `pallet-contracts` on v2.0.0 substrate dependencies now.
-* `substrate-v2.0.0`: run v2.0.0 `pallet-contracts` based on v2.0.0 substrate dependencies.
+* `master`: run newest `pallet-contracts` on newest substrate dependencies now.
+* `substrate/v3.0.0`: run substrate-v3.0.0 `pallet-contracts` based on v3.0.0 substrate dependencies.
+* `substrate/v2.0.0`: run substrate-v2.0.0 `pallet-contracts` based on v2.0.0 substrate dependencies.
 
-We may keep it in this way until `pallet-contracts` release v3.0.0
+In those branch:
 
 * `master` branch is our default branch, which provides our forked `pallet-contracts` crate that tracks the newest substrate `pallet-contracts` module.
 
@@ -41,14 +42,18 @@ We may keep it in this way until `pallet-contracts` release v3.0.0
     
     More information about this forked substrate refers to [this repo](https://github.com/patractlabs/substrate)
     
-    Currently, the tracked substrate commit is [90cfb952f2e11bc6d327faf04b30dc5f4cf89df8(polkadot-v0.9.3)](https://github.com/paritytech/substrate/commit/90cfb952f2e11bc6d327faf04b30dc5f4cf89df8)
+    Currently, the tracked substrate commit is [e447c49537e66d0b6e3a408c6ae5c424c7344a7c](https://github.com/paritytech/substrate/commit/e447c49537e66d0b6e3a408c6ae5c424c7344a7c)
 
-* `substrate-v2.0.0` branch is fixed in v2.0.0 substrate, both for `pallet-contracts` module and all substrate dependencies.
+* `substrate/v3.0.0` branch is fixed in v3.0.0 substrate:
 
-    If you just need v2.0.0 contract test, do not need to clone git submodule in vendor, just switch to this branch.
+    In this branch, Europa use substrate v3.0.0 from crate.io as dependencies, so as the `pallet-contracts` in vendor.
 
-Europa is tracking [newest substrate (90cfb952)](https://github.com/paritytech/substrate/commit/90cfb952f2e11bc6d327faf04b30dc5f4cf89df8) now. 
-Thus `pallet-contracts` could use newest features.
+* `substrate/v2.0.0` branch is fixed in v2.0.0 substrate and does not contains vendor:
+
+    > P.S. We do not advice you to use v2.0.0, for we no longer maintain this version.
+
+For master, Europa is tracking [newest substrate (e447c495)](https://github.com/paritytech/substrate/commit/e447c49537e66d0b6e3a408c6ae5c424c7344a7c) now. 
+Thus, `pallet-contracts` can use the newest features.
 
 ## Extending types
 When using [Substrate Portal](https://polkadot.js.org/apps), [@polkadot/api](https://github.com/polkadot-js/api) and [Redspot](https://github.com/patractlabs/redspot) or other 3rd parties clients to connect Europa `pallet-contracts` node, please remember to add ["extending types"](https://polkadot.js.org/docs/api/start/types.extend/) for Europa requirements.
@@ -57,29 +62,20 @@ Europa **current** "extending types" is (This may be changed for different Europ
 ```json
 {
   "LookupSource": "MultiAddress",
-  "Address": "MultiAddress"
+  "Address": "MultiAddress",
+  "AliveContractInfo": {
+    "trieId": "TrieId",
+    "storageSize": "u32",
+    "pairCount": "u32",
+    "codeHash": "CodeHash",
+    "rentAllowance": "Balance",
+    "rentPaid": "Balance",
+    "deductBlock": "BlockNumber",
+    "lastWrite": "Option<BlockNumber>",
+    "_reserved": "Option<Null>"
+  }
 }
 ```
-
-> If you are using v0.2.1 or substrate-v3.0.0-1 tag, please choose 
-> 
-> ```json
-> {
->   "LookupSource": "MultiAddress",
->   "Address": "MultiAddress",
->   "AliveContractInfo": {
->     "trieId": "TrieId",
->     "storageSize": "u32",
->     "pairCount": "u32",
->     "codeHash": "CodeHash",
->     "rentAllowance": "Balance",
->     "rentPayed": "Balance",
->     "deductBlock": "BlockNumber",
->     "lastWrite": "Option<BlockNumber>",
->     "_reserved": "Option<Null>"
->   }
-> }
-> ```
 
 ## Features
 In details, current Europa sandbox framework provides:
@@ -107,7 +103,8 @@ Europa self modifications:
 
 - [x] Using `ep-sandbox` instead of `sp-sandbox` in `pallet-contracts`.
     - [x] Using [`forked wasmi`](https://github.com/patractlabs/wasmi) to support **WASM panic backtrace**.
-    - [ ] Using `wasmtime` as WASM JIT-executor and support gdb/lldb debug. (developing)
+    - [X] Using `wasmtime` as WASM JIT-executor
+    - [ ] Support gdb/lldb debug. (developing)
     - [ ] Using `wasm3` as a more faster WASM interpreter. (not in plan)
 - [x] Supporting `NestedRuntime` event track feature to record all useful thing in `pallet-contracts`.
     When instantiate or call a contract (This contract needs to be compiled by [PatractLabs's `cargo-contract`](https://github.com/patractlabs/cargo-contract/) now), Europa would print:
@@ -151,13 +148,6 @@ More information about Europa `pallet-contracts` sandbox detailed features refer
 > git clone https://github.com/patractlabs/europa.git
 > cd europa/vendor
 > git submodule update --init --recursive
-```
-If you want to use `substrate-v2.0.0` branch, do following commands:
-```bash
-> git clone --branch substrate-v2.0.0 https://github.com/patractlabs/europa.git
-## or do following commands:
-> git clone https://github.com/patractlabs/europa.git
-> git checkout -t origin/substrate-v2.0.0
 ```
 
 #### compile
