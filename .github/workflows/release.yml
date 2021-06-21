@@ -117,10 +117,10 @@ jobs:
         env:
           LIBCLANG_PATH: "C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin"
         run: llvm-config.exe --help
-     - name: Build2
-       env:
-         LIBCLANG_PATH: "C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin"
-       run: dir C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin
+      - name: Build2
+        env:
+          LIBCLANG_PATH: "C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin"
+        run: dir C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin
 #      - name: Build
 #        run: cargo build --release
 #
