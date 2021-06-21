@@ -74,24 +74,24 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v1
-          - name: Set stable toolchain
-            uses: actions-rs/toolchain@v1
-            with:
-              toolchain: stable
-              target: x86_64-apple-darwin
-              override: true
+      - name: Set stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-apple-darwin
+          override: true
 
-          - name: Init
-            run: git submodule update --init --remote
-          - name: Build
-            run: cargo build --release
+      - name: Init
+        run: git submodule update --init --remote
+      - name: Build
+        run: cargo build --release
 
-          - name: Upload macos Release
-            uses: actions/upload-release-asset@v1.0.1
-            env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            with:
-              upload_url: ${{ needs.create_release.outputs.upload_url }}
-              asset_path: ./target/release/europa
-              asset_name: europa-${{ steps.create_release.outputs.tag }}-x86_64-apple-darwin
-              asset_content_type: application/octet-stream
+      - name: Upload macos Release
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ./target/release/europa
+          asset_name: europa-${{ steps.create_release.outputs.tag }}-x86_64-apple-darwin
+          asset_content_type: application/octet-stream
