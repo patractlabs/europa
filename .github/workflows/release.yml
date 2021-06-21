@@ -113,10 +113,10 @@ jobs:
           Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
           scoop install llvm --global
 
-      - name: Build
-        env:
-          LIBCLANG_PATH: "C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin"
-        run: llvm-config.exe --help
+#      - name: Build
+#        env:
+#          LIBCLANG_PATH: "C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin"
+#        run: llvm-config.exe --help
       - name: Build2
         env:
           LIBCLANG_PATH: "C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin"
