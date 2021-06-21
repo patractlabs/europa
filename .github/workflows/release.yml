@@ -104,7 +104,7 @@ jobs:
         run: git submodule update --init --remote
 
       - name: Set LLVM
-        run: echo "::add-path::C:\msys64\mingw64\bin"
+        run: echo "::addPath::C:\msys64\mingw64\bin"
 
       - name: Build
         run: cargo build --release
