@@ -59,6 +59,7 @@ jobs:
 
   build-mac:
     name: Release on macOS
+    needs: create_release # we need to know the upload URL
     runs-on: macos-latest
 
     steps:
@@ -88,6 +89,7 @@ jobs:
 
   build-win:
     name: Release on win
+    needs: create_release # we need to know the upload URL
     runs-on: windows-latest
 
     steps:
