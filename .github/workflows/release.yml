@@ -47,17 +47,6 @@ jobs:
       - name: Build
         run: cargo build --release
 
-      - name: Create Release
-        id: create_release
-        uses: monkeyWie/create-release@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-
       - name: Upload linux Release
         uses: actions/upload-release-asset@v1.0.1
         env:
@@ -113,6 +102,10 @@ jobs:
 
       - name: Init
         run: git submodule update --init --remote
+
+      - name: Set LLVM
+        run: echo "::add-path::C:\msys64\mingw64\bin"
+
       - name: Build
         run: cargo build --release
 
@@ -122,6 +115,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: ./target/release/europa.exe
+          asset_path: .\target\release\europa.exe
           asset_name: europa-${{ steps.create_release.outputs.tag }}-x86_64-win
           asset_content_type: application/octet-stream
