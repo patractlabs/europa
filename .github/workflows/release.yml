@@ -106,21 +106,23 @@ jobs:
 
 #      - name: Set LLVM
 #        run: echo "PATH=$PATH:C:\msys64\mingw64\bin" >> $GITHUB_ENV
-      - name: Install LLVM (Windows)
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
-          scoop install llvm --global
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@v1
+        with:
+          version: "10.0"
 
 #      - name: Build
 #        env:
 #          LIBCLANG_PATH: "C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin"
 #        run: llvm-config.exe --help
-      - name: Build2
+      - name: Build
         env:
-          LIBCLANG_PATH: "C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin"
-        run: dir C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin
+          LIBCLANG_PATH: ${{ env.LLVM_PATH }}
+        run: dir ${{ env.LLVM_PATH }}
+      - name: Tmp
+        env:
+          LIBCLANG_PATH: ${{ env.LLVM_PATH }}
+        run: llvm-config --help
 #      - name: Build
 #        run: cargo build --release
 #
