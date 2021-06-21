@@ -33,14 +33,14 @@ jobs:
 #    needs: create_release # we need to know the upload URL
 #    runs-on: ubuntu-latest
 #    steps:
-#      - name: Checkout source
-#        uses: actions/checkout@v1
 #      - name: Set stable toolchain
 #        uses: actions-rs/toolchain@v1
 #        with:
 #          toolchain: stable
 #          override: true
 #
+#      - name: Checkout source
+#        uses: actions/checkout@v1
 #      - name: Init
 #        run: git submodule update --init --remote
 #
@@ -63,8 +63,6 @@ jobs:
 #    runs-on: macos-latest
 #
 #    steps:
-#      - name: Checkout source
-#        uses: actions/checkout@v1
 #      - name: Set stable toolchain
 #        uses: actions-rs/toolchain@v1
 #        with:
@@ -72,6 +70,8 @@ jobs:
 #          target: x86_64-apple-darwin
 #          override: true
 #
+#      - name: Checkout source
+#        uses: actions/checkout@v1
 #      - name: Init
 #        run: git submodule update --init --remote
 #      - name: Build
@@ -93,17 +93,16 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v1
-      - name: Set stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: x86_64-apple-darwin
-          override: true
+#      - name: Set stable toolchain
+#        uses: actions-rs/toolchain@v1
+#        with:
+#          toolchain: stable
+#          override: true
 
-      - name: Init
-        run: git submodule update --init --remote
+#      - name: Checkout source
+#        uses: actions/checkout@v1
+#      - name: Init
+#        run: git submodule update --init --remote
 
 #      - name: Set LLVM
 #        run: echo "PATH=$PATH:C:\msys64\mingw64\bin" >> $GITHUB_ENV
@@ -117,7 +116,11 @@ jobs:
       - name: Build
         env:
           LIBCLANG_PATH: "C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin"
-        run: llvm-config --help
+        run: llvm-config.exe --help
+     - name: Build2
+       env:
+         LIBCLANG_PATH: "C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin"
+       run: dir C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin
 #      - name: Build
 #        run: cargo build --release
 #
