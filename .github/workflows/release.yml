@@ -28,64 +28,64 @@ jobs:
           draft: false
           prerelease: false
 
-  release-linux:
-    name: Release on Ubuntu
-    needs: create_release # we need to know the upload URL
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v1
-      - name: Set stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-
-      - name: Init
-        run: git submodule update --init --remote
-
-      - name: Build
-        run: cargo build --release
-
-      - name: Upload linux Release
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: ./target/release/europa
-          asset_name: europa-${{ steps.create_release.outputs.tag }}-x86_64-ubuntu
-          asset_content_type: application/octet-stream
-
-  build-mac:
-    name: Release on macOS
-    needs: create_release # we need to know the upload URL
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v1
-      - name: Set stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: x86_64-apple-darwin
-          override: true
-
-      - name: Init
-        run: git submodule update --init --remote
-      - name: Build
-        run: cargo build --release
-
-      - name: Upload macOS Release
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: ./target/release/europa
-          asset_name: europa-${{ steps.create_release.outputs.tag }}-x86_64-apple-darwin
-          asset_content_type: application/octet-stream
+#  release-linux:
+#    name: Release on Ubuntu
+#    needs: create_release # we need to know the upload URL
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout source
+#        uses: actions/checkout@v1
+#      - name: Set stable toolchain
+#        uses: actions-rs/toolchain@v1
+#        with:
+#          toolchain: stable
+#          override: true
+#
+#      - name: Init
+#        run: git submodule update --init --remote
+#
+#      - name: Build
+#        run: cargo build --release
+#
+#      - name: Upload linux Release
+#        uses: actions/upload-release-asset@v1.0.1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ needs.create_release.outputs.upload_url }}
+#          asset_path: ./target/release/europa
+#          asset_name: europa-${{ steps.create_release.outputs.tag }}-x86_64-ubuntu
+#          asset_content_type: application/octet-stream
+#
+#  build-mac:
+#    name: Release on macOS
+#    needs: create_release # we need to know the upload URL
+#    runs-on: macos-latest
+#
+#    steps:
+#      - name: Checkout source
+#        uses: actions/checkout@v1
+#      - name: Set stable toolchain
+#        uses: actions-rs/toolchain@v1
+#        with:
+#          toolchain: stable
+#          target: x86_64-apple-darwin
+#          override: true
+#
+#      - name: Init
+#        run: git submodule update --init --remote
+#      - name: Build
+#        run: cargo build --release
+#
+#      - name: Upload macOS Release
+#        uses: actions/upload-release-asset@v1.0.1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ needs.create_release.outputs.upload_url }}
+#          asset_path: ./target/release/europa
+#          asset_name: europa-${{ steps.create_release.outputs.tag }}-x86_64-apple-darwin
+#          asset_content_type: application/octet-stream
 
   build-win:
     name: Release on win
@@ -105,18 +105,28 @@ jobs:
       - name: Init
         run: git submodule update --init --remote
 
-      - name: Set LLVM
-        run: echo "::addPath::C:\msys64\mingw64\bin"
+#      - name: Set LLVM
+#        run: echo "PATH=$PATH:C:\msys64\mingw64\bin" >> $GITHUB_ENV
+      - name: Install LLVM (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+          scoop install llvm --global
 
       - name: Build
-        run: cargo build --release
-
-      - name: Upload win Release
-        uses: actions/upload-release-asset@v1.0.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: .\target\release\europa.exe
-          asset_name: europa-${{ steps.create_release.outputs.tag }}-x86_64-win
-          asset_content_type: application/octet-stream
+          LIBCLANG_PATH: "C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin"
+        run: llvm-config --help
+#      - name: Build
+#        run: cargo build --release
+#
+#      - name: Upload win Release
+#        uses: actions/upload-release-asset@v1.0.1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ needs.create_release.outputs.upload_url }}
+#          asset_path: .\target\release\europa.exe
+#          asset_name: europa-${{ steps.create_release.outputs.tag }}-x86_64-win
+#          asset_content_type: application/octet-stream
