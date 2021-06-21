@@ -10,26 +10,40 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  create_release:
+    name: Create release
     runs-on: ubuntu-latest
+    # Note this. We are going to use that in further jobs.
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
 
+  release-linux:
+    name: Release on Ubuntu
+    needs: create_release # we need to know the upload URL
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout source
         uses: actions/checkout@v1
-      - name: Set nightly toolchain
+      - name: Set stable toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
-      - name: Cache substrate deps
-        uses: actions/cache@v1
-        env:
-          cache-name: substrate-cache
-        with:
-          path: ./target
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./Cargo.lock') }}
+
       - name: Init
         run: git submodule update --init --remote
+
       - name: Build
         run: cargo build --release
 
@@ -44,13 +58,40 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release normal linux
+      - name: Upload linux Release
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
           asset_path: ./target/release/europa
-          asset_name: europa-${{ steps.create_release.outputs.tag }}-linux-x64
+          asset_name: europa-${{ steps.create_release.outputs.tag }}-x86_64-ubuntu
           asset_content_type: application/octet-stream
 
+  build-mac:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v1
+          - name: Set stable toolchain
+            uses: actions-rs/toolchain@v1
+            with:
+              toolchain: stable
+              target: x86_64-apple-darwin
+              override: true
+
+          - name: Init
+            run: git submodule update --init --remote
+          - name: Build
+            run: cargo build --release
+
+          - name: Upload macos Release
+            uses: actions/upload-release-asset@v1.0.1
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            with:
+              upload_url: ${{ needs.create_release.outputs.upload_url }}
+              asset_path: ./target/release/europa
+              asset_name: europa-${{ steps.create_release.outputs.tag }}-x86_64-apple-darwin
+              asset_content_type: application/octet-stream
