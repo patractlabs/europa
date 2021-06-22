@@ -26,7 +26,9 @@ use sc_client_api::{
 };
 use sc_client_db::{Backend, KeepBlocks, PruningMode};
 use sc_keystore::LocalKeystore;
-use sc_service::{error::Error, new_db_backend, MallocSizeOfWasm, RpcExtensionBuilder};
+use sc_service::{
+	error::Error, new_db_backend, MallocSizeOfWasm, RpcExtensionBuilder, TransactionStorageMode,
+};
 
 use ec_client_db::StateKv;
 use ec_executor::{NativeExecutionDispatch, NativeExecutor, RuntimeInfo};
@@ -162,7 +164,8 @@ pub fn database_settings(config: &Configuration) -> sc_client_db::DatabaseSettin
 		state_pruning: PruningMode::ArchiveAll,
 		source: config.database.clone(),
 		keep_blocks: KeepBlocks::All,
-		transaction_storage: config.transaction_storage.clone(),
+		// we only point this StorageChain mode, do not receive BlockBody mode
+		transaction_storage: TransactionStorageMode::StorageChain,
 	}
 }
 
