@@ -110,6 +110,7 @@ jobs:
         uses: KyleMayes/install-llvm-action@v1
         with:
           version: "10.0"
+        run: echo "::AddPath::C:\Program Files\LLVM"
 
 #      - name: Build
 #        env:
@@ -117,11 +118,11 @@ jobs:
 #        run: llvm-config.exe --help
       - name: Build
         env:
-          LIBCLANG_PATH: ${{ env.LLVM_PATH }}
-        run: dir ${{ env.LLVM_PATH }}
+          LIBCLANG_PATH: "C:\Program Files\LLVM"
+        run: dir "C:\Program Files\LLVM"
       - name: Tmp
         env:
-          LIBCLANG_PATH: ${{ env.LLVM_PATH }}
+          LIBCLANG_PATH: "C:\Program Files\LLVM"
         run: llvm-config --help
 #      - name: Build
 #        run: cargo build --release
