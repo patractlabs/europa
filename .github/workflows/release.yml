@@ -109,29 +109,30 @@ jobs:
 
 #      - name: Set LLVM
 #        run: echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-#      - name: Set LLVM
-#        uses: engineerd/configurator@v0.0.1
-#        with:
-##          name: "hb3.exe"
-#          url: "https://github.com/taichi-dev/taichi_assets/releases/download/llvm10/taichi-llvm-10.0.0-msvc2019.zip"
-#          pathInArchive: "windows-amd64/helm.exe"
+      - name: Set LLVM Config
+        uses: engineerd/configurator@v0.0.1
+        with:
+          name: "llvm-config.exe"
+          url: "https://github.com/taichi-dev/taichi_assets/releases/download/llvm10/taichi-llvm-10.0.0-msvc2019.zip"
+          pathInArchive: "bin/llvm-config.exe"
       - name: Set LLVM
-        run: |
-          Invoke-WebRequest -Uri "https://github.com/taichi-dev/taichi_assets/releases/download/llvm10/taichi-llvm-10.0.0-msvc2019.zip" -OutFile "llvm-win.zip"
-          expand-archive -path 'llvm-win.zip' -destinationpath 'C:\\llvm'
-          echo "C:\llvm\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
-#      - name: Build
+        run: echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+#      - name: Set LLVM
+#        run: |
+#          Invoke-WebRequest -Uri "https://github.com/taichi-dev/taichi_assets/releases/download/llvm10/taichi-llvm-10.0.0-msvc2019.zip" -OutFile "llvm-win.zip"
+#          expand-archive -path 'llvm-win.zip' -destinationpath 'C:\\llvm'
+#          echo "C:\llvm\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+      - name: Build
 #        env:
 #          LIBCLANG_PATH: "C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin"
-#        run: llvm-config.exe --help
-      - name: Build
-        env:
-          LIBCLANG_PATH: "C:\\llvm\\bin"
-        run: dir "C:\\llvm\\bin"
-      - name: Tmp
-        env:
-          LIBCLANG_PATH: "C:\\llvm\\bin"
-        run: llvm-config --help
+#        run: cargo build --release
+        run: |
+          llvm-config --help
+          llvm-link --help
+#      - name: Tmp
+##        env:
+##          LIBCLANG_PATH: "C:\\llvm\\bin"
+#        run: llvm-config --help
 #      - name: Build
 #        run: cargo build --release
 #
