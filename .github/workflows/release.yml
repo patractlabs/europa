@@ -33,6 +33,7 @@ jobs:
         uses: olegtarasov/get-tag@v2.1
 
   echo-tag:
+    name: Echo Tag
     needs: create_release
     runs-on: ubuntu-latest
     steps:
