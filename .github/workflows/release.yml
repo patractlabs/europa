@@ -121,7 +121,7 @@ jobs:
       - name: Tmp
         env:
           LIBCLANG_PATH: "C:\\msys64\\mingw64\\bin"
-        run: llvm --help
+        run: llvm-link --help
 #      - name: Build
 #        run: cargo build --release
 #
