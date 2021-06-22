@@ -34,7 +34,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Echo Test
-        run: echo europa-${{ needs.create_release.outputs.tag }}-archive
+        run: |
+          echo europa-${{ needs.create_release.outputs.tag }}-archive
+          echo url:${{ needs.create_release.outputs.upload_url }}
 
 #  release-linux:
 #    name: Release on Ubuntu
