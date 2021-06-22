@@ -110,6 +110,8 @@ jobs:
         uses: KyleMayes/install-llvm-action@v1
         with:
           version: "10.0"
+
+      - name: Set LLVM to Path
         run: echo "::AddPath::C:\Program Files\LLVM"
 
 #      - name: Build
