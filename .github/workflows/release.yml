@@ -32,109 +32,109 @@ jobs:
         id: get_tag
         uses: olegtarasov/get-tag@v2.1
 
-  echo-test:
+  echo-tag:
     needs: create_release
     runs-on: ubuntu-latest
     steps:
-      - name: Echo Test
+      - name: Echo Tag
         run: |
-          echo europa-${{ needs.create_release.outputs.tag }}-archive
+          echo europa-${{ needs.create_release.outputs.tag }}
           echo url:${{ needs.create_release.outputs.upload_url }}
 
-#  release-linux:
-#    name: Release on Ubuntu
-#    needs: create_release # we need to know the upload URL
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Set stable toolchain
-#        uses: actions-rs/toolchain@v1
-#        with:
-#          toolchain: stable
-#          override: true
-#
-#      - name: Checkout source
-#        uses: actions/checkout@v1
-#      - name: Init
-#        run: git submodule update --init --remote
-#
-#      - name: Build
-#        run: cargo build --release
-#
-#      - name: Upload linux Release
-#        uses: actions/upload-release-asset@v1.0.1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ needs.create_release.outputs.upload_url }}
-#          asset_path: ./target/release/europa
-#          asset_name: europa-${{ needs.create_release.outputs.tag }}-x86_64-ubuntu
-#          asset_content_type: application/octet-stream
-#
-#  build-mac:
-#    name: Release on macOS
-#    needs: create_release # we need to know the upload URL
-#    runs-on: macos-latest
-#
-#    steps:
-#      - name: Set stable toolchain
-#        uses: actions-rs/toolchain@v1
-#        with:
-#          toolchain: stable
-#          target: x86_64-apple-darwin
-#          override: true
-#
-#      - name: Checkout source
-#        uses: actions/checkout@v1
-#      - name: Init
-#        run: git submodule update --init --remote
-#      - name: Build
-#        run: cargo build --release
-#
-#      - name: Upload macOS Release
-#        uses: actions/upload-release-asset@v1.0.1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ needs.create_release.outputs.upload_url }}
-#          asset_path: ./target/release/europa
-#          asset_name: europa-${{ needs.create_release.outputs.tag }}-x86_64-apple-darwin
-#          asset_content_type: application/octet-stream
+  release-linux:
+    name: Release on Ubuntu
+    needs: create_release # we need to know the upload URL
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
 
-#  build-win:
-#    name: Release on win
-#    needs: create_release # we need to know the upload URL
-#    runs-on: windows-latest
-#
-#    steps:
-#      - name: Set stable toolchain
-#        uses: actions-rs/toolchain@v1
-#        with:
-#          toolchain: stable
-#          override: true
-#
-#      - name: Checkout source
-#        uses: actions/checkout@v1
-#      - name: Init
-#        run: git submodule update --init --remote
-#
-#      - name: Set LLVM Config
-#        uses: engineerd/configurator@v0.0.8
-#        with:
-#          name: "llvm-config.exe"
-#          url: "https://github.com/taichi-dev/taichi_assets/releases/download/llvm10/taichi-llvm-10.0.0-msvc2019.zip"
-#          pathInArchive: "bin/llvm-config.exe"
-#      - name: Set LLVM
-#        run: echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-#
-#      - name: Build
-#        run: cargo build --release
-#
-#      - name: Upload win Release
-#        uses: actions/upload-release-asset@v1.0.1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ needs.create_release.outputs.upload_url }}
-#          asset_path: .\target\release\europa.exe
-#          asset_name: europa-${{ needs.create_release.outputs.tag }}-x86_64-win.exe
-#          asset_content_type: application/octet-stream
+      - name: Checkout source
+        uses: actions/checkout@v1
+      - name: Init
+        run: git submodule update --init --remote
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Upload linux Release
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ./target/release/europa
+          asset_name: europa-${{ needs.create_release.outputs.tag }}-x86_64-ubuntu
+          asset_content_type: application/octet-stream
+
+  build-mac:
+    name: Release on macOS
+    needs: create_release # we need to know the upload URL
+    runs-on: macos-latest
+
+    steps:
+      - name: Set stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-apple-darwin
+          override: true
+
+      - name: Checkout source
+        uses: actions/checkout@v1
+      - name: Init
+        run: git submodule update --init --remote
+      - name: Build
+        run: cargo build --release
+
+      - name: Upload macOS Release
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ./target/release/europa
+          asset_name: europa-${{ needs.create_release.outputs.tag }}-x86_64-apple-darwin
+          asset_content_type: application/octet-stream
+
+  build-win:
+    name: Release on win
+    needs: create_release # we need to know the upload URL
+    runs-on: windows-latest
+
+    steps:
+      - name: Set stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Checkout source
+        uses: actions/checkout@v1
+      - name: Init
+        run: git submodule update --init --remote
+
+      - name: Set LLVM Config
+        uses: engineerd/configurator@v0.0.8
+        with:
+          name: "llvm-config.exe"
+          url: "https://github.com/taichi-dev/taichi_assets/releases/download/llvm10/taichi-llvm-10.0.0-msvc2019.zip"
+          pathInArchive: "bin/llvm-config.exe"
+      - name: Set LLVM
+        run: echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Upload win Release
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: .\target\release\europa.exe
+          asset_name: europa-${{ needs.create_release.outputs.tag }}-x86_64-win.exe
+          asset_content_type: application/octet-stream
