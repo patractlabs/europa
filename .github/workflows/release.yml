@@ -30,6 +30,7 @@ jobs:
           prerelease: false
 
   echo-test:
+    needs: create_release
     runs-on: ubuntu-latest
     steps:
       - name: Echo Test
