@@ -34,7 +34,7 @@ pub use sc_cli::{DatabaseParams, KeystoreParams, SubstrateCli};
 use ec_service::{
 	config::{
 		BasePath, Configuration, DatabaseConfig, KeystoreConfig, Role, RpcMethods, TaskExecutor,
-		TransactionPoolOptions, TransactionStorageMode,
+		TransactionPoolOptions,
 	},
 	TracingReceiver,
 };
@@ -123,14 +123,6 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 			.database_params()
 			.map(|x| x.database_cache_size())
 			.unwrap_or_default())
-	}
-
-	/// Get the database transaction storage scheme.
-	fn database_transaction_storage(&self) -> Result<TransactionStorageMode> {
-		Ok(self
-			.database_params()
-			.map(|x| x.transaction_storage())
-			.unwrap_or(TransactionStorageMode::BlockBody))
 	}
 
 	/// Get the database backend variant.
@@ -333,7 +325,6 @@ pub trait CliConfiguration<DCV: DefaultConfigurationValues = ()>: Sized {
 			rpc_ws_max_connections: self.rpc_ws_max_connections()?,
 			rpc_cors: self.rpc_cors()?,
 			tracing_targets: self.tracing_targets()?,
-			transaction_storage: self.database_transaction_storage()?,
 			chain_spec,
 			announce_block: self.announce_block()?,
 			role,

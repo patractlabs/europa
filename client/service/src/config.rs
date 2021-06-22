@@ -55,8 +55,6 @@ pub struct Configuration {
 	pub state_cache_size: usize,
 	/// Size in percent of cache size dedicated to child tries
 	pub state_cache_child_ratio: Option<usize>,
-	/// Transaction storage scheme.
-	pub transaction_storage: TransactionStorageMode,
 	/// Chain configuration.
 	pub chain_spec: Box<dyn ChainSpec>,
 	/// RPC over HTTP binding address. `None` if disabled.
