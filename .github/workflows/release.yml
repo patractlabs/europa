@@ -16,7 +16,7 @@ jobs:
     # Note this. We are going to use that in further jobs.
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
-      tag: ${{ steps.create_release.with.tag_name }}
+      tag: ${{ steps.get_tag.outputs.tag }}
     steps:
       - name: Create release
         id: create_release
@@ -28,6 +28,9 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
+      - name: Get Tag
+        id: get_tag
+        uses: olegtarasov/get-tag@v2.1
 
   echo-test:
     needs: create_release
