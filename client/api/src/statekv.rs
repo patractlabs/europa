@@ -55,6 +55,8 @@ pub trait StateKv<Block: BlockT>: Send + Sync {
 	fn get_contract_tracing(&self, number: NumberFor<Block>, index: u32) -> Option<String>;
 	fn remove_contract_tracing(&self, number: NumberFor<Block>, index: u32) -> error::Result<()>;
 	fn remove_contract_tracings_by_number(&self, number: NumberFor<Block>) -> error::Result<()>;
+
+	fn revert_all(&self, number: NumberFor<Block>) -> error::Result<()>;
 }
 
 pub trait StateKvTransaction {
@@ -171,6 +173,10 @@ impl<Block: BlockT, T: StateKv<Block>> StateKv<Block> for Arc<T> {
 	}
 
 	fn remove_contract_tracings_by_number(&self, number: NumberFor<Block>) -> error::Result<()> {
+		(&**self).remove_contract_tracings_by_number(number)
+	}
+
+	fn revert_all(&self, number: NumberFor<Block>) -> error::Result<()> {
 		(&**self).remove_contract_tracings_by_number(number)
 	}
 }

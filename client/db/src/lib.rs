@@ -430,6 +430,42 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 			t.delete_prefix(columns::TRACING, prefix);
 		})
 	}
+
+	fn revert_all(&self, number: NumberFor<B>) -> error::Result<()> {
+		let hash = <Self as ec_client_api::statekv::StateKv<B>>::get_hash(self, number).ok_or(
+			error::DatabaseError(format!("No hash for this number:{}", number).into()),
+		)?;
+		// state
+		<Self as ec_client_api::statekv::StateKv<B>>::delete_kvs_by_hash(self, hash)?;
+
+		// child state
+		let prefix = hash.as_ref();
+		let hash_len = prefix.len();
+		let mut lookup_key = Vec::with_capacity(hash_len + 1);
+		lookup_key.extend(prefix);
+		lookup_key.push(SEPARATOR);
+
+		let mut t = DBTransaction::with_capacity(1);
+		t.delete_prefix(columns::STATE_CHILD_KV, &lookup_key);
+		self.state_kv_db
+			.write(t)
+			.map_err(|e| error::DatabaseError(Box::new(e)))?;
+
+		// extrinsic changes
+		let num_u64: u64 = number.saturated_into::<u64>();
+		let prefix = &num_u64.to_le_bytes()[..];
+		let mut t = DBTransaction::with_capacity(1);
+		t.delete_prefix(columns::EXTRINSIC_CHANGES, &prefix);
+		self.state_kv_db
+			.write(t)
+			.map_err(|e| error::DatabaseError(Box::new(e)))?;
+
+		// contract tracing
+		<Self as ec_client_api::statekv::StateKv<B>>::remove_contract_tracings_by_number(
+			self, number,
+		)?;
+		Ok(())
+	}
 }
 
 fn tracing_key(number: u64, index: u32) -> Vec<u8> {
