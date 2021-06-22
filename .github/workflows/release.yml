@@ -106,26 +106,22 @@ jobs:
 
 #      - name: Set LLVM
 #        run: echo "PATH=$PATH:C:\msys64\mingw64\bin" >> $GITHUB_ENV
-      - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v1
-        with:
-          version: "11.0"
 
-      - name: Set LLVM to Path
-        run: echo "::AddPath::C:\Program Files\LLVM"
+      - name: Set LLVM
+        run: echo "::addPath::C:\msys64\mingw64\bin"
 
 #      - name: Build
 #        env:
 #          LIBCLANG_PATH: "C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin"
 #        run: llvm-config.exe --help
-      - name: Build
-        env:
-          LIBCLANG_PATH: "C:\Program Files\LLVM"
-        run: dir "C:\Program Files\LLVM"
+#      - name: Build
+#        env:
+#          LIBCLANG_PATH: "C:\msys64\mingw64\bin"
+#        run: dir "C:\Program Files\LLVM"
       - name: Tmp
         env:
-          LIBCLANG_PATH: "C:\Program Files\LLVM"
-        run: llvm-config --help
+          LIBCLANG_PATH: "C:\msys64\mingw64\bin"
+        run: llvm --help
 #      - name: Build
 #        run: cargo build --release
 #
