@@ -108,7 +108,7 @@ jobs:
 #        run: echo "PATH=$PATH:C:\msys64\mingw64\bin" >> $GITHUB_ENV
 
       - name: Set LLVM
-        run: echo "::addPath::C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        run: echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
 #      - name: Build
 #        env:
@@ -116,7 +116,7 @@ jobs:
 #        run: llvm-config.exe --help
       - name: Build
         env:
-          LIBCLANG_PATH: "C:\msys64\mingw64\bin"
+          LIBCLANG_PATH: "C:\\msys64\\mingw64\\bin"
         run: dir "C:\\msys64\\mingw64\\bin"
       - name: Tmp
         env:
