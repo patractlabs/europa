@@ -93,22 +93,17 @@ jobs:
     runs-on: windows-latest
 
     steps:
-#      - name: Set stable toolchain
-#        uses: actions-rs/toolchain@v1
-#        with:
-#          toolchain: stable
-#          override: true
+      - name: Set stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
 
-#      - name: Checkout source
-#        uses: actions/checkout@v1
-#      - name: Init
-#        run: git submodule update --init --remote
+      - name: Checkout source
+        uses: actions/checkout@v1
+      - name: Init
+        run: git submodule update --init --remote
 
-#      - name: Set LLVM
-#        run: echo "PATH=$PATH:C:\msys64\mingw64\bin" >> $GITHUB_ENV
-
-#      - name: Set LLVM
-#        run: echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Set LLVM Config
         uses: engineerd/configurator@v0.0.8
         with:
@@ -117,31 +112,16 @@ jobs:
           pathInArchive: "bin/llvm-config.exe"
       - name: Set LLVM
         run: echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-#      - name: Set LLVM
-#        run: |
-#          Invoke-WebRequest -Uri "https://github.com/taichi-dev/taichi_assets/releases/download/llvm10/taichi-llvm-10.0.0-msvc2019.zip" -OutFile "llvm-win.zip"
-#          expand-archive -path 'llvm-win.zip' -destinationpath 'C:\\llvm'
-#          echo "C:\llvm\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+
       - name: Build
-#        env:
-#          LIBCLANG_PATH: "C:\\ProgramData\\scoop\\apps\\llvm\\current\\bin"
-#        run: cargo build --release
-        run: |
-          llvm-config --help
-          llvm-link --help
-#      - name: Tmp
-##        env:
-##          LIBCLANG_PATH: "C:\\llvm\\bin"
-#        run: llvm-config --help
-#      - name: Build
-#        run: cargo build --release
-#
-#      - name: Upload win Release
-#        uses: actions/upload-release-asset@v1.0.1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ needs.create_release.outputs.upload_url }}
-#          asset_path: .\target\release\europa.exe
-#          asset_name: europa-${{ steps.create_release.outputs.tag }}-x86_64-win
-#          asset_content_type: application/octet-stream
+        run: cargo build --release
+
+      - name: Upload win Release
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: .\target\release\europa.exe
+          asset_name: europa-${{ steps.create_release.outputs.tag }}-x86_64-win
+          asset_content_type: application/octet-stream
