@@ -12,13 +12,16 @@ use jsonrpc_derive::rpc;
 
 use sp_blockchain::HeaderBackend;
 use sp_core::Bytes;
-use sp_runtime::traits::{Block as BlockT, BlockIdTo, Header};
+use sp_runtime::{
+	generic::BlockId,
+	traits::{Block as BlockT, BlockIdTo, Header},
+	SaturatedConversion,
+};
 use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 
 use ec_client_api::statekv;
 
 use error::EuropaRpcError;
-use sp_runtime::generic::BlockId;
 
 pub enum Message<B: BlockT> {
 	Forward(NumberOf<B>),
@@ -128,6 +131,15 @@ where
 		self.backend
 			.revert(diff, true)
 			.map_err(error::client_err::<B>)?;
+		let state_kv = self.client.state_kv();
+		let mut current = best;
+		while current != height {
+			state_kv
+				.revert_all(current)
+				.map_err(|e| error::client_err::<B>(e.into()))?;
+			current -= 1_u64.saturated_into();
+		}
+
 		Ok(())
 	}
 	fn state_kvs(
