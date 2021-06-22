@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Echo Test
-        run: echo ${{ needs.create_release.outputs.tag }}
+        run: echo europa-${{ needs.create_release.outputs.tag }}-archive
 
 #  release-linux:
 #    name: Release on Ubuntu
