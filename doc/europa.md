@@ -491,24 +491,24 @@ In v0.3, we store this information in local and provide some rpc for user to get
         }
     ```
    
-2. `contractsExt_call` (params: same as `contract_call`)
+2. `contractsExt_call` (params: same as `contracts_call`)
 
-    This rpc is the extension version for `contract_call`, it receives the same parameters, and return same value while plus the contract tracing information for this call.
+    This rpc is the extension version for `contracts_call`, it receives the same parameters, and return same value while plus the contract tracing information for this call.
 
     ```json
     {
-      "result": "<same value in `contract_call` return>",
+      "result": "<same value in `contracts_call` return>",
       "trace": "<same contract tracing in `contractsExt_tracing`>"
     }
     ```
 
-3. `contractsExt_instantiate` (params: same as `contract_instantiate`)
+3. `contractsExt_instantiate` (params: same as `contracts_instantiate`)
 
     This rpc is the extension version for `contracts_instantiate`, it receives the same parameters, and return same value while plus the contract tracing information for this call.
 
     ```json
     {
-      "result": "<same value in `contract_call` return>",
+      "result": "<same value in `contracts_instantiate` return>",
       "trace": "<same contract tracing in `contractsExt_tracing`>"
     }
     ```
