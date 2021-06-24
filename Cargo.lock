@@ -1748,14 +1748,14 @@ dependencies = [
 
 [[package]]
 name = "europa"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "europa-cli",
 ]
 
 [[package]]
 name = "europa-cli"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "ec-cli",
  "ec-service",
