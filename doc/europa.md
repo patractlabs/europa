@@ -37,7 +37,7 @@ We do following things to support those features:
         This lib providers different curves to support basic function to run Groth16 algorithm in contracts.
 
 ### Prepare
-For using all features when running contracts in Europa, we advice developers use [Patract's `cargo-contract`](https://github.com/paritytech/cargo-contract)
+For using all features when running contracts in Europa, we advise developers use [Patract's `cargo-contract`](https://github.com/patractlabs/cargo-contract)
 to compile ink! contract, until [this pr#131 Enable debug info to the source warehouse with flag in command build](https://github.com/paritytech/cargo-contract/pull/131) could be merged by paritytech.
 
 In Patract's `cargo-contract`, we will contain the "name section" while compile contracts. Before this PR is merged, 
