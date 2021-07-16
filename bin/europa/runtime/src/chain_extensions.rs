@@ -6,7 +6,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use codec::Encode;
 
-use frame_support::log::{debug, error, info, trace, warn};
+use frame_support::log::{error, trace};
 use pallet_contracts::chain_extension::{
 	ChainExtension, Environment, Ext, InitState, RetVal, SysConfig, UncheckedFrom,
 };
@@ -73,7 +73,7 @@ impl<C: pallet_contracts::Config> ChainExtension<C> for EuropaExt {
 			}
 			0xfeffff00 => {
 				// refers to https://github.com/patractlabs/PIPs/blob/main/PIPs/pip-102.md
-				// runtime_log::logger_ext!(func_id, env);
+				runtime_log::logger_ext!(func_id, env);
 			}
 			_ => {
 				error!("call an unregistered `func_id`, func_id:{:}", func_id);
