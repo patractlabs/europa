@@ -15,11 +15,10 @@ jobs:
     steps:
       - name: Checkout the source code
         uses: actions/checkout@v1
-      - name: Set nightly toolchain
+      - name: Set stable toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2021-02-10
-          target: wasm32-unknown-unknown
+          toolchain: stable
           override: true
       - name: Cache substrate deps
         uses: actions/cache@v1
