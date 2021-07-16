@@ -471,7 +471,7 @@ where
 					sp_consensus::StorageChanges::Changes(storage_changes) => {
 						self.backend
 							.begin_state_operation(&mut operation.op, BlockId::Hash(parent_hash))?;
-						let (main_sc, child_sc, offchain_sc, tx, _, changes_trie_tx, tx_index) =
+						let (main_sc, child_sc, _offchain_sc, tx, _, changes_trie_tx, tx_index) =
 							storage_changes.into_inner();
 
 						// if self.config.offchain_indexing_api {
@@ -960,24 +960,6 @@ where
 		}
 		trace!("Collected {} uncles", uncles.len());
 		Ok(uncles)
-	}
-
-	/// Prepare in-memory header that is used in execution environment.
-	fn prepare_environment_block(
-		&self,
-		parent: &BlockId<Block>,
-	) -> sp_blockchain::Result<Block::Header> {
-		let parent_header = self.backend.blockchain().expect_header(*parent)?;
-		Ok(<<Block as BlockT>::Header as HeaderT>::new(
-			self.backend
-				.blockchain()
-				.expect_block_number_from_id(parent)?
-				+ One::one(),
-			Default::default(),
-			Default::default(),
-			parent_header.hash(),
-			Default::default(),
-		))
 	}
 }
 
