@@ -222,6 +222,7 @@ fn start_rpc_servers<
 					deny_unsafe(&address, &config.rpc_methods),
 					sc_rpc_server::RpcMiddleware::new(rpc_metrics.clone(), "http"),
 				),
+				None,
 			)
 		})?
 		.map(|s| waiting::HttpServer(Some(s))),
@@ -234,6 +235,7 @@ fn start_rpc_servers<
 					deny_unsafe(&address, &config.rpc_methods),
 					sc_rpc_server::RpcMiddleware::new(rpc_metrics.clone(), "ws"),
 				),
+				None,
 			)
 		})?
 		.map(|s| waiting::WsServer(Some(s))),

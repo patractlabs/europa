@@ -27,7 +27,7 @@ pub use sc_client_db::{
 };
 
 use sc_chain_spec::ChainSpec;
-pub use sc_transaction_pool::txpool::Options as TransactionPoolOptions;
+pub use sc_transaction_pool::Options as TransactionPoolOptions;
 
 pub use sc_network::config::Role;
 pub use sc_service::config::{

@@ -37,6 +37,7 @@ sp-transaction-pool = { version = "3.0.0", git = "https://github.com/paritytech/
 sp-session = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sp-trie = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sp-keystore = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sp-storage = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 
 sc-block-builder = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-client-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
@@ -46,6 +47,7 @@ sc-service = { version = "0.9.0", git = "https://github.com/paritytech/substrate
 sc-rpc-server = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-rpc = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-transaction-pool = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+sc-transaction-pool-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-consensus = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-consensus-manual-seal = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 sc-chain-spec = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }

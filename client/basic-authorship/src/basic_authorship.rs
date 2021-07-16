@@ -36,6 +36,7 @@ use log::{debug, error, info, trace, warn};
 use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider};
 use sc_client_api::backend;
 use sc_telemetry::{telemetry, TelemetryHandle, CONSENSUS_INFO};
+use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
 use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_blockchain::{ApplyExtrinsicFailed::Validity, Error::ApplyExtrinsicFailed, HeaderBackend};
 use sp_consensus::{
@@ -50,7 +51,6 @@ use sp_runtime::{
 	},
 	SaturatedConversion,
 };
-use sp_transaction_pool::{InPoolTransaction, TransactionPool};
 use std::marker::PhantomData;
 
 use prometheus_endpoint::Registry as PrometheusRegistry;
