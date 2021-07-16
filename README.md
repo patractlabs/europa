@@ -42,7 +42,7 @@ In those branch:
     
     More information about this forked substrate refers to [this repo](https://github.com/patractlabs/substrate)
     
-    Currently, the tracked substrate commit is [e447c49537e66d0b6e3a408c6ae5c424c7344a7c](https://github.com/paritytech/substrate/commit/e447c49537e66d0b6e3a408c6ae5c424c7344a7c)
+    Currently, the tracked substrate commit is [deac6324a16fc4128b94a7b4c3826eebcb86917f](https://github.com/paritytech/substrate/commit/deac6324a16fc4128b94a7b4c3826eebcb86917f)
 
 * `substrate/v3.0.0` branch is fixed in v3.0.0 substrate:
 
@@ -52,7 +52,7 @@ In those branch:
 
     > P.S. We do not advice you to use v2.0.0, for we no longer maintain this version.
 
-For master, Europa is tracking [newest substrate (e447c495)](https://github.com/paritytech/substrate/commit/e447c49537e66d0b6e3a408c6ae5c424c7344a7c) now. 
+For master, Europa is tracking [newest substrate (deac6324)](https://github.com/paritytech/substrate/commit/deac6324a16fc4128b94a7b4c3826eebcb86917f) now. 
 Thus, `pallet-contracts` can use the newest features.
 
 ## Extending types
@@ -130,6 +130,12 @@ Europa self modifications:
     }
     ```
 
+- [ ] `pallet-contracts` self features.
+    For now, Europa is tracing the version before 4.0.0-dev(commit [deac6324a16fc4128b94a7b4c3826eebcb86917f](https://github.com/paritytech/substrate/commit/deac6324a16fc4128b94a7b4c3826eebcb86917f)).
+    
+    Thus, the recent feature: "contracts: Allow contracts to dispatch calls into the runtime ([#9276](https://github.com/paritytech/substrate/pull/9276))" can support.
+    This feature and the following modifications will be merged **after substrate release 4.0.0**.
+  
 ChainExtensions features:
 
 - [x] Contract Logger support, refer to this link [PIP-102](https://github.com/patractlabs/PIPs/blob/main/PIPs/pip-102.md)
