@@ -20,6 +20,8 @@ jobs:
         with:
           toolchain: stable
           override: true
+      - name: Install xmllint
+        run: sudo apt install -y clang curl libssl-dev llvm libudev-dev
       - name: Cache substrate deps
         uses: actions/cache@v1
         env:
