@@ -20,15 +20,15 @@ jobs:
         with:
           toolchain: stable
           override: true
-      - name: Install xmllint
+      - name: Install Dependencies
         run: sudo apt install -y clang curl libssl-dev llvm libudev-dev
-      - name: Cache substrate deps
-        uses: actions/cache@v1
-        env:
-          cache-name: substrate-cache
-        with:
-          path: ./target
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./Cargo.lock') }}
+#      - name: Cache substrate deps
+#        uses: actions/cache@v1
+#        env:
+#          cache-name: substrate-cache
+#        with:
+#          path: ./target
+#          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./Cargo.lock') }}
       - name: Init
         run: git submodule update --init --remote
       - name: Build
