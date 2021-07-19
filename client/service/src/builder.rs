@@ -10,6 +10,7 @@ use jsonrpc_pubsub::manager::SubscriptionManager;
 use sc_client_api::{
 	BlockBackend, BlockchainEvents, ExecutorProvider, ProofProvider, StorageProvider, UsageProvider,
 };
+use sc_transaction_pool_api::MaintainedTransactionPool;
 use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_blockchain::{HeaderBackend, HeaderMetadata};
 use sp_consensus::block_validation::Chain;
@@ -17,7 +18,6 @@ use sp_core::traits::{CodeExecutor, SpawnNamed};
 use sp_keystore::{CryptoStore, SyncCryptoStorePtr};
 use sp_runtime::traits::{BlockIdTo, Zero};
 use sp_runtime::{traits::Block as BlockT, BuildStorage};
-use sp_transaction_pool::MaintainedTransactionPool;
 use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 
 use sc_client_api::{
@@ -393,7 +393,7 @@ where
 	let (chain, state, child_state) = {
 		let chain = sc_rpc::chain::new_full(client.clone(), subscriptions.clone());
 		let (state, child_state) =
-			sc_rpc::state::new_full(client.clone(), subscriptions.clone(), deny_unsafe);
+			sc_rpc::state::new_full(client.clone(), subscriptions.clone(), deny_unsafe, None);
 		(chain, state, child_state)
 	};
 

@@ -23,7 +23,7 @@ use std::{cell::RefCell, panic::UnwindSafe, result, sync::Arc};
 
 use sc_client_api::{backend, call_executor::CallExecutor};
 
-use sp_api::{InitializeBlock, ProofRecorder, StorageTransactionCache};
+use sp_api::{ProofRecorder, StorageTransactionCache};
 use sp_core::{
 	traits::{CodeExecutor, SpawnNamed},
 	NativeOrEncoded, NeverNativeValue,
@@ -118,8 +118,6 @@ where
 	}
 
 	fn contextual_call<
-		'a,
-		IB: Fn() -> sp_blockchain::Result<()>,
 		EM: Fn(
 			Result<NativeOrEncoded<R>, Self::Error>,
 			Result<NativeOrEncoded<R>, Self::Error>,
@@ -128,13 +126,11 @@ where
 		NC: FnOnce() -> result::Result<R, sp_api::ApiError> + UnwindSafe,
 	>(
 		&self,
-		initialize_block_fn: IB,
 		at: &BlockId<Block>,
 		method: &str,
 		call_data: &[u8],
 		changes: &RefCell<OverlayedChanges>,
 		storage_transaction_cache: Option<&RefCell<StorageTransactionCache<Block, B::State>>>,
-		initialize_block: InitializeBlock<'a, Block>,
 		execution_manager: ExecutionManager<EM>,
 		native_call: Option<NC>,
 		recorder: &Option<ProofRecorder<Block>>,
@@ -143,20 +139,6 @@ where
 	where
 		ExecutionManager<EM>: Clone,
 	{
-		match initialize_block {
-			InitializeBlock::Do(ref init_block)
-				if init_block
-					.borrow()
-					.as_ref()
-					.map(|id| id != at)
-					.unwrap_or(true) =>
-			{
-				initialize_block_fn()?;
-			}
-			// We don't need to initialize the runtime at a block.
-			_ => {}
-		}
-
 		let changes_trie_state =
 			backend::changes_tries_state_at_block(at, self.backend.changes_trie_storage())?;
 		let mut storage_transaction_cache = storage_transaction_cache.map(|c| c.borrow_mut());
@@ -208,6 +190,7 @@ where
 				let runtime_code = state_runtime_code
 					.runtime_code()
 					.map_err(sp_blockchain::Error::RuntimeCode)?;
+
 				let mut state_machine = StateMachine::new(
 					&state,
 					changes_trie_state,

@@ -87,7 +87,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v1
       - name: Init
-        run: git submodule update --init --remote
+        run: git submodule update --init --recursive
       - name: Build
         run: cargo build --release
 

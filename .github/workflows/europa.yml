@@ -11,7 +11,7 @@ env:
   
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout the source code
         uses: actions/checkout@v1
@@ -21,6 +21,8 @@ jobs:
           toolchain: nightly-2021-02-10
           target: wasm32-unknown-unknown
           override: true
+      - name: Install Dependencies
+        run: sudo apt install -y clang curl libssl-dev llvm libudev-dev
       - name: Cache substrate deps
         uses: actions/cache@v1
         env:
@@ -29,7 +31,7 @@ jobs:
           path: ./target
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./Cargo.lock') }}
       - name: Init
-        run: git submodule update --init --remote
+        run: git submodule update --init --recursive
       - name: Build
         run: cargo build --all -vv
       - name: Run tests

@@ -190,7 +190,7 @@ where
 		block_import: client.clone(),
 		env: proposer,
 		client: client.clone(),
-		pool: transaction_pool.pool().clone(),
+		pool: transaction_pool.clone(),
 		commands_stream,
 		select_chain,
 		consensus_data_provider: None,

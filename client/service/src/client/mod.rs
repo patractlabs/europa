@@ -35,7 +35,7 @@ use sp_blockchain::{
 };
 use sp_consensus::{
 	BlockCheckParams, BlockImportParams, BlockOrigin, BlockStatus, Error as ConsensusError,
-	ForkChoiceStrategy, ImportResult,
+	ForkChoiceStrategy, ImportResult, StateAction,
 };
 use sp_core::{
 	convert_hash,
@@ -103,6 +103,11 @@ impl<H> PrePostHeader<H> {
 			PrePostHeader::Different(_, h) => h,
 		}
 	}
+}
+
+enum PrepareStorageChangesResult<B: backend::Backend<Block>, Block: BlockT> {
+	Discard(ImportResult),
+	Import(Option<sp_consensus::StorageChanges<Block, backend::TransactionFor<B, Block>>>),
 }
 
 /// europa sandbox client
@@ -345,6 +350,9 @@ where
 		operation: &mut ClientImportOperation<Block, B>,
 		import_block: BlockImportParams<Block, backend::TransactionFor<B, Block>>,
 		new_cache: HashMap<CacheKeyId, Vec<u8>>,
+		storage_changes: Option<
+			sp_consensus::StorageChanges<Block, backend::TransactionFor<B, Block>>,
+		>,
 	) -> sp_blockchain::Result<ImportResult>
 	where
 		Self: ProvideRuntimeApi<Block>,
@@ -357,7 +365,6 @@ where
 			justifications,
 			post_digests,
 			body,
-			storage_changes,
 			finalized,
 			auxiliary,
 			fork_choice,
@@ -415,7 +422,9 @@ where
 		import_headers: PrePostHeader<Block::Header>,
 		justification: Option<Justifications>,
 		body: Option<Vec<Block::Extrinsic>>,
-		storage_changes: Option<sp_api::StorageChanges<backend::StateBackendFor<B, Block>, Block>>,
+		storage_changes: Option<
+			sp_consensus::StorageChanges<Block, backend::TransactionFor<B, Block>>,
+		>,
 		new_cache: HashMap<CacheKeyId, Vec<u8>>,
 		finalized: bool,
 		aux: Vec<(Vec<u8>, Option<Vec<u8>>)>,
@@ -458,8 +467,45 @@ where
 
 		let storage_changes = match storage_changes {
 			Some(storage_changes) => {
-				self.backend
-					.begin_state_operation(&mut operation.op, BlockId::Hash(parent_hash))?;
+				let storage_changes = match storage_changes {
+					sp_consensus::StorageChanges::Changes(storage_changes) => {
+						self.backend
+							.begin_state_operation(&mut operation.op, BlockId::Hash(parent_hash))?;
+						let (main_sc, child_sc, _offchain_sc, tx, _, changes_trie_tx, tx_index) =
+							storage_changes.into_inner();
+
+						// if self.config.offchain_indexing_api {
+						// 	operation.op.update_offchain_storage(offchain_sc)?;
+						// }
+
+						operation.op.update_db_storage(tx)?;
+						operation
+							.op
+							.update_storage(main_sc.clone(), child_sc.clone())?;
+						operation.op.update_transaction_index(tx_index)?;
+
+						if let Some(changes_trie_transaction) = changes_trie_tx {
+							operation.op.update_changes_trie(changes_trie_transaction)?;
+						}
+
+						Some((main_sc, child_sc))
+					}
+					sp_consensus::StorageChanges::Import(changes) => {
+						let storage = sp_storage::Storage {
+							top: changes.state.into_iter().collect(),
+							children_default: Default::default(),
+						};
+
+						let state_root = operation.op.reset_storage(storage)?;
+						if state_root != *import_headers.post().state_root() {
+							// State root mismatch when importing state. This should not happen in safe fast sync mode,
+							// but may happen in unsafe mode.
+							warn!("Error imporing state: State root mismatch.");
+							return Err(Error::InvalidStateRoot);
+						}
+						None
+					}
+				};
 
 				// ensure parent block is finalized to maintain invariant that
 				// finality is called sequentially.
@@ -474,21 +520,7 @@ where
 				}
 
 				operation.op.update_cache(new_cache);
-
-				let (main_sc, child_sc, _, tx, _, changes_trie_tx, tx_index) =
-					storage_changes.into_inner();
-
-				operation.op.update_db_storage(tx)?;
-				operation
-					.op
-					.update_storage(main_sc.clone(), child_sc.clone())?;
-				operation.op.update_transaction_index(tx_index)?;
-
-				if let Some(changes_trie_transaction) = changes_trie_tx {
-					operation.op.update_changes_trie(changes_trie_transaction)?;
-				}
-
-				Some((main_sc, child_sc))
+				storage_changes
 			}
 			None => None,
 		};
@@ -561,7 +593,7 @@ where
 	fn prepare_block_storage_changes(
 		&self,
 		import_block: &mut BlockImportParams<Block, backend::TransactionFor<B, Block>>,
-	) -> sp_blockchain::Result<Option<ImportResult>>
+	) -> sp_blockchain::Result<PrepareStorageChangesResult<B, Block>>
 	where
 		Self: ProvideRuntimeApi<Block>,
 		<Self as ProvideRuntimeApi<Block>>::Api:
@@ -569,83 +601,43 @@ where
 	{
 		let parent_hash = import_block.header.parent_hash();
 		let at = BlockId::Hash(*parent_hash);
-		let enact_state = match self.block_status(&at)? {
-			BlockStatus::Unknown => return Ok(Some(ImportResult::UnknownParent)),
-			BlockStatus::InChainWithState | BlockStatus::Queued => true,
-			BlockStatus::InChainPruned if import_block.allow_missing_state => false,
-			BlockStatus::InChainPruned => return Ok(Some(ImportResult::MissingState)),
-			BlockStatus::KnownBad => return Ok(Some(ImportResult::KnownBad)),
+		let state_action = std::mem::replace(&mut import_block.state_action, StateAction::Skip);
+		let (enact_state, storage_changes) = match (self.block_status(&at)?, state_action) {
+			(BlockStatus::Unknown, _) => {
+				return Ok(PrepareStorageChangesResult::Discard(
+					ImportResult::UnknownParent,
+				))
+			}
+			(BlockStatus::KnownBad, _) => {
+				return Ok(PrepareStorageChangesResult::Discard(ImportResult::KnownBad))
+			}
+			(_, StateAction::Skip) => (false, None),
+			(
+				BlockStatus::InChainPruned,
+				StateAction::ApplyChanges(sp_consensus::StorageChanges::Changes(_)),
+			) => {
+				return Ok(PrepareStorageChangesResult::Discard(
+					ImportResult::MissingState,
+				))
+			}
+			(BlockStatus::InChainPruned, StateAction::Execute) => {
+				return Ok(PrepareStorageChangesResult::Discard(
+					ImportResult::MissingState,
+				))
+			}
+			(BlockStatus::InChainPruned, StateAction::ExecuteIfPossible) => (false, None),
+			(_, StateAction::Execute) => (true, None),
+			(_, StateAction::ExecuteIfPossible) => (true, None),
+			(_, StateAction::ApplyChanges(changes)) => (true, Some(changes)),
 		};
-		//
-		// let runtime_api = self.runtime_api();
-		// let execution_context = if import_block.origin == BlockOrigin::NetworkInitialSync {
-		// 	ExecutionContext::Syncing
-		// } else {
-		// 	ExecutionContext::Importing
-		// };
-		// let header = import_block.header.clone();
-		// let exec_func = |body: &Vec<Block::Extrinsic>| {
-		// 	// TODO exec ?
-		// 	let targets = "pallet,frame,state";
-		// 	let block_subscriber = BlockSubscriber::new(targets);
-		// 	let dispatch = Dispatch::new(block_subscriber);
-		// 	{
-		// 		let dispatcher_span = tracing::debug_span!(
-		// 				target: "state_tracing",
-		// 				"execute_block",
-		// 				extrinsics_len = body.len(),
-		// 			);
-		// 		let _guard = dispatcher_span.enter();
-		// 		if let Err(e) = dispatcher::with_default(&dispatch, || {
-		// 			let span = tracing::info_span!(
-		// 					target: "block_trace",
-		// 					"trace_block",
-		// 				);
-		// 			let _enter = span.enter();
-		// 			runtime_api.execute_block_with_context(
-		// 				&at,
-		// 				execution_context,
-		// 				Block::new(header, body.clone()),
-		// 			)
-		// 		}) {
-		// 			println!("fxck!!!!");
-		// 		}
-		// 	}
-		// 	let block_subscriber = dispatch.downcast_ref::<BlockSubscriber>()
-		// 		.expect("");
-		// 	// .ok_or(Error::Dispatch(
-		// 	// 	"Cannot downcast Dispatch to BlockSubscriber after tracing block".to_string()
-		// 	// ))?;
-		// 	let spans: Vec<_> = block_subscriber.spans
-		// 		.lock()
-		// 		.drain()
-		// 		// Patch wasm identifiers
-		// 		// .filter_map(|(_, s)| patch_and_filter(SpanDatum::from(s), targets))
-		// 		.collect();
-		// 	let events: Vec<_> = block_subscriber.events
-		// 		.lock()
-		// 		.drain(..)
-		// 		// .filter(|e| self.storage_keys
-		// 		// 	.as_ref()
-		// 		// 	.map(|keys| event_key_filter(e, keys))
-		// 		// 	.unwrap_or(false)
-		// 		// )
-		// 		// .map(|s| s.into())
-		// 		.collect();
-		// 	info!(target: "state_tracing", "Captured {} spans and {} events", spans.len(), events.len());
-		// };
 
-		match (
-			enact_state,
-			&mut import_block.storage_changes,
-			&mut import_block.body,
-		) {
+		let storage_changes = match (enact_state, storage_changes, &import_block.body) {
 			// We have storage changes and should enact the state, so we don't need to do anything
 			// here
-			(true, Some(_), _) => {}
+			(true, changes @ Some(_), _) => changes,
 			// We should enact state, but don't have any storage changes, so we need to execute the
 			// block.
-			(true, ref mut storage_changes @ None, Some(ref body)) => {
+			(true, None, Some(ref body)) => {
 				let runtime_api = self.runtime_api();
 				let execution_context = if import_block.origin == BlockOrigin::NetworkInitialSync {
 					ExecutionContext::Syncing
@@ -670,19 +662,16 @@ where
 				if import_block.header.state_root() != &gen_storage_changes.transaction_storage_root
 				{
 					return Err(Error::InvalidStateRoot);
-				} else {
-					**storage_changes = Some(gen_storage_changes);
 				}
+				Some(sp_consensus::StorageChanges::Changes(gen_storage_changes))
 			}
 			// No block body, no storage changes
-			(true, None, None) => {}
+			(true, None, None) => None,
 			// We should not enact the state, so we set the storage changes to `None`.
-			(false, changes, _) => {
-				changes.take();
-			}
+			(false, _, _) => None,
 		};
 
-		Ok(None)
+		Ok(PrepareStorageChangesResult::Import(storage_changes))
 	}
 
 	fn apply_finality_with_block_hash(
@@ -972,24 +961,6 @@ where
 		trace!("Collected {} uncles", uncles.len());
 		Ok(uncles)
 	}
-
-	/// Prepare in-memory header that is used in execution environment.
-	fn prepare_environment_block(
-		&self,
-		parent: &BlockId<Block>,
-	) -> sp_blockchain::Result<Block::Header> {
-		let parent_header = self.backend.blockchain().expect_header(*parent)?;
-		Ok(<<Block as BlockT>::Header as HeaderT>::new(
-			self.backend
-				.blockchain()
-				.expect_block_number_from_id(parent)?
-				+ One::one(),
-			Default::default(),
-			Default::default(),
-			parent_header.hash(),
-			Default::default(),
-		))
-	}
 }
 
 impl<B, S, E, Block, RA> UsageProvider<Block> for Client<B, S, E, Block, RA>
@@ -1057,6 +1028,33 @@ where
 		_storage_key: Option<&PrefixedStorageKey>,
 		_key: &StorageKey,
 	) -> sp_blockchain::Result<ChangesProof<Block::Header>> {
+		Err(sp_blockchain::Error::NotAvailableOnLightClient)
+	}
+
+	fn read_proof_collection(
+		&self,
+		_: &BlockId<Block>,
+		_: &[u8],
+		_: usize,
+	) -> blockchain::Result<(StorageProof, u32)> {
+		Err(sp_blockchain::Error::NotAvailableOnLightClient)
+	}
+
+	fn storage_collection(
+		&self,
+		_: &BlockId<Block>,
+		_: &[u8],
+		_: usize,
+	) -> blockchain::Result<Vec<(Vec<u8>, Vec<u8>)>> {
+		Err(sp_blockchain::Error::NotAvailableOnLightClient)
+	}
+
+	fn verify_range_proof(
+		&self,
+		_: Block::Hash,
+		_: StorageProof,
+		_: &[u8],
+	) -> blockchain::Result<(Vec<(Vec<u8>, Vec<u8>)>, bool)> {
 		Err(sp_blockchain::Error::NotAvailableOnLightClient)
 	}
 }
@@ -1171,6 +1169,21 @@ where
 			.map(|key| key.0.clone())
 			.unwrap_or_else(Vec::new);
 		Ok(KeyIterator::new(state, prefix, start_key))
+	}
+
+	fn child_storage_keys_iter<'a>(
+		&self,
+		id: &BlockId<Block>,
+		child_info: ChildInfo,
+		prefix: Option<&'a StorageKey>,
+		start_key: Option<&StorageKey>,
+	) -> sp_blockchain::Result<KeyIterator<'a, B::State, Block>> {
+		let state = self.state_at(id)?;
+		let start_key = start_key
+			.or(prefix)
+			.map(|key| key.0.clone())
+			.unwrap_or_else(Vec::new);
+		Ok(KeyIterator::new_child(state, child_info, prefix, start_key))
 	}
 
 	fn storage(
@@ -1503,12 +1516,10 @@ where
 		'a,
 		R: Encode + Decode + PartialEq,
 		NC: FnOnce() -> result::Result<R, sp_api::ApiError> + UnwindSafe,
-		C: CoreApi<Block>,
 	>(
 		&self,
-		params: CallApiAtParams<'a, Block, C, NC, B::State>,
+		params: CallApiAtParams<'a, Block, NC, B::State>,
 	) -> Result<NativeOrEncoded<R>, sp_api::ApiError> {
-		let core_api = params.core_api;
 		let at = params.at;
 
 		let (manager, mut extensions) = self
@@ -1520,18 +1531,12 @@ where
 		));
 
 		self.executor
-			.contextual_call::<_, fn(_, _) -> _, _, _>(
-				|| {
-					core_api
-						.initialize_block(at, &self.prepare_environment_block(at)?)
-						.map_err(Error::RuntimeApiError)
-				},
+			.contextual_call::<fn(_, _) -> _, _, _>(
 				at,
 				params.function,
 				&params.arguments,
 				params.overlayed_changes,
 				Some(params.storage_transaction_cache),
-				params.initialize_block,
 				manager,
 				params.native_call,
 				params.recorder,
@@ -1581,20 +1586,23 @@ where
 		let span = tracing::span!(tracing::Level::DEBUG, "import_block");
 		let _enter = span.enter();
 
-		if let Some(res) = self
+		let storage_changes = match self
 			.prepare_block_storage_changes(&mut import_block)
 			.map_err(|e| {
 				warn!("Block prepare storage changes error:\n{:?}", e);
 				ConsensusError::ClientImport(e.to_string())
 			})? {
-			return Ok(res);
-		}
+			PrepareStorageChangesResult::Discard(res) => return Ok(res),
+			PrepareStorageChangesResult::Import(storage_changes) => storage_changes,
+		};
 
-		self.lock_import_and_run(|operation| self.apply_block(operation, import_block, new_cache))
-			.map_err(|e| {
-				warn!("Block import error:\n{:?}", e);
-				ConsensusError::ClientImport(e.to_string()).into()
-			})
+		self.lock_import_and_run(|operation| {
+			self.apply_block(operation, import_block, new_cache, storage_changes)
+		})
+		.map_err(|e| {
+			warn!("Block import error:\n{:?}", e);
+			ConsensusError::ClientImport(e.to_string()).into()
+		})
 	}
 
 	/// Check block preconditions.
