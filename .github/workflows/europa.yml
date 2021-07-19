@@ -15,10 +15,11 @@ jobs:
     steps:
       - name: Checkout the source code
         uses: actions/checkout@v1
-      - name: Set stable toolchain
+      - name: Set nightly toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly-2021-02-10
+          target: wasm32-unknown-unknown
           override: true
       - name: Install Dependencies
         run: sudo apt install -y clang curl libssl-dev llvm libudev-dev
