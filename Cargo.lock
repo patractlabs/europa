@@ -1692,7 +1692,7 @@ checksum = "68b91989ae21441195d7d9b9993a2f9295c7e1a8c96255d8b729accddc124797"
 
 [[package]]
 name = "ep-extensions"
-version = "0.3.2"
+version = "0.3.0"
 dependencies = [
  "sp-externalities",
 ]
