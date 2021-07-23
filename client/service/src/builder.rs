@@ -215,7 +215,7 @@ where
 	))
 }
 
-/// Parameters to pass into `build`.
+/// Parameters to pass into `build`
 pub struct SpawnTasksParams<'a, TBl: BlockT, TCl, TExPool, TRpc, Backend, S> {
 	/// The service configuration.
 	pub config: Configuration,
@@ -235,7 +235,7 @@ pub struct SpawnTasksParams<'a, TBl: BlockT, TCl, TExPool, TRpc, Backend, S> {
 	/// A Sender for RPC requests.
 	pub system_rpc_tx: TracingUnboundedSender<sc_rpc::system::Request<TBl>>,
 	/// rpc instance for europa inner rpc
-	pub europa_rpc: Option<ec_rpc::Europa<TCl, TBl, Backend, S>>,
+	pub europa_rpc: ec_rpc::Europa<TCl, TBl, Backend, S>,
 }
 
 /// Spawn the tasks that are required to run a node.
@@ -274,12 +274,12 @@ where
 		config,
 		task_manager,
 		client,
-		backend: _,
 		keystore,
 		transaction_pool,
 		rpc_extensions_builder,
 		system_rpc_tx,
 		europa_rpc,
+		..
 	} = params;
 
 	let chain_info = client.usage_info().chain;
@@ -353,7 +353,7 @@ fn gen_handler<TBl, TBackend, TStateKv, TExPool, TRpc, TCl>(
 	keystore: SyncCryptoStorePtr,
 	rpc_extensions_builder: &(dyn RpcExtensionBuilder<Output = TRpc> + Send),
 	system_rpc_tx: TracingUnboundedSender<sc_rpc::system::Request<TBl>>,
-	europa_rpc: Option<ec_rpc::Europa<TCl, TBl, TBackend, TStateKv>>,
+	europa_rpc: ec_rpc::Europa<TCl, TBl, TBackend, TStateKv>,
 ) -> sc_rpc_server::RpcHandler<sc_rpc::Metadata>
 where
 	TBl: BlockT + for<'de> sp_runtime::Deserialize<'de>,
@@ -406,32 +406,18 @@ where
 	);
 	let system = system::System::new(system_info, system_rpc_tx, deny_unsafe);
 
-	if let Some(europa_rpc) = europa_rpc {
-		sc_rpc_server::rpc_handler(
-			(
-				state::StateApi::to_delegate(state),
-				state::ChildStateApi::to_delegate(child_state),
-				chain::ChainApi::to_delegate(chain),
-				author::AuthorApi::to_delegate(author),
-				system::SystemApi::to_delegate(system),
-				ec_rpc::EuropaApi::to_delegate(europa_rpc), // add ec_rpc
-				rpc_extensions_builder.build(deny_unsafe, task_executor),
-			),
-			rpc_middleware,
-		)
-	} else {
-		sc_rpc_server::rpc_handler(
-			(
-				state::StateApi::to_delegate(state),
-				state::ChildStateApi::to_delegate(child_state),
-				chain::ChainApi::to_delegate(chain),
-				author::AuthorApi::to_delegate(author),
-				system::SystemApi::to_delegate(system),
-				rpc_extensions_builder.build(deny_unsafe, task_executor),
-			),
-			rpc_middleware,
-		)
-	}
+	sc_rpc_server::rpc_handler(
+		(
+			state::StateApi::to_delegate(state),
+			state::ChildStateApi::to_delegate(child_state),
+			chain::ChainApi::to_delegate(chain),
+			author::AuthorApi::to_delegate(author),
+			system::SystemApi::to_delegate(system),
+			ec_rpc::EuropaApi::to_delegate(europa_rpc), // add ec_rpc
+			rpc_extensions_builder.build(deny_unsafe, task_executor),
+		),
+		rpc_middleware,
+	)
 }
 
 pub fn build_mock_network<TBl>(

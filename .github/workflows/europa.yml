@@ -21,8 +21,6 @@ jobs:
           toolchain: nightly-2021-02-10
           target: wasm32-unknown-unknown
           override: true
-      - name: Install Dependencies
-        run: sudo apt install -y clang curl libssl-dev llvm libudev-dev
       - name: Cache substrate deps
         uses: actions/cache@v1
         env:

@@ -130,7 +130,7 @@ where
 	let rpc_extensions_builder = rpc_builder(components);
 	let system_rpc_tx = build_mock_network::<TBl>(task_manager.spawn_handle())?;
 
-	let (europa_rpc, europa_rpc_tx) = ec_rpc::Europa::new(client.clone(), backend.clone());
+	let (europa_rpc, europa_rpc_rx) = ec_rpc::Europa::new(client.clone(), backend.clone());
 
 	spawn_tasks(SpawnTasksParams {
 		client: client.clone(),
@@ -140,8 +140,8 @@ where
 		rpc_extensions_builder,
 		backend,
 		system_rpc_tx,
-		europa_rpc: Some(europa_rpc),
 		config,
+		europa_rpc,
 	})?;
 
 	let mut proposer = ec_basic_authorship::ProposerFactory::new(
@@ -168,7 +168,7 @@ where
 			parent_hash: None,
 			sender: None,
 		});
-	let europa_rpc_stream = europa_rpc_tx
+	let europa_rpc_stream = europa_rpc_rx
 		.map(|message| match message {
 			ec_rpc::Message::Forward(n) => {
 				use sp_runtime::SaturatedConversion;
