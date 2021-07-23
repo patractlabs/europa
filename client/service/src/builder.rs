@@ -215,6 +215,7 @@ where
 	))
 }
 
+/// Parameters to pass into `build`
 pub struct SpawnTasksParams<'a, TBl: BlockT, TCl, TExPool, TRpc, Backend, S> {
 	/// The service configuration.
 	pub config: Configuration,
