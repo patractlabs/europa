@@ -1756,14 +1756,14 @@ dependencies = [
 
 [[package]]
 name = "europa"
-version = "0.3.2"
+version = "0.3.4"
 dependencies = [
  "europa-cli",
 ]
 
 [[package]]
 name = "europa-cli"
-version = "0.3.2"
+version = "0.3.4"
 dependencies = [
  "ec-cli",
  "ec-service",
@@ -1787,7 +1787,7 @@ dependencies = [
 
 [[package]]
 name = "europa-executor"
-version = "0.3.2"
+version = "0.3.4"
 dependencies = [
  "ec-executor",
  "europa-runtime",
@@ -1795,7 +1795,7 @@ dependencies = [
 
 [[package]]
 name = "europa-rpc"
-version = "0.3.2"
+version = "0.3.4"
 dependencies = [
  "ec-client-api",
  "europa-runtime",
@@ -1828,7 +1828,7 @@ dependencies = [
 
 [[package]]
 name = "europa-runtime"
-version = "0.3.2"
+version = "0.3.4"
 dependencies = [
  "frame-executive",
  "frame-support",
