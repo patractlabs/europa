@@ -1,6 +1,6 @@
 [package]
 name = "europa-runtime"
-version = "0.3.4"
+version = "0.3.5"
 authors = ["patract labs <https://github.com/patractlabs>"]
 edition = "2018"
 
