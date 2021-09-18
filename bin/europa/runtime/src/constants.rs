@@ -11,15 +11,11 @@ pub mod currency {
 	pub const DOTS: Balance = 1_000_000_000_000; // old dot, one Dot is 100 Dot(new) now
 	pub const DOLLARS: Balance = DOTS / 100; // 10_000_000_000 // one Dollar is 1 Dot(new) now
 	pub const CENTS: Balance = DOLLARS / 100; // 100_000_000 // one Cent is 0.01 Dot(new) now
-	pub const MILLICENTS: Balance = CENTS / 1_000; // 100_000 // one Millicent is 0.00001 Dot(new) now
+	// pub const MILLICENTS: Balance = CENTS / 1_000; // 100_000 // one Millicent is 0.00001 Dot(new) now
 
-	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 20 * DOLLARS + (bytes as Balance) * 100 * MILLICENTS
-	}
-
-	pub const fn europa_deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 10 * CENTS + (bytes as Balance) * 10 * MILLICENTS
-	}
+	// pub const fn deposit(items: u32, bytes: u32) -> Balance {
+	// 	items as Balance * 20 * DOLLARS + (bytes as Balance) * 100 * MILLICENTS
+	// }
 }
 
 /// Fee-related.
