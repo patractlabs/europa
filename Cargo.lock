@@ -1756,14 +1756,14 @@ dependencies = [
 
 [[package]]
 name = "europa"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "europa-cli",
 ]
 
 [[package]]
 name = "europa-cli"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "ec-cli",
  "ec-service",
@@ -1787,7 +1787,7 @@ dependencies = [
 
 [[package]]
 name = "europa-executor"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "ec-executor",
  "europa-runtime",
@@ -1795,7 +1795,7 @@ dependencies = [
 
 [[package]]
 name = "europa-rpc"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "ec-client-api",
  "europa-runtime",
@@ -1828,7 +1828,7 @@ dependencies = [
 
 [[package]]
 name = "europa-runtime"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "frame-executive",
  "frame-support",
@@ -4330,11 +4330,13 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
+ "libsecp256k1",
  "log",
  "pallet-contracts-primitives",
  "pallet-contracts-proc-macro",
  "parity-scale-codec",
  "pwasm-utils 0.18.1 (git+https://github.com/patractlabs/wasm-utils?branch=v0.18.1)",
+ "rand 0.7.3",
  "serde",
  "serde_json",
  "smallvec 1.6.1",
