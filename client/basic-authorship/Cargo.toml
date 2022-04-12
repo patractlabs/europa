@@ -1,8 +1,8 @@
 [package]
 name = "ec-basic-authorship"
-version = "0.9.0"
-authors = ["Parity Technologies <admin@parity.io>", "patract labs <https://github.com/patractlabs>"]
-edition = "2018"
+version = "0.10.0-dev"
+authors = ["Parity Technologies <admin@parity.io>", "Patract Labs <https://github.com/patractlabs>"]
+edition = "2021"
 license = "GPL-3.0-or-later WITH Classpath-exception-2.0"
 description = "Basic implementation of block-authoring logic."
 readme = "README.md"
@@ -11,38 +11,40 @@ readme = "README.md"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "2.0.0" }
-futures = "0.3.9"
-futures-timer = "3.0.1"
-log = "0.4.8"
-
-tracing = "0.1.25"
-tracing-subscriber = "0.2.15"
-parking_lot = "0.10.0"
-
+futures = "0.3"
+futures-timer = "3.0"
+log = "0.4"
+nom = "6.1.2"
+parking_lot = "0.12"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+tracing = "0.1.25"
+tracing-subscriber = "0.2.15"
 
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-runtime = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-core = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-blockchain = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-client-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-consensus = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-inherents = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-telemetry = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-transaction-pool-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-block-builder = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-proposer-metrics = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+# Parity
+codec = { package = "parity-scale-codec", version = "3.1" }
 
-sp-tracing = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-tracing = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-nom = "6.1.2"
+# Substrate
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-proposer-metrics = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 
+# Europa
 ec-client-api = { path = "../api" }
 
 [dev-dependencies]
-sc-transaction-pool = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-substrate-test-runtime-client = { version = "2.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
 hex = "0.4"
+# Substrate
+sc-transaction-pool = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+substrate-test-runtime-client = { version = "2.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }

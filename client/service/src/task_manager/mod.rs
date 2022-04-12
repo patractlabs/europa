@@ -3,7 +3,7 @@
 // Copyright 2020 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
-// Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
+// Copyright 2020-2022 Patract Labs. Licensed under GPL-3.0.
 
 // Substrate is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

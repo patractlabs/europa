@@ -1,44 +1,44 @@
 [package]
 name = "europa-rpc"
-version = "0.3.6"
-authors = ["Jupiter <https://github.com/patractlabs/jupiter>"]
-edition = "2018"
+version = "0.4.0-dev"
+authors = ["Patract Labs <https://github.com/patractlabs>"]
+edition = "2021"
+license = "GPL-3.0"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-jsonrpc-core = "15.1.0"
-jsonrpc-core-client = "15"
-jsonrpc-derive = "15"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1.0" }
 
-sp-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-core = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-rpc = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-runtime = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-blockchain = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-block-builder = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-consensus = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+# Parity
+jsonrpc-core = "18.0"
+jsonrpc-derive = "18.0"
 
-sc-client-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-rpc = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-rpc-api = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-consensus-epochs = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-keystore = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-transaction-pool-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+# Substrate
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-consensus-epochs = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+## Substrate FRAME
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+pallet-contracts = { path = "../../../vendor/substrate/frame/contracts", features = ["unstable-interface", "europa-io"] }
+pallet-contracts-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+pallet-contracts-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+pallet-contracts-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 
-frame-system = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-
-substrate-frame-rpc-system = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-pallet-transaction-payment-rpc = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-
-pallet-contracts-primitives = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-pallet-contracts-rpc-runtime-api = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-pallet-contracts-rpc = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-# vendor
-pallet-contracts = { path = "../../../vendor/substrate/frame/contracts", features = ["unstable-interface", "europa-io"]  }
-
+# Europa
 ec-client-api = { path = "../../../client/api" }
 europa-runtime = { path = "../runtime" }

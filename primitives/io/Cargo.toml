@@ -1,15 +1,19 @@
 [package]
 name = "ep-io"
-version = "0.3.0"
-authors = ["patract labs <https://github.com/patractlabs>"]
-edition = "2018"
+version = "0.4.0-dev"
+authors = ["Patract Labs <https://github.com/patractlabs>"]
+edition = "2021"
+license = "GPL-3.0"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-# Substrate primitives
-sp-runtime-interface = { git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-externalities = { version = "0.9.0", git = "https://github.com/paritytech/substrate.git", branch = "master" }
+# Substrate
+sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 
+# Europa
 ep-extensions = { path = "../extensions" }
 
 [features]

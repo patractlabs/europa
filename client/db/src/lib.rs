@@ -1,18 +1,17 @@
 // This file is part of europa
 
-// Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
+// Copyright 2020-2022 Patract Labs. Licensed under GPL-3.0.
 
 use std::sync::Arc;
 
 use kvdb::{DBTransaction, KeyValueDB};
 
+use sc_client_db::{DatabaseSettings, DatabaseSettingsSrc};
 use sp_database::error;
 use sp_runtime::{
 	traits::{Block as BlockT, NumberFor},
 	SaturatedConversion,
 };
-
-use sc_client_db::{DatabaseSettings, DatabaseSettingsSrc};
 
 const SEPARATOR: u8 = b'|';
 const DELETE_HOLDER: &'static [u8] = b":DELETE:";

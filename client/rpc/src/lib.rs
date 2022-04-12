@@ -1,6 +1,6 @@
 // This file is part of europa
 
-// Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
+// Copyright 2020-2022 Patract Labs. Licensed under GPL-3.0.
 
 mod error;
 
@@ -64,7 +64,7 @@ impl<C, B: BlockT, Backend, S> Europa<C, B, Backend, S> {
 	}
 }
 
-#[rpc]
+#[rpc(server)]
 pub trait EuropaApi<B>
 where
 	B: BlockT,

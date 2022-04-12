@@ -1,23 +1,27 @@
 [package]
 name = "ec-client-db"
-version = "0.3.2"
-authors = ["patract labs <https://github.com/patractlabs>"]
-edition = "2018"
+version = "0.4.0-dev"
+authors = ["Patract Labs <https://github.com/patractlabs>"]
+edition = "2021"
+license = "GPL-3.0"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-kvdb = "0.10.0"
-kvdb-rocksdb = { version = "0.12.0" }
 log = "0.4"
 
-sp-std = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-runtime = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-database = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-blockchain = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+# Parity
+kvdb = "0.11"
+kvdb-rocksdb = "0.15.2"
 
+# Substrate
+sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", features = ["with-kvdb-rocksdb", "with-parity-db"] }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-database = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 
-sc-client-db = { version = "0.9.0", features = [ "with-kvdb-rocksdb", "with-parity-db" ], git = "https://github.com/paritytech/substrate", branch = "master" }
-
-ep-extensions = { path = "../../primitives/extensions" }
-
+# Europa
 ec-client-api = { path = "../api" }
-
+ep-extensions = { path = "../../primitives/extensions" }

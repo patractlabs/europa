@@ -1,8 +1,8 @@
 // This file is part of europa
 
-// Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
+// Copyright 2020-2022 Patract Labs. Licensed under GPL-3.0.
 
-//! Wasmtime Enviroment
+//! Wasmtime Environment
 use super::{util, Memory};
 use crate::{Error, HostFuncType};
 use sp_std::collections::btree_map::BTreeMap;

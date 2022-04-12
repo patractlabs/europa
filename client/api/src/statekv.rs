@@ -1,10 +1,11 @@
 // This file is part of europa
 
-// Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
+// Copyright 2020-2022 Patract Labs. Licensed under GPL-3.0.
+
+use std::sync::Arc;
 
 use sp_database::error;
 use sp_runtime::traits::{Block as BlockT, NumberFor};
-use std::sync::Arc;
 
 pub trait StateKv<Block: BlockT>: Send + Sync {
 	/// The transaction type used by the StateKv.

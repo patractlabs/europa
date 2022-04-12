@@ -1,17 +1,21 @@
 [package]
 name = "ec-executor"
-version = "0.3.2"
-authors = ["patract labs <https://github.com/patractlabs>"]
-edition = "2018"
+version = "0.4.0-dev"
+authors = ["Patract Labs <https://github.com/patractlabs>"]
+edition = "2021"
+license = "GPL-3.0"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-log = "0.4.8"
-codec = { package = "parity-scale-codec", version = "2.0.0" }
+log = "0.4"
 
-sp-version = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sp-core = { version = "3.0.0", git = "https://github.com/paritytech/substrate", branch = "master" }
+# Parity
+codec = { package = "parity-scale-codec", version = "3.1" }
 
-sc-executor = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-sc-executor-common = { version = "0.9.0", git = "https://github.com/paritytech/substrate", branch = "master" }
-
-[dev-dependencies]
+# Substrate
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }

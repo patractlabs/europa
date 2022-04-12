@@ -3,7 +3,7 @@
 // Copyright (C) 2018-2020 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-// Copyright 2020-2021 patract labs. Licensed under GPL-3.0.
+// Copyright 2020-2022 Patract Labs. Licensed under GPL-3.0.
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
