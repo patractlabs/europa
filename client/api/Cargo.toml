@@ -10,5 +10,5 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Substrate
-sp-database = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-database = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }

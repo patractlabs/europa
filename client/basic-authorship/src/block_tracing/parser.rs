@@ -1,6 +1,7 @@
 // This file is part of europa
-
+//
 // Copyright 2020-2022 Patract Labs. Licensed under GPL-3.0.
+
 //! `TraceEvent` parser
 use super::*;
 
@@ -24,10 +25,7 @@ pub struct Message {
 /// default `Message` if parse failed.
 impl Default for Message {
 	fn default() -> Self {
-		Message {
-			id: 0,
-			event: Event::NotConcerned,
-		}
+		Message { id: 0, event: Event::NotConcerned }
 	}
 }
 
@@ -69,10 +67,8 @@ fn parse_event(input: &str) -> IResult<&str, Event> {
 
 /// event parse for `Event::PutChild`
 fn parse_put_child(input: &str) -> IResult<&str, Event> {
-	let arg = preceded(
-		tag("PutChild"),
-		delimited(char('('), bytes::complete::is_not(")"), char(')')),
-	);
+	let arg =
+		preceded(tag("PutChild"), delimited(char('('), bytes::complete::is_not(")"), char(')')));
 
 	tuple((arg, character::complete::multispace1, parse_k_equ_opt_v))(input).map(
 		|(left, (arg, _, (key, value)))| {
@@ -90,34 +86,19 @@ fn parse_put_child(input: &str) -> IResult<&str, Event> {
 
 /// event parse for `Event::KillChild`
 fn parse_kill_child(input: &str) -> IResult<&str, Event> {
-	preceded(
-		tag("KillChild"),
-		delimited(char('('), bytes::complete::is_not(")"), char(')')),
-	)(input)
-	.map(|(left, arg)| {
-		(
-			left,
-			Event::KillChild(KillChild {
-				child_id: arg.as_bytes().to_vec(),
-			}),
-		)
-	})
+	preceded(tag("KillChild"), delimited(char('('), bytes::complete::is_not(")"), char(')')))(input)
+		.map(|(left, arg)| {
+			(left, Event::KillChild(KillChild { child_id: arg.as_bytes().to_vec() }))
+		})
 }
 
 /// event parse for `Event::ClearPrefix`
 fn parse_clear_prefix(input: &str) -> IResult<&str, Event> {
-	tuple((
-		tag("ClearPrefix"),
-		character::complete::multispace1,
-		character::complete::hex_digit1,
-	))(input)
+	tuple((tag("ClearPrefix"), character::complete::multispace1, character::complete::hex_digit1))(
+		input,
+	)
 	.map(|(left, (_, _, value))| {
-		(
-			left,
-			Event::ClearPrefix(ClearPrefix {
-				prefix: value.as_bytes().to_vec(),
-			}),
-		)
+		(left, Event::ClearPrefix(ClearPrefix { prefix: value.as_bytes().to_vec() }))
 	})
 }
 
@@ -128,20 +109,17 @@ fn parse_clear_child_prefix(input: &str) -> IResult<&str, Event> {
 		delimited(char('('), bytes::complete::is_not(")"), char(')')),
 	);
 
-	tuple((
-		arg,
-		character::complete::multispace1,
-		character::complete::hex_digit1,
-	))(input)
-	.map(|(left, (arg, _, value))| {
-		(
-			left,
-			Event::ClearChildPrefix(ClearChildPrefix {
-				child_id: arg.as_bytes().to_vec(),
-				prefix: value.as_bytes().to_vec(),
-			}),
-		)
-	})
+	tuple((arg, character::complete::multispace1, character::complete::hex_digit1))(input).map(
+		|(left, (arg, _, value))| {
+			(
+				left,
+				Event::ClearChildPrefix(ClearChildPrefix {
+					child_id: arg.as_bytes().to_vec(),
+					prefix: value.as_bytes().to_vec(),
+				}),
+			)
+		},
+	)
 }
 
 /// event parse for `Event::Append`
@@ -209,9 +187,7 @@ fn parse_some(input: &str) -> IResult<&str, OptVal> {
 		tag("Some"),
 		delimited(
 			char('('),
-			map(bytes::complete::is_not(")"), |v: &str| {
-				OptVal(Some(v.as_bytes().to_vec()))
-			}),
+			map(bytes::complete::is_not(")"), |v: &str| OptVal(Some(v.as_bytes().to_vec()))),
 			char(')'),
 		),
 	)(input)
@@ -239,12 +215,12 @@ impl From<TraceEvent> for Message {
 								value: parse_opt_val(value),
 							}),
 						}
-					}
+					},
 
 					// NB: ignore other methods
 					_ => Self::default(),
 				}
-			}
+			},
 
 			None => {
 				// Other Event
@@ -252,7 +228,7 @@ impl From<TraceEvent> for Message {
 					Some(value) => parse_message(value).unwrap_or_default(),
 					None => Self::default(),
 				}
-			}
+			},
 		}
 	}
 }
@@ -261,8 +237,10 @@ impl From<TraceEvent> for Message {
 mod tests {
 	// use super::super::*;
 	// use super::*;
-	use crate::block_tracing::parser::{parse_message, parse_opt_val, Message};
-	use crate::block_tracing::*;
+	use crate::block_tracing::{
+		parser::{parse_message, parse_opt_val, Message},
+		*,
+	};
 	use tracing::dispatcher;
 
 	#[test]
@@ -295,9 +273,7 @@ mod tests {
 			parsed,
 			Some(Message {
 				id: 1,
-				event: Event::KillChild(KillChild {
-					child_id: b"0002".to_vec(),
-				})
+				event: Event::KillChild(KillChild { child_id: b"0002".to_vec() })
 			})
 		);
 
@@ -306,9 +282,7 @@ mod tests {
 			parsed,
 			Some(Message {
 				id: 1,
-				event: Event::ClearPrefix(ClearPrefix {
-					prefix: b"0002".to_vec(),
-				})
+				event: Event::ClearPrefix(ClearPrefix { prefix: b"0002".to_vec() })
 			})
 		);
 
@@ -329,21 +303,12 @@ mod tests {
 			parsed,
 			Some(Message {
 				id: 21306,
-				event: Event::Append(Append {
-					key: b"0002".to_vec(),
-					append: b"0003".to_vec(),
-				})
+				event: Event::Append(Append { key: b"0002".to_vec(), append: b"0003".to_vec() })
 			})
 		);
 
 		let parsed = parse_message("0001: Append 0002 0003");
-		assert_eq!(
-			parsed,
-			Some(Message {
-				id: 1,
-				event: Event::NotConcerned
-			})
-		);
+		assert_eq!(parsed, Some(Message { id: 1, event: Event::NotConcerned }));
 	}
 
 	#[test]

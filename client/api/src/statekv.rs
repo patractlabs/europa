@@ -1,26 +1,26 @@
 // This file is part of europa
-
+//
 // Copyright 2020-2022 Patract Labs. Licensed under GPL-3.0.
 
 use std::sync::Arc;
 
-use sp_database::error;
+use sp_database::error::Result;
 use sp_runtime::traits::{Block as BlockT, NumberFor};
 
 pub trait StateKv<Block: BlockT>: Send + Sync {
 	/// The transaction type used by the StateKv.
 	type Transaction: StateKvTransaction + Default + Send + 'static;
 
-	fn set_kv(&self, hash: Block::Hash, key: &[u8], value: Option<&[u8]>) -> error::Result<()>;
+	fn set_kv(&self, hash: Block::Hash, key: &[u8], value: Option<&[u8]>) -> Result<()>;
 	fn set_child_kv(
 		&self,
 		hash: Block::Hash,
 		child: &[u8],
 		key: &[u8],
 		value: Option<&[u8]>,
-	) -> error::Result<()>;
+	) -> Result<()>;
 	fn transaction(&self, hash: Block::Hash) -> Self::Transaction;
-	fn commit(&self, t: Self::Transaction) -> error::Result<()>;
+	fn commit(&self, t: Self::Transaction) -> Result<()>;
 
 	fn get(&self, hash: Block::Hash, key: &[u8]) -> Option<Vec<u8>>;
 	fn get_child(&self, hash: Block::Hash, child: &[u8], key: &[u8]) -> Option<Vec<u8>>;
@@ -30,20 +30,19 @@ pub trait StateKv<Block: BlockT>: Send + Sync {
 		hash: Block::Hash,
 		child: &[u8],
 	) -> Option<Vec<(Vec<u8>, Option<Vec<u8>>)>>;
-	fn delete_kvs_by_hash(&self, hash: Block::Hash) -> error::Result<()>;
-	fn delete_child_kvs_by_hash(&self, hash: Block::Hash, child: &[u8]) -> error::Result<()>;
+	fn delete_kvs_by_hash(&self, hash: Block::Hash) -> Result<()>;
+	fn delete_child_kvs_by_hash(&self, hash: Block::Hash, child: &[u8]) -> Result<()>;
 	fn set_extrinsic_changes(
 		&self,
 		number: NumberFor<Block>,
 		index: u32,
 		json: String,
-	) -> error::Result<()>;
+	) -> Result<()>;
 	fn get_extrinsic_changes(&self, number: NumberFor<Block>, index: u32) -> Option<String>;
-	fn delete_extrinsic_changes(&self, number: NumberFor<Block>, index: u32) -> error::Result<()>;
+	fn delete_extrinsic_changes(&self, number: NumberFor<Block>, index: u32) -> Result<()>;
 
 	// hash&number
-	fn set_hash_and_number(&self, hash: Block::Hash, number: NumberFor<Block>)
-		-> error::Result<()>;
+	fn set_hash_and_number(&self, hash: Block::Hash, number: NumberFor<Block>) -> Result<()>;
 	fn get_number(&self, hash: Block::Hash) -> Option<NumberFor<Block>>;
 	fn get_hash(&self, number: NumberFor<Block>) -> Option<Block::Hash>;
 
@@ -52,12 +51,12 @@ pub trait StateKv<Block: BlockT>: Send + Sync {
 		number: NumberFor<Block>,
 		index: u32,
 		tracing: String,
-	) -> error::Result<()>;
+	) -> Result<()>;
 	fn get_contract_tracing(&self, number: NumberFor<Block>, index: u32) -> Option<String>;
-	fn remove_contract_tracing(&self, number: NumberFor<Block>, index: u32) -> error::Result<()>;
-	fn remove_contract_tracings_by_number(&self, number: NumberFor<Block>) -> error::Result<()>;
+	fn remove_contract_tracing(&self, number: NumberFor<Block>, index: u32) -> Result<()>;
+	fn remove_contract_tracings_by_number(&self, number: NumberFor<Block>) -> Result<()>;
 
-	fn revert_all(&self, number: NumberFor<Block>) -> error::Result<()>;
+	fn revert_all(&self, number: NumberFor<Block>) -> Result<()>;
 }
 
 pub trait StateKvTransaction {
@@ -75,7 +74,7 @@ pub trait ClientStateKv<B: BlockT, S: StateKv<B>> {
 impl<Block: BlockT, T: StateKv<Block>> StateKv<Block> for Arc<T> {
 	type Transaction = T::Transaction;
 
-	fn set_kv(&self, hash: Block::Hash, key: &[u8], value: Option<&[u8]>) -> error::Result<()> {
+	fn set_kv(&self, hash: Block::Hash, key: &[u8], value: Option<&[u8]>) -> Result<()> {
 		(&**self).set_kv(hash, key, value)
 	}
 
@@ -85,7 +84,7 @@ impl<Block: BlockT, T: StateKv<Block>> StateKv<Block> for Arc<T> {
 		child: &[u8],
 		key: &[u8],
 		value: Option<&[u8]>,
-	) -> error::Result<()> {
+	) -> Result<()> {
 		(&**self).set_child_kv(hash, child, key, value)
 	}
 
@@ -93,7 +92,7 @@ impl<Block: BlockT, T: StateKv<Block>> StateKv<Block> for Arc<T> {
 		(&**self).transaction(hash)
 	}
 
-	fn commit(&self, t: Self::Transaction) -> error::Result<()> {
+	fn commit(&self, t: Self::Transaction) -> Result<()> {
 		(&**self).commit(t)
 	}
 
@@ -117,11 +116,11 @@ impl<Block: BlockT, T: StateKv<Block>> StateKv<Block> for Arc<T> {
 		(&**self).get_child_kvs_by_hash(hash, child)
 	}
 
-	fn delete_kvs_by_hash(&self, hash: Block::Hash) -> error::Result<()> {
+	fn delete_kvs_by_hash(&self, hash: Block::Hash) -> Result<()> {
 		(&**self).delete_kvs_by_hash(hash)
 	}
 
-	fn delete_child_kvs_by_hash(&self, hash: Block::Hash, child: &[u8]) -> error::Result<()> {
+	fn delete_child_kvs_by_hash(&self, hash: Block::Hash, child: &[u8]) -> Result<()> {
 		(&**self).delete_child_kvs_by_hash(hash, child)
 	}
 
@@ -130,21 +129,17 @@ impl<Block: BlockT, T: StateKv<Block>> StateKv<Block> for Arc<T> {
 		number: NumberFor<Block>,
 		index: u32,
 		json: String,
-	) -> error::Result<()> {
+	) -> Result<()> {
 		(&**self).set_extrinsic_changes(number, index, json)
 	}
 	fn get_extrinsic_changes(&self, number: NumberFor<Block>, index: u32) -> Option<String> {
 		(&**self).get_extrinsic_changes(number, index)
 	}
-	fn delete_extrinsic_changes(&self, number: NumberFor<Block>, index: u32) -> error::Result<()> {
+	fn delete_extrinsic_changes(&self, number: NumberFor<Block>, index: u32) -> Result<()> {
 		(&**self).delete_extrinsic_changes(number, index)
 	}
 
-	fn set_hash_and_number(
-		&self,
-		hash: Block::Hash,
-		number: NumberFor<Block>,
-	) -> error::Result<()> {
+	fn set_hash_and_number(&self, hash: Block::Hash, number: NumberFor<Block>) -> Result<()> {
 		(&**self).set_hash_and_number(hash, number)
 	}
 
@@ -161,7 +156,7 @@ impl<Block: BlockT, T: StateKv<Block>> StateKv<Block> for Arc<T> {
 		number: NumberFor<Block>,
 		index: u32,
 		tracing: String,
-	) -> error::Result<()> {
+	) -> Result<()> {
 		(&**self).set_contract_tracing(number, index, tracing)
 	}
 
@@ -169,15 +164,15 @@ impl<Block: BlockT, T: StateKv<Block>> StateKv<Block> for Arc<T> {
 		(&**self).get_contract_tracing(number, index)
 	}
 
-	fn remove_contract_tracing(&self, number: NumberFor<Block>, index: u32) -> error::Result<()> {
+	fn remove_contract_tracing(&self, number: NumberFor<Block>, index: u32) -> Result<()> {
 		(&**self).remove_contract_tracing(number, index)
 	}
 
-	fn remove_contract_tracings_by_number(&self, number: NumberFor<Block>) -> error::Result<()> {
+	fn remove_contract_tracings_by_number(&self, number: NumberFor<Block>) -> Result<()> {
 		(&**self).remove_contract_tracings_by_number(number)
 	}
 
-	fn revert_all(&self, number: NumberFor<Block>) -> error::Result<()> {
+	fn revert_all(&self, number: NumberFor<Block>) -> Result<()> {
 		(&**self).remove_contract_tracings_by_number(number)
 	}
 }

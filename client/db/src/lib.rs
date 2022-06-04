@@ -1,13 +1,13 @@
 // This file is part of europa
-
+//
 // Copyright 2020-2022 Patract Labs. Licensed under GPL-3.0.
 
 use std::sync::Arc;
 
 use kvdb::{DBTransaction, KeyValueDB};
 
-use sc_client_db::{DatabaseSettings, DatabaseSettingsSrc};
-use sp_database::error;
+use sc_client_db::{DatabaseSettings, DatabaseSource};
+use sp_database::error::{DatabaseError, Result};
 use sp_runtime::{
 	traits::{Block as BlockT, NumberFor},
 	SaturatedConversion,
@@ -50,10 +50,7 @@ pub fn open_state_key_database(
 	}
 
 	let db: Arc<dyn KeyValueDB> = match &config.source {
-		DatabaseSettingsSrc::RocksDb {
-			path,
-			cache_size: _,
-		} => {
+		DatabaseSource::RocksDb { path, cache_size: _ } => {
 			// TODO add upgrade function | last columns is 7
 
 			// and now open database assuming that it has the latest version
@@ -62,32 +59,30 @@ pub fn open_state_key_database(
 			let mut path = path.to_path_buf();
 			// remove "/db" from path
 			if !path.pop() {
-				return Err(db_open_error("NOT a valid path"));
+				return Err(db_open_error("NOT a valid path"))
 			}
 			path.push(format!("db_{}", DB_PATH_NAME));
-			let path = path
-				.to_str()
-				.ok_or_else(|| sp_blockchain::Error::Backend("Invalid database path".into()))?;
 
 			log::trace!(
 				target: "db",
-				"Open RocksDB state kv database at {}, column number ({})",
-				path,
+				"Open RocksDB state kv database at {:?}, column number ({})",
+				path.to_str(),
 				NUM_COLUMNS,
 			);
 			let memory_budget = std::collections::HashMap::new();
 			db_config.memory_budget = memory_budget;
 
 			if read_only {
-				db_config.secondary = Some(path.to_string());
+				db_config.secondary = Some(path.clone());
 			}
 
 			let db = kvdb_rocksdb::Database::open(&db_config, &path)
 				.map_err(|err| sp_blockchain::Error::Backend(format!("{}", err)))?;
 			Arc::new(db)
-		}
-		DatabaseSettingsSrc::ParityDb { path: _ } => return Err(db_open_error("with-parity-db")),
-		DatabaseSettingsSrc::Custom(_) => return Err(db_open_error("with-custom-db")),
+		},
+		DatabaseSource::ParityDb { path: _ } => return Err(db_open_error("with-parity-db")),
+		DatabaseSource::Auto { .. } => return Err(db_open_error("auto")),
+		DatabaseSource::Custom(_) => return Err(db_open_error("with-custom-db")),
 	};
 	Ok(db)
 }
@@ -125,34 +120,31 @@ pub struct StateKvTransaction<B: BlockT> {
 	hash: B::Hash,
 	inner: DBTransaction,
 }
+
 impl<B: BlockT> Default for StateKvTransaction<B> {
 	fn default() -> Self {
-		StateKvTransaction {
-			hash: B::Hash::default(),
-			inner: Default::default(),
-		}
+		StateKvTransaction { hash: B::Hash::default(), inner: Default::default() }
 	}
 }
+
 impl<B: BlockT> StateKvTransaction<B> {
 	fn set_kv_impl(&mut self, col: u32, real_key: &[u8], value: Option<&[u8]>) {
 		if let Some(value) = value {
 			self.inner.put(col, real_key, value);
 		} else {
-			// can't put "" directly, for `Foo: Option<()>` which defined in runtime would be "" in value
+			// can't put "" directly, for `Foo: Option<()>` which defined in runtime would be "" in
+			// value
 			self.inner.put(col, real_key, DELETE_HOLDER);
 		}
 	}
 	fn remove_impl(&mut self, col: u32, real_key: &[u8]) {
-		let find = self
-			.inner
-			.ops
-			.iter()
-			.position(|op| op.col() == col && op.key() == real_key);
+		let find = self.inner.ops.iter().position(|op| op.col() == col && op.key() == real_key);
 		if let Some(pos) = find {
 			self.inner.ops.remove(pos);
 		}
 	}
 }
+
 impl<B: BlockT> ec_client_api::statekv::StateKvTransaction for StateKvTransaction<B> {
 	fn set_kv(&mut self, key: &[u8], value: Option<&[u8]>) {
 		let real_key = real_key::<B>(self.hash, key);
@@ -183,23 +175,22 @@ fn handle_err<T>(result: std::io::Result<T>) -> T {
 	match result {
 		Ok(r) => r,
 		Err(e) => {
-			panic!("Critical database eror: {:?}", e);
-		}
+			panic!("Critical database error: {:?}", e);
+		},
 	}
 }
 
 impl StateKv {
-	fn set_kv_impl(&self, col: u32, real_key: &[u8], value: Option<&[u8]>) -> error::Result<()> {
+	fn set_kv_impl(&self, col: u32, real_key: &[u8], value: Option<&[u8]>) -> Result<()> {
 		let mut t = DBTransaction::with_capacity(1);
 		if let Some(value) = value {
 			t.put(col, real_key, value);
 		} else {
-			// can't put "" directly, for `Foo: Option<()>` which defined in runtime would be "" in value
+			// can't put "" directly, for `Foo: Option<()>` which defined in runtime would be "" in
+			// value
 			t.put(col, real_key, DELETE_HOLDER);
 		}
-		self.state_kv_db
-			.write(t)
-			.map_err(|e| error::DatabaseError(Box::new(e)))
+		self.state_kv_db.write(t).map_err(|e| DatabaseError(Box::new(e)))
 	}
 
 	fn get_kys_impl(
@@ -212,13 +203,7 @@ impl StateKv {
 			.state_kv_db
 			.iter_with_prefix(col, prefix)
 			.map(f)
-			.map(|(k, v)| {
-				if &v == &DELETE_HOLDER {
-					(k, None)
-				} else {
-					(k, Some(v))
-				}
-			})
+			.map(|(k, v)| if &v == &DELETE_HOLDER { (k, None) } else { (k, Some(v)) })
 			.collect::<Vec<(Vec<u8>, Option<Vec<u8>>)>>();
 		if r.len() == 0 {
 			None
@@ -227,7 +212,7 @@ impl StateKv {
 		}
 	}
 
-	fn set_contract_tracing(&self, number: u64, index: u32, tracing: String) -> error::Result<()> {
+	fn set_contract_tracing(&self, number: u64, index: u32, tracing: String) -> Result<()> {
 		let key = tracing_key(number, index);
 		self.set_kv_impl(columns::TRACING, key.as_ref(), Some(tracing.as_bytes()))
 	}
@@ -239,19 +224,18 @@ impl StateKv {
 	fn remove_contract_tracing<B: BlockT, F: FnMut(&mut DBTransaction)>(
 		&self,
 		mut f: F,
-	) -> error::Result<()> {
+	) -> Result<()> {
 		let mut t = DBTransaction::with_capacity(1);
 
 		f(&mut t);
 
-		self.state_kv_db
-			.write(t)
-			.map_err(|e| error::DatabaseError(Box::new(e)))
+		self.state_kv_db.write(t).map_err(|e| DatabaseError(Box::new(e)))
 	}
 }
+
 impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 	type Transaction = StateKvTransaction<B>;
-	fn set_kv(&self, hash: B::Hash, key: &[u8], value: Option<&[u8]>) -> error::Result<()> {
+	fn set_kv(&self, hash: B::Hash, key: &[u8], value: Option<&[u8]>) -> Result<()> {
 		let real_key = real_key::<B>(hash, key);
 		self.set_kv_impl(columns::STATE_KV, &real_key, value)
 	}
@@ -262,21 +246,16 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		child: &[u8],
 		key: &[u8],
 		value: Option<&[u8]>,
-	) -> error::Result<()> {
+	) -> Result<()> {
 		let real_key = real_child_key::<B>(hash, child, key);
 		self.set_kv_impl(columns::STATE_CHILD_KV, &real_key, value)
 	}
 
 	fn transaction(&self, hash: B::Hash) -> Self::Transaction {
-		StateKvTransaction {
-			hash,
-			inner: self.state_kv_db.transaction(),
-		}
+		StateKvTransaction { hash, inner: self.state_kv_db.transaction() }
 	}
-	fn commit(&self, t: Self::Transaction) -> error::Result<()> {
-		self.state_kv_db
-			.write(t.inner)
-			.map_err(|e| error::DatabaseError(Box::new(e)))
+	fn commit(&self, t: Self::Transaction) -> Result<()> {
+		self.state_kv_db.write(t.inner).map_err(|e| DatabaseError(Box::new(e)))
 	}
 
 	fn get(&self, hash: B::Hash, key: &[u8]) -> Option<Vec<u8>> {
@@ -319,15 +298,13 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		})
 	}
 
-	fn delete_kvs_by_hash(&self, hash: B::Hash) -> error::Result<()> {
+	fn delete_kvs_by_hash(&self, hash: B::Hash) -> Result<()> {
 		let mut t = DBTransaction::with_capacity(1);
 		t.delete_prefix(columns::STATE_KV, hash.as_ref());
-		self.state_kv_db
-			.write(t)
-			.map_err(|e| error::DatabaseError(Box::new(e)))
+		self.state_kv_db.write(t).map_err(|e| DatabaseError(Box::new(e)))
 	}
 
-	fn delete_child_kvs_by_hash(&self, hash: B::Hash, child: &[u8]) -> error::Result<()> {
+	fn delete_child_kvs_by_hash(&self, hash: B::Hash, child: &[u8]) -> Result<()> {
 		let prefix = hash.as_ref();
 		let hash_len = prefix.len();
 		let mut lookup_key = Vec::with_capacity(hash_len + 1 + child.len());
@@ -337,24 +314,13 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 
 		let mut t = DBTransaction::with_capacity(1);
 		t.delete_prefix(columns::STATE_CHILD_KV, &lookup_key);
-		self.state_kv_db
-			.write(t)
-			.map_err(|e| error::DatabaseError(Box::new(e)))
+		self.state_kv_db.write(t).map_err(|e| DatabaseError(Box::new(e)))
 	}
 
-	fn set_extrinsic_changes(
-		&self,
-		number: NumberFor<B>,
-		index: u32,
-		json: String,
-	) -> error::Result<()> {
+	fn set_extrinsic_changes(&self, number: NumberFor<B>, index: u32, json: String) -> Result<()> {
 		let number: u64 = number.saturated_into::<u64>();
 		let key = tracing_key(number, index);
-		self.set_kv_impl(
-			columns::EXTRINSIC_CHANGES,
-			key.as_ref(),
-			Some(json.as_bytes()),
-		)
+		self.set_kv_impl(columns::EXTRINSIC_CHANGES, key.as_ref(), Some(json.as_bytes()))
 	}
 	fn get_extrinsic_changes(&self, number: NumberFor<B>, index: u32) -> Option<String> {
 		let number: u64 = number.saturated_into::<u64>();
@@ -362,18 +328,16 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		let v = handle_err(self.state_kv_db.get(columns::EXTRINSIC_CHANGES, &key))?;
 		Some(String::from_utf8_lossy(&v).to_string())
 	}
-	fn delete_extrinsic_changes(&self, number: NumberFor<B>, index: u32) -> error::Result<()> {
+	fn delete_extrinsic_changes(&self, number: NumberFor<B>, index: u32) -> Result<()> {
 		let number: u64 = number.saturated_into::<u64>();
 		let key = tracing_key(number, index);
 		let mut t = DBTransaction::with_capacity(1);
 		t.delete(columns::EXTRINSIC_CHANGES, &key);
-		self.state_kv_db
-			.write(t)
-			.map_err(|e| error::DatabaseError(Box::new(e)))
+		self.state_kv_db.write(t).map_err(|e| DatabaseError(Box::new(e)))
 	}
 
 	// hash&number
-	fn set_hash_and_number(&self, hash: B::Hash, number: NumberFor<B>) -> error::Result<()> {
+	fn set_hash_and_number(&self, hash: B::Hash, number: NumberFor<B>) -> Result<()> {
 		let number: u64 = number.saturated_into::<u64>();
 		let bytes = &number.to_le_bytes()[..];
 		self.set_kv_impl(columns::HASH_TO_NUMBER, hash.as_ref(), Some(bytes))?;
@@ -404,7 +368,7 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		number: NumberFor<B>,
 		index: u32,
 		tracing: String,
-	) -> error::Result<()> {
+	) -> Result<()> {
 		let number: u64 = number.saturated_into::<u64>();
 		self.set_contract_tracing(number, index, tracing)
 	}
@@ -414,7 +378,7 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		self.get_contract_tracing(number, index)
 	}
 
-	fn remove_contract_tracing(&self, number: NumberFor<B>, index: u32) -> error::Result<()> {
+	fn remove_contract_tracing(&self, number: NumberFor<B>, index: u32) -> Result<()> {
 		let number: u64 = number.saturated_into::<u64>();
 		self.remove_contract_tracing::<B, _>(|t| {
 			let key = tracing_key(number, index);
@@ -422,7 +386,7 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		})
 	}
 
-	fn remove_contract_tracings_by_number(&self, number: NumberFor<B>) -> error::Result<()> {
+	fn remove_contract_tracings_by_number(&self, number: NumberFor<B>) -> Result<()> {
 		let number: u64 = number.saturated_into::<u64>();
 		self.remove_contract_tracing::<B, _>(|t| {
 			let prefix = &number.to_le_bytes()[..];
@@ -430,10 +394,9 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 		})
 	}
 
-	fn revert_all(&self, number: NumberFor<B>) -> error::Result<()> {
-		let hash = <Self as ec_client_api::statekv::StateKv<B>>::get_hash(self, number).ok_or(
-			error::DatabaseError(format!("No hash for this number:{}", number).into()),
-		)?;
+	fn revert_all(&self, number: NumberFor<B>) -> Result<()> {
+		let hash = <Self as ec_client_api::statekv::StateKv<B>>::get_hash(self, number)
+			.ok_or(DatabaseError(format!("No hash for this number:{}", number).into()))?;
 		// state
 		<Self as ec_client_api::statekv::StateKv<B>>::delete_kvs_by_hash(self, hash)?;
 
@@ -446,18 +409,14 @@ impl<B: BlockT> ec_client_api::statekv::StateKv<B> for StateKv {
 
 		let mut t = DBTransaction::with_capacity(1);
 		t.delete_prefix(columns::STATE_CHILD_KV, &lookup_key);
-		self.state_kv_db
-			.write(t)
-			.map_err(|e| error::DatabaseError(Box::new(e)))?;
+		self.state_kv_db.write(t).map_err(|e| DatabaseError(Box::new(e)))?;
 
 		// extrinsic changes
 		let num_u64: u64 = number.saturated_into::<u64>();
 		let prefix = &num_u64.to_le_bytes()[..];
 		let mut t = DBTransaction::with_capacity(1);
 		t.delete_prefix(columns::EXTRINSIC_CHANGES, &prefix);
-		self.state_kv_db
-			.write(t)
-			.map_err(|e| error::DatabaseError(Box::new(e)))?;
+		self.state_kv_db.write(t).map_err(|e| DatabaseError(Box::new(e)))?;
 
 		// contract tracing
 		<Self as ec_client_api::statekv::StateKv<B>>::remove_contract_tracings_by_number(
@@ -488,10 +447,7 @@ pub struct DbRef<Block, Db> {
 impl<Block: BlockT, Db: ec_client_api::statekv::StateKv<Block> + 'static> DbRef<Block, Db> {
 	/// Create new instance of Offchain DB.
 	pub fn new(persistent: Db) -> Self {
-		Self {
-			persistent,
-			_phantom: Default::default(),
-		}
+		Self { persistent, _phantom: Default::default() }
 	}
 }
 
@@ -500,8 +456,6 @@ impl<Block: BlockT, Db: ec_client_api::statekv::StateKv<Block>> ep_extensions::C
 {
 	fn set_tracing(&mut self, number: u32, index: u32, tracing: String) {
 		let number: u64 = number as u64;
-		self.persistent
-			.set_contract_tracing(number.saturated_into(), index, tracing)
-			.expect("")
+		self.persistent.set_contract_tracing(number.saturated_into(), index, tracing).expect("")
 	}
 }

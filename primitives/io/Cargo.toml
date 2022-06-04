@@ -10,10 +10,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Substrate
-sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
+sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
 
-# Europa
+# Local
 ep-extensions = { path = "../extensions" }
 
 [features]

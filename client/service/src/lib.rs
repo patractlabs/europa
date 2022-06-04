@@ -22,11 +22,8 @@ mod builder;
 pub mod builder_ext;
 pub mod client;
 pub mod config;
-pub mod task_manager;
 
-use std::net::SocketAddr;
-use std::sync::Arc;
-use std::{io, pin::Pin};
+use std::{io, net::SocketAddr, pin::Pin, sync::Arc};
 
 use futures::{compat::*, Future, FutureExt};
 pub use jsonrpc_core::IoHandler;
@@ -35,17 +32,19 @@ pub use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnb
 
 pub use sc_service::{
 	build_network, error, BasePath, BuildNetworkParams, ChainSpec, ChainType, GenericChainSpec,
-	NoopRpcExtensionBuilder, RpcExtensionBuilder, RpcMethods, TaskType, TracingReceiver,
-	TransactionPoolOptions,
+	NoopRpcExtensionBuilder, RpcExtensionBuilder, RpcMethods, SpawnTaskHandle, TaskManager,
+	TaskType, TracingReceiver, TransactionPoolOptions,
 };
 
 use crate::builder::KeystoreContainer;
-pub use crate::builder::{
-	build_mock_network, database_settings, new_client, new_full_parts, new_state_kv, spawn_tasks,
-	SpawnTasksParams, TFullBackend, TFullCallExecutor, TFullClient, TFullParts, TFullStateKv,
+pub use crate::{
+	builder::{
+		build_mock_network, database_settings, new_client, new_full_parts, new_state_kv,
+		spawn_tasks, SpawnTasksParams, TFullBackend, TFullCallExecutor, TFullClient, TFullParts,
+		TFullStateKv,
+	},
+	config::Configuration,
 };
-pub use crate::config::Configuration;
-pub use crate::task_manager::{SpawnTaskHandle, TaskManager};
 
 use log::warn;
 
@@ -88,9 +87,7 @@ impl RpcSession {
 	///
 	/// The `RpcSession` must be kept alive in order to receive messages on the sender.
 	pub fn new(sender: futures01::sync::mpsc::Sender<String>) -> RpcSession {
-		RpcSession {
-			metadata: sender.into(),
-		}
+		RpcSession { metadata: sender.into() }
 	}
 }
 
@@ -182,13 +179,10 @@ fn start_rpc_servers<
 		Ok(match address {
 			Some(mut address) => Some(start(&address).or_else(|e| match e.kind() {
 				io::ErrorKind::AddrInUse | io::ErrorKind::PermissionDenied => {
-					warn!(
-						"Unable to bind RPC server to {}. Trying random port.",
-						address
-					);
+					warn!("Unable to bind RPC server to {}. Trying random port.", address);
 					address.set_port(0);
 					start(&address)
-				}
+				},
 				_ => Err(e),
 			})?),
 			None => None,

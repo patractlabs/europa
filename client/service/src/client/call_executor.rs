@@ -37,8 +37,6 @@ use sp_state_machine::{
 	self, backend::Backend as _, DefaultHandler, ExecutionManager, ExecutionStrategy, Ext,
 	OverlayedChanges, StateMachine,
 };
-
-use ec_executor::{NativeVersion, RuntimeInfo, RuntimeVersion};
 use sp_trie::StorageProof;
 
 /// Call executor that executes methods locally, querying all required
@@ -52,11 +50,7 @@ pub struct LocalCallExecutor<B, E> {
 impl<B, E> LocalCallExecutor<B, E> {
 	/// Creates new instance of local call executor.
 	pub fn new(backend: Arc<B>, executor: E, spawn_handle: Box<dyn SpawnNamed>) -> Self {
-		LocalCallExecutor {
-			backend,
-			executor,
-			spawn_handle,
-		}
+		LocalCallExecutor { backend, executor, spawn_handle }
 	}
 }
 
@@ -104,9 +98,7 @@ where
 			method,
 			call_data,
 			extensions.unwrap_or_default(),
-			&state_runtime_code
-				.runtime_code()
-				.map_err(sp_blockchain::Error::RuntimeCode)?,
+			&state_runtime_code.runtime_code().map_err(sp_blockchain::Error::RuntimeCode)?,
 			self.spawn_handle.clone(),
 		)
 		.execute_using_consensus_failure_handler::<DefaultHandler<_, _>, NeverNativeValue, fn() -> _>(
@@ -158,9 +150,8 @@ where
 					sp_state_machine::backend::BackendRuntimeCode::new(trie_state);
 				// It is important to extract the runtime code here before we create the proof
 				// recorder.
-				let runtime_code = state_runtime_code
-					.runtime_code()
-					.map_err(sp_blockchain::Error::RuntimeCode)?;
+				let runtime_code =
+					state_runtime_code.runtime_code().map_err(sp_blockchain::Error::RuntimeCode)?;
 
 				let backend = sp_state_machine::ProvingBackend::new_with_recorder(
 					trie_state,
@@ -179,17 +170,17 @@ where
 					self.spawn_handle.clone(),
 				);
 				// TODO: https://github.com/paritytech/substrate/issues/4455
-				// .with_storage_transaction_cache(storage_transaction_cache.as_mut().map(|c| &mut **c))
+				// .with_storage_transaction_cache(storage_transaction_cache.as_mut().map(|c| &mut
+				// **c))
 				state_machine.execute_using_consensus_failure_handler(
 					execution_manager,
 					native_call.map(|n| || (n)().map_err(|e| Box::new(e) as Box<_>)),
 				)
-			}
+			},
 			None => {
 				let state_runtime_code = sp_state_machine::backend::BackendRuntimeCode::new(&state);
-				let runtime_code = state_runtime_code
-					.runtime_code()
-					.map_err(sp_blockchain::Error::RuntimeCode)?;
+				let runtime_code =
+					state_runtime_code.runtime_code().map_err(sp_blockchain::Error::RuntimeCode)?;
 
 				let mut state_machine = StateMachine::new(
 					&state,
@@ -209,7 +200,7 @@ where
 					execution_manager,
 					native_call.map(|n| || (n)().map_err(|e| Box::new(e) as Box<_>)),
 				)
-			}
+			},
 		}
 		.map_err(Into::into)
 	}
@@ -225,9 +216,7 @@ where
 		self.executor
 			.runtime_version(
 				&mut ext,
-				&state_runtime_code
-					.runtime_code()
-					.map_err(sp_blockchain::Error::RuntimeCode)?,
+				&state_runtime_code.runtime_code().map_err(sp_blockchain::Error::RuntimeCode)?,
 			)
 			.map_err(|e| sp_blockchain::Error::VersionInvalid(format!("{:?}", e)).into())
 	}

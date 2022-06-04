@@ -1,42 +1,82 @@
 // This file is part of europa
-
+//
 // Copyright 2020-2022 Patract Labs. Licensed under GPL-3.0.
 
 mod error;
 
-use serde::{Deserialize, Serialize};
-use std::{collections::hash_map::HashMap, sync::Arc};
+use std::{collections::HashMap, marker::PhantomData, sync::Arc};
 
 use jsonrpc_core::Result;
 use jsonrpc_derive::rpc;
-
+use serde::{Deserialize, Serialize};
+// Substrate
+use sc_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 use sp_blockchain::HeaderBackend;
 use sp_core::Bytes;
 use sp_runtime::{
 	generic::BlockId,
-	traits::{Block as BlockT, BlockIdTo, Header},
+	traits::{Block as BlockT, BlockIdTo, NumberFor},
 	SaturatedConversion,
 };
-use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
-
+// Local
 use ec_client_api::statekv;
 
-use error::EuropaRpcError;
+use crate::error::EuropaRpcError;
+
+#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum NumberOrHash<B: BlockT> {
+	Number(NumberFor<B>),
+	Hash(B::Hash),
+}
+
+#[rpc(server)]
+pub trait EuropaApi<B>
+where
+	B: BlockT,
+{
+	/// The rpc provide a way to produce a batch of empty block to reach target block height.
+	#[rpc(name = "europa_forwardToHeight")]
+	fn forward_to_height(&self, height: NumberFor<B>) -> Result<()>;
+
+	/// The rpc could revert current best height to the specified height which is less than current
+	/// best height.
+	#[rpc(name = "europa_backwardToHeight")]
+	fn backward_to_height(&self, height: NumberFor<B>) -> Result<()>;
+
+	/// The rpc could print the modified state kvs for a specified block height or hash.
+	#[rpc(name = "europa_modifiedStateKvs")]
+	fn state_kvs(
+		&self,
+		number_or_hash: NumberOrHash<B>,
+		child: Option<Bytes>,
+	) -> Result<HashMap<Bytes, Option<Bytes>>>;
+
+	/// The rpc can get the changed state for pointed extrinsic. Notice the changed state is only
+	/// for this extrinsic, may be different with the block modified state kvs, because the changed
+	/// state may be modified by following extrinsics.
+	#[rpc(name = "europa_extrinsicStateChanges")]
+	fn extrinsic_changes(
+		&self,
+		number_or_hash: NumberOrHash<B>,
+		index: u32,
+	) -> Result<serde_json::Value>;
+}
 
 pub enum Message<B: BlockT> {
-	Forward(NumberOf<B>),
+	Forward(NumberFor<B>),
 }
 
 pub struct Europa<C, B: BlockT, Backend, S> {
 	client: Arc<C>,
 	backend: Arc<Backend>,
 	sender: TracingUnboundedSender<Message<B>>,
-	_marker: std::marker::PhantomData<S>,
+	_marker: PhantomData<S>,
 }
 
 impl<C, B: BlockT, Backend, S> Clone for Europa<C, B, Backend, S> {
 	fn clone(&self) -> Self {
-		Europa {
+		Self {
 			client: self.client.clone(),
 			backend: self.backend.clone(),
 			sender: self.sender.clone(),
@@ -52,55 +92,8 @@ impl<C, B: BlockT, Backend, S> Europa<C, B, Backend, S> {
 		backend: Arc<Backend>,
 	) -> (Self, TracingUnboundedReceiver<Message<B>>) {
 		let (tx, rx) = tracing_unbounded("mpsc_europa_rpc");
-		(
-			Europa {
-				client,
-				backend,
-				sender: tx,
-				_marker: Default::default(),
-			},
-			rx,
-		)
+		(Self { client, backend, sender: tx, _marker: Default::default() }, rx)
 	}
-}
-
-#[rpc(server)]
-pub trait EuropaApi<B>
-where
-	B: BlockT,
-{
-	/// The rpc provide a way to produce a batch of empty block to reach target block height.
-	#[rpc(name = "europa_forwardToHeight")]
-	fn forward_to_height(&self, height: NumberOf<B>) -> Result<()>;
-
-	/// The rpc could revert current best height to the specified height which is less than current best height.
-	#[rpc(name = "europa_backwardToHeight")]
-	fn backward_to_height(&self, height: NumberOf<B>) -> Result<()>;
-
-	/// The rpc could print the modified state kvs for a specified block height or hash.
-	#[rpc(name = "europa_modifiedStateKvs")]
-	fn state_kvs(
-		&self,
-		number_or_hash: NumberOrHash<B>,
-		child: Option<Bytes>,
-	) -> Result<HashMap<Bytes, Option<Bytes>>>;
-
-	/// The rpc can get the changed state for pointed extrinsic. Notice the changed state is only for this extrinsic, may be different with the block modified state kvs, because the changed state may be modified by following extrinsics.
-	#[rpc(name = "europa_extrinsicStateChanges")]
-	fn extrinsic_changes(
-		&self,
-		number_or_hash: NumberOrHash<B>,
-		index: u32,
-	) -> Result<serde_json::Value>;
-}
-
-type NumberOf<B> = <<B as BlockT>::Header as Header>::Number;
-
-#[derive(Copy, Clone, Serialize, Deserialize, Debug, PartialEq)]
-#[serde(untagged)]
-pub enum NumberOrHash<B: BlockT> {
-	Number(NumberOf<B>),
-	Hash(B::Hash),
 }
 
 impl<C, B, Backend, S> EuropaApi<B> for Europa<C, B, Backend, S>
@@ -111,10 +104,10 @@ where
 	Backend: sc_client_api::backend::Backend<B> + Send + Sync + 'static,
 	S: statekv::StateKv<B> + 'static,
 {
-	fn forward_to_height(&self, height: NumberOf<B>) -> Result<()> {
+	fn forward_to_height(&self, height: NumberFor<B>) -> Result<()> {
 		let best = self.client.info().best_number;
 		if height <= best {
-			return Err(EuropaRpcError::<B>::InvalidForwardHeight(height, best).into());
+			return Err(EuropaRpcError::<B>::InvalidForwardHeight(height, best).into())
 		}
 		// height > number
 		let need_more = height - best;
@@ -122,26 +115,23 @@ where
 		Ok(())
 	}
 
-	fn backward_to_height(&self, height: NumberOf<B>) -> Result<()> {
+	fn backward_to_height(&self, height: NumberFor<B>) -> Result<()> {
 		let best = self.client.info().best_number;
 		if height >= best {
-			return Err(EuropaRpcError::<B>::InvalidBackwardHeight(height, best).into());
+			return Err(EuropaRpcError::<B>::InvalidBackwardHeight(height, best).into())
 		}
 		let diff = best - height;
-		self.backend
-			.revert(diff, true)
-			.map_err(error::client_err::<B>)?;
+		self.backend.revert(diff, true).map_err(error::client_err::<B>)?;
 		let state_kv = self.client.state_kv();
 		let mut current = best;
 		while current != height {
-			state_kv
-				.revert_all(current)
-				.map_err(|e| error::client_err::<B>(e.into()))?;
+			state_kv.revert_all(current).map_err(|e| error::client_err::<B>(e.into()))?;
 			current -= 1_u64.saturated_into();
 		}
 
 		Ok(())
 	}
+
 	fn state_kvs(
 		&self,
 		number_or_hash: NumberOrHash<B>,
@@ -164,17 +154,13 @@ where
 				.get_child_kvs_by_hash(hash, &child)
 				.ok_or(EuropaRpcError::<B>::NoChildStateKvs(number_or_hash, child))?
 		} else {
-			state_kv
-				.get_kvs_by_hash(hash)
-				.ok_or(EuropaRpcError::<B>::NoStateKvs(number_or_hash))?
+			state_kv.get_kvs_by_hash(hash).ok_or(EuropaRpcError::<B>::NoStateKvs(number_or_hash))?
 		};
-		let kvs = kvs
-			.into_iter()
-			.map(|(k, v)| (Bytes(k), v.map(Bytes)))
-			.collect();
+		let kvs = kvs.into_iter().map(|(k, v)| (Bytes(k), v.map(Bytes))).collect();
 
 		Ok(kvs)
 	}
+
 	fn extrinsic_changes(
 		&self,
 		number_or_hash: NumberOrHash<B>,

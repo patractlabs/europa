@@ -1,18 +1,18 @@
 // This file is part of europa
-
+//
 // Copyright 2020-2022 Patract Labs. Licensed under GPL-3.0.
 
 use jsonrpc_core as rpc;
 
 use sp_core::Bytes;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::traits::{Block as BlockT, NumberFor};
 
-use crate::{NumberOf, NumberOrHash};
+use crate::NumberOrHash;
 
 #[derive(Debug)]
 pub enum EuropaRpcError<B: BlockT> {
-	InvalidForwardHeight(NumberOf<B>, NumberOf<B>),
-	InvalidBackwardHeight(NumberOf<B>, NumberOf<B>),
+	InvalidForwardHeight(NumberFor<B>, NumberFor<B>),
+	InvalidBackwardHeight(NumberFor<B>, NumberFor<B>),
 	InvalidBlockId(NumberOrHash<B>),
 	NoStateKvs(NumberOrHash<B>),
 	NoChildStateKvs(NumberOrHash<B>, Bytes),

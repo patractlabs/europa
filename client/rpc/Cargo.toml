@@ -18,12 +18,12 @@ jsonrpc-core = "18.0"
 jsonrpc-derive = "18.0"
 
 # Substrate
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sp-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
+sc-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
 
-# Europa
+# Local
 ec-basic-authorship = { path = "../basic-authorship" }
 ec-client-api = { path = "../api" }

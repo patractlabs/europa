@@ -6,19 +6,22 @@ use std::sync::Arc;
 
 use futures::StreamExt;
 use jsonrpc_pubsub::manager::SubscriptionManager;
+use log::info;
 
 use sc_client_api::{
 	BlockBackend, BlockchainEvents, ExecutorProvider, ProofProvider, StorageProvider, UsageProvider,
 };
 use sc_transaction_pool_api::MaintainedTransactionPool;
+use sc_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
 use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_blockchain::{HeaderBackend, HeaderMetadata};
 use sp_consensus::block_validation::Chain;
 use sp_core::traits::{CodeExecutor, SpawnNamed};
 use sp_keystore::{CryptoStore, SyncCryptoStorePtr};
-use sp_runtime::traits::{BlockIdTo, Zero};
-use sp_runtime::{traits::Block as BlockT, BuildStorage};
-use sp_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
+use sp_runtime::{
+	traits::{Block as BlockT, BlockIdTo, Zero},
+	BuildStorage,
+};
 
 use sc_client_api::{
 	execution_extensions::{ExecutionExtensions, ExecutionStrategies},
@@ -26,20 +29,16 @@ use sc_client_api::{
 };
 use sc_client_db::{Backend, KeepBlocks, PruningMode};
 use sc_keystore::LocalKeystore;
-use sc_service::{
-	error::Error, new_db_backend, MallocSizeOfWasm, RpcExtensionBuilder, TransactionStorageMode,
-};
+use sc_service::{error::Error, new_db_backend, RpcExtensionBuilder, SpawnTaskHandle, TaskManager};
 
 use ec_client_db::StateKv;
-use ec_executor::{NativeExecutionDispatch, NativeExecutor, RuntimeInfo};
+use ec_executor::NativeExecutor;
 
-use log::info;
-
-use crate::client::Client;
-use crate::config::{Configuration, KeystoreConfig};
-use crate::start_rpc_servers;
-use crate::task_manager::{SpawnTaskHandle, TaskManager};
-use crate::RpcHandlers;
+use crate::{
+	client::Client,
+	config::{Configuration, KeystoreConfig},
+	start_rpc_servers, RpcHandlers,
+};
 
 /// Full client type.
 pub type TFullClient<TBl, TRtApi, TExecDisp> =
@@ -54,12 +53,8 @@ pub type TFullStateKv = ec_client_db::StateKv;
 pub type TFullCallExecutor<TBl, TExecDisp> =
 	crate::client::LocalCallExecutor<sc_client_db::Backend<TBl>, NativeExecutor<TExecDisp>>;
 
-pub type TFullParts<TBl, TRtApi, TExecDisp> = (
-	TFullClient<TBl, TRtApi, TExecDisp>,
-	Arc<TFullBackend<TBl>>,
-	KeystoreContainer,
-	TaskManager,
-);
+pub type TFullParts<TBl, TRtApi, TExecDisp> =
+	(TFullClient<TBl, TRtApi, TExecDisp>, Arc<TFullBackend<TBl>>, KeystoreContainer, TaskManager);
 
 enum KeystoreContainerInner {
 	Local(Arc<LocalKeystore>),
@@ -72,9 +67,8 @@ impl KeystoreContainer {
 	/// Construct KeystoreContainer
 	pub fn new(config: &KeystoreConfig) -> Result<Self, Error> {
 		let keystore = Arc::new(match config {
-			KeystoreConfig::Path { path, password } => {
-				LocalKeystore::open(path.clone(), password.clone())?
-			}
+			KeystoreConfig::Path { path, password } =>
+				LocalKeystore::open(path.clone(), password.clone())?,
 			KeystoreConfig::InMemory => LocalKeystore::in_memory(),
 		});
 
@@ -101,8 +95,9 @@ impl KeystoreContainer {
 	///
 	/// # Note
 	///
-	/// Using the [`LocalKeystore`] will result in loosing the ability to use any other keystore implementation, like
-	/// a remote keystore for example. Only use this if you a certain that you require it!
+	/// Using the [`LocalKeystore`] will result in loosing the ability to use any other keystore
+	/// implementation, like a remote keystore for example. Only use this if you a certain that you
+	/// require it!
 	pub fn local_keystore(&self) -> Option<Arc<LocalKeystore>> {
 		match self.0 {
 			KeystoreContainerInner::Local(ref keystore) => Some(keystore.clone()),
@@ -397,13 +392,8 @@ where
 		(chain, state, child_state)
 	};
 
-	let author = sc_rpc::author::Author::new(
-		client,
-		transaction_pool,
-		subscriptions,
-		keystore,
-		deny_unsafe,
-	);
+	let author =
+		sc_rpc::author::Author::new(client, transaction_pool, subscriptions, keystore, deny_unsafe);
 	let system = system::System::new(system_info, system_rpc_tx, deny_unsafe);
 
 	sc_rpc_server::rpc_handler(
@@ -443,31 +433,31 @@ where
 							is_syncing: false,
 							should_have_peers: false,
 						});
-					}
+					},
 					sc_rpc::system::Request::LocalPeerId(sender) => {
 						let _ = sender.send("".to_string()); // todo use a valid peerid
-					}
+					},
 					sc_rpc::system::Request::LocalListenAddresses(sender) => {
 						let _ = sender.send(vec![]);
-					}
+					},
 					sc_rpc::system::Request::Peers(sender) => {
 						let _ = sender.send(vec![]);
-					}
+					},
 					sc_rpc::system::Request::NetworkState(sender) => {
 						let _ = sender.send(serde_json::Value::Null);
-					}
+					},
 					sc_rpc::system::Request::NetworkAddReservedPeer(_peer_addr, sender) => {
 						let _ = sender.send(Ok(()));
-					}
+					},
 					sc_rpc::system::Request::NetworkRemoveReservedPeer(_peer_id, sender) => {
 						let _ = sender.send(Ok(()));
-					}
+					},
 					sc_rpc::system::Request::NetworkReservedPeers(sender) => {
 						let _ = sender.send(vec![]);
-					}
+					},
 					sc_rpc::system::Request::NodeRoles(sender) => {
 						let _ = sender.send(vec![]);
-					}
+					},
 					sc_rpc::system::Request::SyncState(sender) => {
 						use sc_rpc::system::SyncState;
 
@@ -476,11 +466,11 @@ where
 							current_block: Zero::zero(),
 							highest_block: None,
 						});
-					}
+					},
 				}
 			} else {
 				// todo print something?
-				break;
+				break
 			}
 		}
 	}

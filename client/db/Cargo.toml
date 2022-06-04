@@ -12,16 +12,16 @@ targets = ["x86_64-unknown-linux-gnu"]
 log = "0.4"
 
 # Parity
-kvdb = "0.11"
+kvdb = "0.11.0"
 kvdb-rocksdb = "0.15.2"
 
 # Substrate
-sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", features = ["with-kvdb-rocksdb", "with-parity-db"] }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sp-database = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21", features = ["with-kvdb-rocksdb", "with-parity-db"] }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
+sp-database = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
 
-# Europa
+# Local
 ec-client-api = { path = "../api" }
 ep-extensions = { path = "../../primitives/extensions" }

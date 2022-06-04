@@ -22,8 +22,7 @@
 
 // FIXME #1021 move this into sp-consensus
 
-use std::{pin::Pin, sync::Arc, time};
-use tracing::{dispatcher, Dispatch};
+use std::{marker::PhantomData, pin::Pin, sync::Arc, time};
 
 use codec::{Decode, Encode};
 use futures::{
@@ -33,8 +32,12 @@ use futures::{
 	select,
 };
 use log::{debug, error, info, trace, warn};
+use tracing::{dispatcher, Dispatch};
+// Substrate
+use prometheus_endpoint::Registry as PrometheusRegistry;
 use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider};
 use sc_client_api::backend;
+use sc_proposer_metrics::MetricsLink as PrometheusMetrics;
 use sc_telemetry::{telemetry, TelemetryHandle, CONSENSUS_INFO};
 use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
 use sp_api::{ApiExt, ProvideRuntimeApi};
@@ -45,19 +48,14 @@ use sp_consensus::{
 use sp_core::traits::SpawnNamed;
 use sp_inherents::InherentData;
 use sp_runtime::{
-	generic::BlockId,
-	traits::{
-		BlakeTwo256, Block as BlockT, BlockIdTo, DigestFor, Hash as HashT, Header as HeaderT,
-	},
+	generic::{BlockId, Digest},
+	traits::{BlakeTwo256, Block as BlockT, BlockIdTo, Hash as HashT, Header as HeaderT},
 	SaturatedConversion,
 };
-use std::marker::PhantomData;
-
-use prometheus_endpoint::Registry as PrometheusRegistry;
-use sc_proposer_metrics::MetricsLink as PrometheusMetrics;
+// Local
+use ec_client_api::statekv::{ClientStateKv, StateKv};
 
 use crate::block_tracing::{hack_global_subscriber, handle_dispatch, ExtrinsicSubscriber};
-use ec_client_api::statekv::{ClientStateKv, StateKv};
 
 /// Default block size limit in bytes used by [`Proposer`].
 ///
@@ -79,8 +77,8 @@ pub struct ProposerFactory<A, B, C, S, PR> {
 	metrics: PrometheusMetrics,
 	/// The default block size limit.
 	///
-	/// If no `block_size_limit` is passed to [`sp_consensus::Proposer::propose`], this block size limit will be
-	/// used.
+	/// If no `block_size_limit` is passed to [`sp_consensus::Proposer::propose`], this block size
+	/// limit will be used.
 	default_block_size_limit: usize,
 	telemetry: Option<TelemetryHandle>,
 	/// When estimating the block size, should the proof be included?
@@ -92,7 +90,8 @@ pub struct ProposerFactory<A, B, C, S, PR> {
 impl<A, B, C, S> ProposerFactory<A, B, C, S, DisableProofRecording> {
 	/// Create a new proposer factory.
 	///
-	/// Proof recording will be disabled when using proposers built by this instance to build blocks.
+	/// Proof recording will be disabled when using proposers built by this instance to build
+	/// blocks.
 	pub fn new(
 		spawn_handle: impl SpawnNamed + 'static,
 		client: Arc<C>,
@@ -151,7 +150,8 @@ impl<A, B, C, S, PR> ProposerFactory<A, B, C, S, PR> {
 	/// The default value for the block size limit is:
 	/// [`DEFAULT_BLOCK_SIZE_LIMIT`].
 	///
-	/// If there is no block size limit passed to [`sp_consensus::Proposer::propose`], this value will be used.
+	/// If there is no block size limit passed to [`sp_consensus::Proposer::propose`], this value
+	/// will be used.
 	pub fn set_default_block_size_limit(&mut self, limit: usize) {
 		self.default_block_size_limit = limit;
 	}
@@ -181,10 +181,7 @@ where
 
 		let id = BlockId::hash(parent_hash);
 
-		info!(
-			"🙌 Starting consensus session on top of parent {:?}",
-			parent_hash
-		);
+		info!("🙌 Starting consensus session on top of parent {:?}", parent_hash);
 
 		let proposer = Proposer::<_, _, _, _, _, PR> {
 			spawn_handle: self.spawn_handle.clone(),
@@ -227,9 +224,7 @@ where
 	type Error = sp_blockchain::Error;
 
 	fn init(&mut self, parent_header: &<Block as BlockT>::Header) -> Self::CreateProposer {
-		future::ready(Ok(
-			self.init_with_now(parent_header, Box::new(time::Instant::now))
-		))
+		future::ready(Ok(self.init_with_now(parent_header, Box::new(time::Instant::now))))
 	}
 }
 
@@ -280,7 +275,7 @@ where
 	fn propose(
 		self,
 		inherent_data: InherentData,
-		inherent_digests: DigestFor<Block>,
+		inherent_digests: Digest,
 		max_duration: time::Duration,
 		block_size_limit: Option<usize>,
 	) -> Self::Proposal {
@@ -289,6 +284,7 @@ where
 
 		spawn_handle.spawn_blocking(
 			"basic-authorship-proposer",
+			None,
 			Box::pin(async move {
 				// leave some time for evaluation and block finalization (33%)
 				let deadline = (self.now)() + max_duration - max_duration / 3;
@@ -325,7 +321,7 @@ where
 	async fn propose_with(
 		self,
 		inherent_data: InherentData,
-		inherent_digests: DigestFor<Block>,
+		inherent_digests: Digest,
 		deadline: time::Instant,
 		block_size_limit: Option<usize>,
 	) -> Result<Proposal<Block, backend::TransactionFor<B, Block>, PR::Proof>, sp_blockchain::Error>
@@ -336,15 +332,14 @@ where
 		const MAX_SKIPPED_TRANSACTIONS: usize = 8;
 
 		let mut block_builder =
-			self.client
-				.new_block_at(&self.parent_id, inherent_digests, PR::ENABLED)?;
+			self.client.new_block_at(&self.parent_id, inherent_digests, PR::ENABLED)?;
 
 		let current_number = self
 			.client
 			.to_number(&self.parent_id)?
 			.expect("parent id must exist")
-			.saturated_into::<u64>()
-			+ 1;
+			.saturated_into::<u64>() +
+			1;
 		let mut extrinsic_count = 0_u32;
 		let state_kv = self.client.state_kv();
 
@@ -372,22 +367,19 @@ where
 			match r {
 				Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() => {
 					warn!("⚠️  Dropping non-mandatory inherent from overweight block.")
-				}
+				},
 				Err(ApplyExtrinsicFailed(Validity(e))) if e.was_mandatory() => {
 					error!(
 						"❌️ Mandatory inherent extrinsic returned error. Block cannot be produced."
 					);
 					Err(ApplyExtrinsicFailed(Validity(e)))?
-				}
+				},
 				Err(e) => {
-					warn!(
-						"❗️ Inherent extrinsic returned unexpected error: {}. Dropping.",
-						e
-					);
-				}
+					warn!("❗️ Inherent extrinsic returned unexpected error: {}. Dropping.", e);
+				},
 				Ok(_) => {
 					extrinsic_count += 1;
-				}
+				},
 			}
 		}
 
@@ -427,7 +419,7 @@ where
 					"Consensus deadline reached when pushing block transactions, \
 					proceeding with proposing."
 				);
-				break;
+				break
 			}
 
 			let pending_tx_data = pending_tx.data().clone();
@@ -443,11 +435,11 @@ where
 						 but will try {} more transactions before quitting.",
 						MAX_SKIPPED_TRANSACTIONS - skipped,
 					);
-					continue;
+					continue
 				} else {
 					debug!("Reached block size limit, proceeding with proposing.");
 					hit_block_size_limit = true;
-					break;
+					break
 				}
 			}
 
@@ -480,7 +472,7 @@ where
 					extrinsic_count += 1;
 					transaction_pushed = true;
 					debug!("[{:?}] Pushed to the block.", pending_tx_hash);
-				}
+				},
 				Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() => {
 					if skipped < MAX_SKIPPED_TRANSACTIONS {
 						skipped += 1;
@@ -490,20 +482,20 @@ where
 						);
 					} else {
 						debug!("Block is full, proceed with proposing.");
-						break;
+						break
 					}
-				}
+				},
 				Err(e) if skipped > 0 => {
 					trace!(
 						"[{:?}] Ignoring invalid transaction when skipping: {}",
 						pending_tx_hash,
 						e
 					);
-				}
+				},
 				Err(e) => {
 					debug!("[{:?}] Invalid transaction: {}", pending_tx_hash, e);
 					unqueue_invalid.push(pending_tx_hash);
-				}
+				},
 			}
 		}
 
@@ -519,12 +511,8 @@ where
 		let (block, storage_changes, proof) = block_builder.build()?.into_inner();
 
 		self.metrics.report(|metrics| {
-			metrics
-				.number_of_transactions
-				.set(block.extrinsics().len() as u64);
-			metrics
-				.block_constructed
-				.observe(block_timer.elapsed().as_secs_f64());
+			metrics.number_of_transactions.set(block.extrinsics().len() as u64);
+			metrics.block_constructed.observe(block_timer.elapsed().as_secs_f64());
 		});
 
 		info!(
@@ -559,10 +547,6 @@ where
 
 		let proof =
 			PR::into_proof(proof).map_err(|e| sp_blockchain::Error::Application(Box::new(e)))?;
-		Ok(Proposal {
-			block,
-			proof,
-			storage_changes,
-		})
+		Ok(Proposal { block, proof, storage_changes })
 	}
 }
