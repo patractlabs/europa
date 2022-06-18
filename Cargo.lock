@@ -1186,6 +1186,7 @@ dependencies = [
  "sp-blockchain",
  "sp-core",
  "sp-runtime",
+ "thiserror",
 ]
 
 [[package]]

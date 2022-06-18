@@ -2,78 +2,56 @@
 //
 // Copyright 2020-2022 Patract Labs. Licensed under GPL-3.0.
 
-use jsonrpc_core as rpc;
+use jsonrpsee::core::Error as JsonRpseeError;
 
 use sp_core::Bytes;
 use sp_runtime::traits::{Block as BlockT, NumberFor};
 
 use crate::NumberOrHash;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum EuropaRpcError<B: BlockT> {
+	/// Forward to a height which is more then best.
+	#[error("Forward to a height which is more then best ['{:?}' vs '{:?}].", .0, .1)]
 	InvalidForwardHeight(NumberFor<B>, NumberFor<B>),
+	/// Backward to a height which is more then best.
+	#[error("Backward to a height which is more then best ['{:?}' vs '{:?}].", .0, .1)]
 	InvalidBackwardHeight(NumberFor<B>, NumberFor<B>),
+	/// Block number or hash not existed.
+	#[error("Block number or hash not existed ['{:?}'].", .0)]
 	InvalidBlockId(NumberOrHash<B>),
+	/// No state kvs data for this number or hash
+	#[error("No state kvs data for this number or hash ['{:?}'].", .0)]
 	NoStateKvs(NumberOrHash<B>),
+	/// No child state kvs data for this number or hash
+	#[error("No child state kvs data for this number or hash ['{:?}']. root:{:?}", .0, .1)]
 	NoChildStateKvs(NumberOrHash<B>, Bytes),
+	/// No extrinsic for this number or hash
+	#[error("No extrinsic for this number or hash ['{:?}']. index:{:}", .0, .1)]
 	NoExtrinsic(NumberOrHash<B>, u32),
-	Client(Box<dyn std::error::Error + Send>),
+	#[error("Client error: {}", .0)]
+	Client(#[from] Box<dyn std::error::Error + Send + Sync>),
 }
 
-impl<B: BlockT> From<EuropaRpcError<B>> for rpc::Error {
+impl<B: BlockT> From<EuropaRpcError<B>> for JsonRpseeError
+where
+	B: Send + Sync + 'static,
+{
 	fn from(e: EuropaRpcError<B>) -> Self {
-		match e {
-			EuropaRpcError::InvalidForwardHeight(forward, best) => rpc::Error {
-				code: rpc::ErrorCode::InvalidParams,
-				message: format!(
-					"forward height should more than current best: forward: {}|best: {}",
-					forward, best
-				)
-				.into(),
-				data: None,
-			},
-			EuropaRpcError::InvalidBackwardHeight(backward, best) => rpc::Error {
-				code: rpc::ErrorCode::InvalidParams,
-				message: format!(
-					"backward height should less than current best: backward: {}|best: {}",
-					backward, best
-				)
-				.into(),
-				data: None,
-			},
-			EuropaRpcError::InvalidBlockId(id) => rpc::Error {
-				code: rpc::ErrorCode::InvalidParams,
-				message: format!("invalid or not existed block number: {:?}", id).into(),
-				data: None,
-			},
-			EuropaRpcError::NoStateKvs(num_or_hash) => rpc::Error {
-				code: rpc::ErrorCode::InvalidParams,
-				message: format!("No state kvs for this block: {:?}", num_or_hash).into(),
-				data: None,
-			},
-			EuropaRpcError::NoChildStateKvs(num_or_hash, bytes) => rpc::Error {
-				code: rpc::ErrorCode::InvalidParams,
-				message: format!(
-					"No child state kvs for this block: {:?}|child:0x{:}",
-					num_or_hash,
-					hex::encode(&*bytes)
-				)
-				.into(),
-				data: None,
-			},
-			e => internal(e),
-		}
+		Self::to_call_error(e)
 	}
 }
-
 pub fn client_err<B: BlockT>(err: sp_blockchain::Error) -> EuropaRpcError<B> {
 	EuropaRpcError::Client(Box::new(err))
 }
-
-pub fn internal<E: ::std::fmt::Debug>(e: E) -> jsonrpc_core::Error {
-	jsonrpc_core::Error {
-		code: jsonrpc_core::ErrorCode::InternalError,
-		message: "Unknown error occurred".into(),
-		data: Some(format!("{:?}", e).into()),
-	}
-}
+// pub fn client_err<B: BlockT>(err: sp_blockchain::Error) -> EuropaRpcError<B> {
+// 	EuropaRpcError::Client(Box::new(err))
+// }
+//
+// pub fn internal<E: ::std::fmt::Debug>(e: E) -> jsonrpc_core::Error {
+// 	jsonrpc_core::Error {
+// 		code: jsonrpc_core::ErrorCode::InternalError,
+// 		message: "Unknown error occurred".into(),
+// 		data: Some(format!("{:?}", e).into()),
+// 	}
+// }

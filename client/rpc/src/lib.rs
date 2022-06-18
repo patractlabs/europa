@@ -6,8 +6,11 @@ mod error;
 
 use std::{collections::HashMap, marker::PhantomData, sync::Arc};
 
-use jsonrpc_core::Result;
-use jsonrpc_derive::rpc;
+use jsonrpsee::{
+	core::{async_trait, RpcResult},
+	proc_macros::rpc,
+};
+
 use serde::{Deserialize, Serialize};
 // Substrate
 use sc_utils::mpsc::{tracing_unbounded, TracingUnboundedReceiver, TracingUnboundedSender};
@@ -30,37 +33,37 @@ pub enum NumberOrHash<B: BlockT> {
 	Hash(B::Hash),
 }
 
-#[rpc(server)]
+#[rpc(client, server)]
 pub trait EuropaApi<B>
 where
 	B: BlockT,
 {
 	/// The rpc provide a way to produce a batch of empty block to reach target block height.
-	#[rpc(name = "europa_forwardToHeight")]
-	fn forward_to_height(&self, height: NumberFor<B>) -> Result<()>;
+	#[method(name = "europa_forwardToHeight")]
+	fn forward_to_height(&self, height: NumberFor<B>) -> RpcResult<()>;
 
 	/// The rpc could revert current best height to the specified height which is less than current
 	/// best height.
-	#[rpc(name = "europa_backwardToHeight")]
-	fn backward_to_height(&self, height: NumberFor<B>) -> Result<()>;
+	#[method(name = "europa_backwardToHeight")]
+	fn backward_to_height(&self, height: NumberFor<B>) -> RpcResult<()>;
 
 	/// The rpc could print the modified state kvs for a specified block height or hash.
-	#[rpc(name = "europa_modifiedStateKvs")]
+	#[method(name = "europa_modifiedStateKvs")]
 	fn state_kvs(
 		&self,
 		number_or_hash: NumberOrHash<B>,
 		child: Option<Bytes>,
-	) -> Result<HashMap<Bytes, Option<Bytes>>>;
+	) -> RpcResult<HashMap<Bytes, Option<Bytes>>>;
 
 	/// The rpc can get the changed state for pointed extrinsic. Notice the changed state is only
 	/// for this extrinsic, may be different with the block modified state kvs, because the changed
 	/// state may be modified by following extrinsics.
-	#[rpc(name = "europa_extrinsicStateChanges")]
+	#[method(name = "europa_extrinsicStateChanges")]
 	fn extrinsic_changes(
 		&self,
 		number_or_hash: NumberOrHash<B>,
 		index: u32,
-	) -> Result<serde_json::Value>;
+	) -> RpcResult<serde_json::Value>;
 }
 
 pub enum Message<B: BlockT> {
@@ -96,7 +99,8 @@ impl<C, B: BlockT, Backend, S> Europa<C, B, Backend, S> {
 	}
 }
 
-impl<C, B, Backend, S> EuropaApi<B> for Europa<C, B, Backend, S>
+#[async_trait]
+impl<C, B, Backend, S> EuropaApiServer<B> for Europa<C, B, Backend, S>
 where
 	C: HeaderBackend<B> + BlockIdTo<B, Error = sp_blockchain::Error> + statekv::ClientStateKv<B, S>,
 	C: Send + Sync + 'static,
@@ -104,7 +108,7 @@ where
 	Backend: sc_client_api::backend::Backend<B> + Send + Sync + 'static,
 	S: statekv::StateKv<B> + 'static,
 {
-	fn forward_to_height(&self, height: NumberFor<B>) -> Result<()> {
+	fn forward_to_height(&self, height: NumberFor<B>) -> RpcResult<()> {
 		let best = self.client.info().best_number;
 		if height <= best {
 			return Err(EuropaRpcError::<B>::InvalidForwardHeight(height, best).into())
@@ -115,7 +119,7 @@ where
 		Ok(())
 	}
 
-	fn backward_to_height(&self, height: NumberFor<B>) -> Result<()> {
+	fn backward_to_height(&self, height: NumberFor<B>) -> RpcResult<()> {
 		let best = self.client.info().best_number;
 		if height >= best {
 			return Err(EuropaRpcError::<B>::InvalidBackwardHeight(height, best).into())
@@ -136,7 +140,7 @@ where
 		&self,
 		number_or_hash: NumberOrHash<B>,
 		child: Option<Bytes>,
-	) -> Result<HashMap<Bytes, Option<Bytes>>> {
+	) -> RpcResult<HashMap<Bytes, Option<Bytes>>> {
 		let id = number_or_hash.clone();
 		let hash = match id {
 			NumberOrHash::Hash(hash) => hash,
@@ -165,7 +169,7 @@ where
 		&self,
 		number_or_hash: NumberOrHash<B>,
 		index: u32,
-	) -> Result<serde_json::Value> {
+	) -> RpcResult<serde_json::Value> {
 		use ec_basic_authorship::Event;
 		let id = number_or_hash.clone();
 		let number = match id {

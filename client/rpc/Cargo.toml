@@ -12,9 +12,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 hex = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+thiserror = "1.0"
 
 # Parity
-jsonrpsee = { version = "0.14.0", features = ["server"] }
+jsonrpsee = { version = "0.14.0", features = ["server", "macros"] }
 
 # Substrate
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
