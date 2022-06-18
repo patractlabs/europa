@@ -34,10 +34,8 @@ use futures::{
 use log::{debug, error, info, trace, warn};
 use tracing::{dispatcher, Dispatch};
 // Substrate
-use prometheus_endpoint::Registry as PrometheusRegistry;
 use sc_block_builder::{BlockBuilderApi, BlockBuilderProvider};
 use sc_client_api::backend;
-use sc_proposer_metrics::MetricsLink as PrometheusMetrics;
 use sc_telemetry::{telemetry, TelemetryHandle, CONSENSUS_INFO};
 use sc_transaction_pool_api::{InPoolTransaction, TransactionPool};
 use sp_api::{ApiExt, ProvideRuntimeApi};
@@ -48,10 +46,14 @@ use sp_consensus::{
 use sp_core::traits::SpawnNamed;
 use sp_inherents::InherentData;
 use sp_runtime::{
-	generic::{BlockId, Digest},
+	generic::BlockId,
 	traits::{BlakeTwo256, Block as BlockT, BlockIdTo, Hash as HashT, Header as HeaderT},
-	SaturatedConversion,
+	Digest, Percent, SaturatedConversion,
 };
+
+use prometheus_endpoint::Registry as PrometheusRegistry;
+use sc_proposer_metrics::{EndProposingReason, MetricsLink as PrometheusMetrics};
+
 // Local
 use ec_client_api::statekv::{ClientStateKv, StateKv};
 
@@ -65,6 +67,8 @@ use crate::block_tracing::{hack_global_subscriber, handle_dispatch, ExtrinsicSub
 /// will accept. If the block doesn't fit in such a package, it can not be
 /// transferred to other nodes.
 pub const DEFAULT_BLOCK_SIZE_LIMIT: usize = 4 * 1024 * 1024 + 512;
+
+const DEFAULT_SOFT_DEADLINE_PERCENT: Percent = Percent::from_percent(50);
 
 /// [`Proposer`] factory.
 pub struct ProposerFactory<A, B, C, S, PR> {
@@ -80,6 +84,14 @@ pub struct ProposerFactory<A, B, C, S, PR> {
 	/// If no `block_size_limit` is passed to [`sp_consensus::Proposer::propose`], this block size
 	/// limit will be used.
 	default_block_size_limit: usize,
+	/// Soft deadline percentage of hard deadline.
+	///
+	/// The value is used to compute soft deadline during block production.
+	/// The soft deadline indicates where we should stop attempting to add transactions
+	/// to the block, which exhaust resources. After soft deadline is reached,
+	/// we switch to a fixed-amount mode, in which after we see `MAX_SKIPPED_TRANSACTIONS`
+	/// transactions which exhaust resrouces, we will conclude that the block is full.
+	soft_deadline_percent: Percent,
 	telemetry: Option<TelemetryHandle>,
 	/// When estimating the block size, should the proof be included?
 	include_proof_in_block_size_estimation: bool,
@@ -104,6 +116,7 @@ impl<A, B, C, S> ProposerFactory<A, B, C, S, DisableProofRecording> {
 			transaction_pool,
 			metrics: PrometheusMetrics::new(prometheus),
 			default_block_size_limit: DEFAULT_BLOCK_SIZE_LIMIT,
+			soft_deadline_percent: DEFAULT_SOFT_DEADLINE_PERCENT,
 			telemetry,
 			client,
 			include_proof_in_block_size_estimation: false,
@@ -132,6 +145,7 @@ impl<A, B, C, S> ProposerFactory<A, B, C, S, EnableProofRecording> {
 			transaction_pool,
 			metrics: PrometheusMetrics::new(prometheus),
 			default_block_size_limit: DEFAULT_BLOCK_SIZE_LIMIT,
+			soft_deadline_percent: DEFAULT_SOFT_DEADLINE_PERCENT,
 			telemetry,
 			include_proof_in_block_size_estimation: true,
 			_phantom: PhantomData,
@@ -154,6 +168,22 @@ impl<A, B, C, S, PR> ProposerFactory<A, B, C, S, PR> {
 	/// will be used.
 	pub fn set_default_block_size_limit(&mut self, limit: usize) {
 		self.default_block_size_limit = limit;
+	}
+
+	/// Set soft deadline percentage.
+	///
+	/// The value is used to compute soft deadline during block production.
+	/// The soft deadline indicates where we should stop attempting to add transactions
+	/// to the block, which exhaust resources. After soft deadline is reached,
+	/// we switch to a fixed-amount mode, in which after we see `MAX_SKIPPED_TRANSACTIONS`
+	/// transactions which exhaust resrouces, we will conclude that the block is full.
+	///
+	/// Setting the value too low will significantly limit the amount of transactions
+	/// we try in case they exhaust resources. Setting the value too high can
+	/// potentially open a DoS vector, where many "exhaust resources" transactions
+	/// are being tried with no success, hence block producer ends up creating an empty block.
+	pub fn set_soft_deadline(&mut self, percent: Percent) {
+		self.soft_deadline_percent = percent;
 	}
 }
 
@@ -193,6 +223,7 @@ where
 			now,
 			metrics: self.metrics.clone(),
 			default_block_size_limit: self.default_block_size_limit,
+			soft_deadline_percent: self.soft_deadline_percent,
 			telemetry: self.telemetry.clone(),
 			_phantom: PhantomData,
 			include_proof_in_block_size_estimation: self.include_proof_in_block_size_estimation,
@@ -240,6 +271,7 @@ pub struct Proposer<B, Block: BlockT, C, S: StateKv<Block>, A: TransactionPool, 
 	metrics: PrometheusMetrics,
 	default_block_size_limit: usize,
 	include_proof_in_block_size_estimation: bool,
+	soft_deadline_percent: Percent,
 	telemetry: Option<TelemetryHandle>,
 	_phantom: PhantomData<(B, S, PR)>,
 }
@@ -301,6 +333,11 @@ where
 	}
 }
 
+/// If the block is full we will attempt to push at most
+/// this number of transactions before quitting for real.
+/// It allows us to increase block utilization.
+const MAX_SKIPPED_TRANSACTIONS: usize = 8;
+
 impl<A, B, Block, C, S, PR> Proposer<B, Block, C, S, A, PR>
 where
 	A: TransactionPool<Block = Block>,
@@ -326,13 +363,21 @@ where
 		block_size_limit: Option<usize>,
 	) -> Result<Proposal<Block, backend::TransactionFor<B, Block>, PR::Proof>, sp_blockchain::Error>
 	{
-		/// If the block is full we will attempt to push at most
-		/// this number of transactions before quitting for real.
-		/// It allows us to increase block utilization.
-		const MAX_SKIPPED_TRANSACTIONS: usize = 8;
-
+		let propose_with_start = time::Instant::now();
 		let mut block_builder =
 			self.client.new_block_at(&self.parent_id, inherent_digests, PR::ENABLED)?;
+
+		let create_inherents_start = time::Instant::now();
+		let inherents = block_builder.create_inherents(inherent_data)?;
+		let create_inherents_end = time::Instant::now();
+
+		self.metrics.report(|metrics| {
+			metrics.create_inherents_time.observe(
+				create_inherents_end
+					.saturating_duration_since(create_inherents_start)
+					.as_secs_f64(),
+			);
+		});
 
 		let current_number = self
 			.client
@@ -346,7 +391,7 @@ where
 		let global_subscriber = hack_global_subscriber();
 		let targets = "state";
 
-		for inherent in block_builder.create_inherents(inherent_data)? {
+		for inherent in inherents {
 			let r = {
 				let dispatch =
 					Dispatch::new(ExtrinsicSubscriber::new(targets, global_subscriber.clone()));
@@ -384,6 +429,12 @@ where
 		}
 
 		// proceed with transactions
+		// We calculate soft deadline used only in case we start skipping transactions.
+		let now = (self.now)();
+		let left = deadline.saturating_duration_since(now);
+		let left_micros: u64 = left.as_micros().saturated_into();
+		let soft_deadline =
+			now + time::Duration::from_micros(self.soft_deadline_percent.mul_floor(left_micros));
 		let block_timer = time::Instant::now();
 		let mut skipped = 0;
 		let mut unqueue_invalid = Vec::new();
@@ -392,7 +443,7 @@ where
 		let mut t2 =
 			futures_timer::Delay::new(deadline.saturating_duration_since((self.now)()) / 8).fuse();
 
-		let pending_iterator = select! {
+		let mut pending_iterator = select! {
 			res = t1 => res,
 			_ = t2 => {
 				log::warn!(
@@ -409,17 +460,23 @@ where
 		debug!("Attempting to push transactions from the pool.");
 		debug!("Pool status: {:?}", self.transaction_pool.status());
 		let mut transaction_pushed = false;
-		let mut hit_block_size_limit = false;
 
 		println!("====================================");
 
-		for pending_tx in pending_iterator {
-			if (self.now)() > deadline {
+		let end_reason = loop {
+			let pending_tx = if let Some(pending_tx) = pending_iterator.next() {
+				pending_tx
+			} else {
+				break EndProposingReason::NoMoreTransactions
+			};
+
+			let now = (self.now)();
+			if now > deadline {
 				debug!(
 					"Consensus deadline reached when pushing block transactions, \
 					proceeding with proposing."
 				);
-				break
+				break EndProposingReason::HitDeadline
 			}
 
 			let pending_tx_data = pending_tx.data().clone();
@@ -428,6 +485,7 @@ where
 			let block_size =
 				block_builder.estimate_block_size(self.include_proof_in_block_size_estimation);
 			if block_size + pending_tx_data.encoded_size() > block_size_limit {
+				pending_iterator.report_invalid(&pending_tx);
 				if skipped < MAX_SKIPPED_TRANSACTIONS {
 					skipped += 1;
 					debug!(
@@ -436,10 +494,16 @@ where
 						MAX_SKIPPED_TRANSACTIONS - skipped,
 					);
 					continue
+				} else if now < soft_deadline {
+					debug!(
+						"Transaction would overflow the block size limit, \
+						 but we still have time before the soft deadline, so \
+						 we will try a bit more."
+					);
+					continue
 				} else {
 					debug!("Reached block size limit, proceeding with proposing.");
-					hit_block_size_limit = true;
-					break
+					break EndProposingReason::HitBlockSizeLimit
 				}
 			}
 
@@ -474,18 +538,25 @@ where
 					debug!("[{:?}] Pushed to the block.", pending_tx_hash);
 				},
 				Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() => {
+					pending_iterator.report_invalid(&pending_tx);
 					if skipped < MAX_SKIPPED_TRANSACTIONS {
 						skipped += 1;
 						debug!(
 							"Block seems full, but will try {} more transactions before quitting.",
 							MAX_SKIPPED_TRANSACTIONS - skipped,
 						);
+					} else if (self.now)() < soft_deadline {
+						debug!(
+							"Block seems full, but we still have time before the soft deadline, \
+							 so we will try a bit more before quitting."
+						);
 					} else {
-						debug!("Block is full, proceed with proposing.");
-						break
+						debug!("Reached block weight limit, proceeding with proposing.");
+						break EndProposingReason::HitBlockWeightLimit
 					}
 				},
 				Err(e) if skipped > 0 => {
+					pending_iterator.report_invalid(&pending_tx);
 					trace!(
 						"[{:?}] Ignoring invalid transaction when skipping: {}",
 						pending_tx_hash,
@@ -493,13 +564,14 @@ where
 					);
 				},
 				Err(e) => {
+					pending_iterator.report_invalid(&pending_tx);
 					debug!("[{:?}] Invalid transaction: {}", pending_tx_hash, e);
 					unqueue_invalid.push(pending_tx_hash);
 				},
 			}
-		}
+		};
 
-		if hit_block_size_limit && !transaction_pushed {
+		if matches!(end_reason, EndProposingReason::HitBlockSizeLimit) && !transaction_pushed {
 			warn!(
 				"Hit block size limit of `{}` without including any transaction!",
 				block_size_limit,
@@ -513,17 +585,20 @@ where
 		self.metrics.report(|metrics| {
 			metrics.number_of_transactions.set(block.extrinsics().len() as u64);
 			metrics.block_constructed.observe(block_timer.elapsed().as_secs_f64());
+
+			metrics.report_end_proposing_reason(end_reason);
 		});
 
 		info!(
-			"🎁 Prepared block for proposing at {} [hash: {:?}; parent_hash: {}; extrinsics ({}): [{}]]",
+			"🎁 Prepared block for proposing at {} ({} ms) [hash: {:?}; parent_hash: {}; extrinsics ({}): [{}]]",
 			block.header().number(),
+			block_timer.elapsed().as_millis(),
 			<Block as BlockT>::Hash::from(block.header().hash()),
 			block.header().parent_hash(),
 			block.extrinsics().len(),
 			block.extrinsics()
 				.iter()
-				.map(|xt| format!("{}", BlakeTwo256::hash_of(xt)))
+				.map(|xt| BlakeTwo256::hash_of(xt).to_string())
 				.collect::<Vec<_>>()
 				.join(", ")
 		);
@@ -547,6 +622,14 @@ where
 
 		let proof =
 			PR::into_proof(proof).map_err(|e| sp_blockchain::Error::Application(Box::new(e)))?;
+
+		let propose_with_end = time::Instant::now();
+		self.metrics.report(|metrics| {
+			metrics.create_block_proposal_time.observe(
+				propose_with_end.saturating_duration_since(propose_with_start).as_secs_f64(),
+			);
+		});
+
 		Ok(Proposal { block, proof, storage_changes })
 	}
 }

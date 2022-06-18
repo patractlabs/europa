@@ -15,6 +15,6 @@ log = "0.4"
 codec = { package = "parity-scale-codec", version = "3.1" }
 
 # Substrate
-sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }

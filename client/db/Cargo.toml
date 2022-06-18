@@ -16,11 +16,11 @@ kvdb = "0.11.0"
 kvdb-rocksdb = "0.15.2"
 
 # Substrate
-sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21", features = ["with-kvdb-rocksdb", "with-parity-db"] }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-sp-database = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.21" }
+sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25", features = ["rocksdb"] }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+sp-database = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
 
 # Local
 ec-client-api = { path = "../api" }
