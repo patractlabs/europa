@@ -82,7 +82,7 @@ pub fn open_state_key_database(
 		},
 		DatabaseSource::ParityDb { path: _ } => return Err(db_open_error("with-parity-db")),
 		DatabaseSource::Auto { .. } => return Err(db_open_error("auto")),
-		DatabaseSource::Custom(_) => return Err(db_open_error("with-custom-db")),
+		DatabaseSource::Custom { .. } => return Err(db_open_error("auto")),
 	};
 	Ok(db)
 }
